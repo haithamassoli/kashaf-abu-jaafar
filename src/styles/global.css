@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 @font-face {
   font-family: 'Thmanyah Sans';
@@ -59,6 +61,8 @@
   --mark-bg: #fde68a;
   --mark-fg: #3b2f00;
   --ring: #0f6b5c;
+  --destructive: oklch(0.577 0.245 27.325);
+  --radius: 0.625rem;
 }
 
 .dark {
@@ -76,6 +80,25 @@
   --mark-bg: #6b5410;
   --mark-fg: #fff4cf;
   --ring: #52c2a5;
+  --destructive: oklch(0.704 0.191 22.216);
+}
+
+/* shadcn's semantic slots aliased onto the palette above — .dark sits on <html>
+   with them, so the theme flip carries through for free. */
+:root {
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card: var(--surface);
+  --card-foreground: var(--fg);
+  --popover: var(--surface);
+  --popover-foreground: var(--fg);
+  --primary: var(--accent);
+  --primary-foreground: var(--accent-fg);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--fg);
+  --muted-foreground: var(--muted);
+  --accent-foreground: var(--accent-fg);
+  --input: var(--border-strong);
 }
 
 @theme inline {
@@ -92,6 +115,29 @@
 
   --font-sans: 'Thmanyah Sans', ui-sans-serif, system-ui, sans-serif;
   --font-naskh: 'Noto Naskh Arabic Variable', 'Noto Naskh Arabic', serif;
+  --font-heading: var(--font-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 @layer base {
@@ -105,6 +151,7 @@
 
   body {
     min-height: 100dvh;
+    @apply bg-background text-foreground;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -143,6 +190,9 @@
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
     }
+  }
+  * {
+    @apply border-border outline-ring/50;
   }
 }
 

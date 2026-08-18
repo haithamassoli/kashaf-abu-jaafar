@@ -1,33 +1,50 @@
 import { useEffect, useRef, useState } from 'react'
 import { HITS_PER_PAGE, MAX_PAGES, highlight, searchCues, type SearchResult } from '../lib/meili'
 import { arabicDate, timestamp } from '../lib/format'
+import { DirectionProvider } from '@base-ui/react/direction-provider'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 type PlaylistOption = { id: string; title: string; count: number }
 type Status = 'idle' | 'loading' | 'done' | 'error'
 
-/** The URL is the state: ?q=<query>&pl=<playlistId>&p=<page>. */
+/** The URL is the state: ?q=<query>&pl=<playlistId>&pl=<…>&p=<page>. */
 function readUrl() {
   const p = new URLSearchParams(location.search)
   return {
     q: p.get('q') ?? '',
-    pl: p.get('pl') ?? '',
+    pl: p.getAll('pl'),
     page: Math.min(Math.max(Number(p.get('p')) || 1, 1), MAX_PAGES),
   }
 }
 
-function pushUrl(q: string, pl: string, page: number) {
+function pushUrl(q: string, pl: string[], page: number) {
   const p = new URLSearchParams()
   if (q) p.set('q', q)
-  if (pl) p.set('pl', pl)
+  for (const id of pl) p.append('pl', id)
   if (page > 1) p.set('p', String(page))
   const qs = p.toString()
   const url = location.pathname + (qs ? `?${qs}` : '')
   if (url !== location.pathname + location.search) history.pushState(null, '', url)
 }
 
+/** 0 selected means "no filter", so the trigger says «all» rather than staying empty. */
+function playlistLabel(ids: string[], playlists: PlaylistOption[]) {
+  if (ids.length === 0) return 'كل القوائم'
+  if (ids.length === 1) return playlists.find((p) => p.id === ids[0])?.title ?? 'قائمة واحدة'
+  if (ids.length === 2) return 'قائمتان'
+  return `${ids.length} ${ids.length <= 10 ? 'قوائم' : 'قائمة'}`
+}
+
 export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
   const [q, setQ] = useState('')
-  const [pl, setPl] = useState('')
+  const [pl, setPl] = useState<string[]>([])
   const [asked, setAsked] = useState('')
   const [status, setStatus] = useState<Status>('idle')
   const [result, setResult] = useState<SearchResult | null>(null)
@@ -35,7 +52,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
   const top = useRef<HTMLDivElement>(null)
 
   // Only the newest request may set state; older responses are ignored.
-  const run = async (query: string, playlist: string, page: number) => {
+  const run = async (query: string, playlist: string[], page: number) => {
     const id = ++seq.current
     const text = query.trim()
     setPl(playlist)
@@ -47,7 +64,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
     }
     setStatus('loading')
     try {
-      const res = await searchCues(text, { page, playlist })
+      const res = await searchCues(text, { page, playlists: playlist })
       if (id !== seq.current) return
       if (res.hits.length === 0 && res.totalPages >= 1 && page > res.totalPages) {
         go(text, playlist, res.totalPages)
@@ -68,7 +85,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
       const u = readUrl()
       // a stale or hand-edited pl= would filter everything away while the select still
       // showed "كل القوائم" — drop it instead
-      const pl = known.has(u.pl) ? u.pl : ''
+      const pl = u.pl.filter((id) => known.has(id))
       setQ(u.q)
       run(u.q, pl, u.page)
     }
@@ -77,7 +94,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
     return () => removeEventListener('popstate', sync)
   }, [])
 
-  const go = (query: string, playlist: string, page: number) => {
+  const go = (query: string, playlist: string[], page: number) => {
     pushUrl(query.trim(), playlist, page)
     run(query, playlist, page)
   }
@@ -88,7 +105,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
     top.current?.scrollIntoView()
   }
 
-  const changePlaylist = (value: string) => {
+  const changePlaylist = (value: string[]) => {
     setPl(value)
     if (q.trim()) go(q, value, 1)
   }
@@ -109,7 +126,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
           ابحث في نصوص الدروس
         </label>
         <div className="flex gap-2">
-          <input
+          <Input
             id="search-q"
             data-search-input
             type="search"
@@ -120,7 +137,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
             autoComplete="off"
             spellCheck={false}
             enterKeyHint="search"
-            className="h-12 min-w-0 flex-1 rounded-xl border border-border-strong bg-surface px-4 text-base text-fg placeholder:text-muted"
+            className="h-12 min-w-0 flex-1 rounded-xl border-border-strong bg-surface px-4 text-base md:text-base"
           />
           <button
             type="submit"
@@ -132,22 +149,37 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
 
         {playlists.length > 0 && (
           <div className="mt-3 flex items-center gap-3">
-            <label htmlFor="search-pl" className="shrink-0 text-sm text-muted">
+            <span id="search-pl-label" className="shrink-0 text-sm text-muted">
               قائمة التشغيل
-            </label>
-            <select
-              id="search-pl"
-              value={pl}
-              onChange={(e) => changePlaylist(e.target.value)}
-              className="h-11 min-w-0 flex-1 rounded-lg border border-border-strong bg-surface px-3 text-sm text-fg sm:max-w-xs"
-            >
-              <option value="">كل القوائم</option>
-              {playlists.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.title} ({p.count})
-                </option>
-              ))}
-            </select>
+            </span>
+            {/* Base UI takes direction from context, not the <html dir> the page uses. */}
+            <DirectionProvider direction="rtl">
+              <Select multiple value={pl} onValueChange={changePlaylist}>
+                <SelectTrigger
+                  aria-labelledby="search-pl-label"
+                  className="h-11 min-w-0 flex-1 border-border-strong bg-surface px-3 text-fg sm:max-w-xs"
+                >
+                  <SelectValue>{() => playlistLabel(pl, playlists)}</SelectValue>
+                </SelectTrigger>
+                <SelectContent className="max-h-80">
+                  {playlists.map((p) => (
+                    <SelectItem key={p.id} value={p.id} className="py-2">
+                      <span className="truncate">{p.title}</span>
+                      <span className="digits shrink-0 text-xs text-muted">({p.count})</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </DirectionProvider>
+            {pl.length > 0 && (
+              <button
+                type="button"
+                onClick={() => changePlaylist([])}
+                className="shrink-0 text-sm text-muted underline underline-offset-4 hover:text-fg"
+              >
+                إلغاء
+              </button>
+            )}
           </div>
         )}
       </form>

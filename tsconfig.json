@@ -5,6 +5,8 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react",
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": { "@/*": ["./src/*"] }
   }
 }

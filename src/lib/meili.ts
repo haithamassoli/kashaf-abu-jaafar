@@ -40,8 +40,10 @@ const safePlaylist = (id: string) => (/^[\w-]{1,64}$/.test(id) ? id : '')
 
 export async function searchCues(
   q: string,
-  { page = 1, playlist = '' }: { page?: number; playlist?: string } = {},
+  { page = 1, playlists = [] }: { page?: number; playlists?: string[] } = {},
 ): Promise<SearchResult> {
+  const ids = playlists.map(safePlaylist).filter(Boolean)
+
   const res = await client.index('cues').search(q, {
     // `locales` folds hamza/ta-marbuta at query time; `all` stops the split-off
     // definite article "ال" from matching the whole corpus.
@@ -52,7 +54,7 @@ export async function searchCues(
     attributesToHighlight: ['text'],
     highlightPreTag: '<mark>',
     highlightPostTag: '</mark>',
-    ...(safePlaylist(playlist) ? { filter: `playlist_ids = "${safePlaylist(playlist)}"` } : {}),
+    ...(ids.length ? { filter: `playlist_ids IN [${ids.map((id) => `"${id}"`).join(', ')}]` } : {}),
   })
 
   const total = res.totalHits ?? 0
