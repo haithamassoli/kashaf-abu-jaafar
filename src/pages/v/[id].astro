@@ -27,6 +27,8 @@ const digits = (s: string) => s.replace(/\d+/g, '<span class="digits">$&</span>'
 const total = Math.floor(video.duration)
 const isoDuration = `PT${Math.floor(total / 3600)}H${Math.floor((total % 3600) / 60)}M${total % 60}S`
 
+// ponytail: hqdefault is the only thumb size YouTube guarantees, so cards crop its
+// 4:3 to 16:9. Switch to maxresdefault if we ever verify each id has one (many 404).
 const jsonLd = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'VideoObject',
@@ -39,7 +41,12 @@ const jsonLd = JSON.stringify({
 }).replaceAll('<', '\\u003c')
 ---
 
-<Base wide title={video.title} description={description || undefined}>
+<Base
+  wide
+  title={video.title}
+  description={description || undefined}
+  image={`https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`}
+>
   <div class="pt-8">
     {
       video.playlists.length > 0 && (
