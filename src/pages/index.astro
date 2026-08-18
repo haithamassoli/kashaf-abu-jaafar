@@ -117,11 +117,4 @@ const value = (s: string) => (/^[\d,]+$/.test(s) ? `<span class="digits">${s}</s
 
     <Charts />
   </section>
-
-  <style is:global>
-    /* Homepage furniture: it steps aside as soon as the search box has a query. */
-    body:has(#search-q:not(:placeholder-shown)) #platform-content {
-      display: none;
-    }
-  </style>
 </Base>

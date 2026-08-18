@@ -191,9 +191,6 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
         aria-live="polite"
         aria-atomic="true"
       >
-        {status === 'idle' && (
-          <p className="text-sm text-muted">اكتب كلمة أو عبارة من كلام الشيخ، ثم اضغط «بحث».</p>
-        )}
         {status === 'loading' && <p className="text-sm text-muted">جارٍ البحث…</p>}
         {status === 'error' && <p className="text-fg">تعذّر الاتصال بالبحث، حاول لاحقًا</p>}
         {status === 'done' &&
