@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Search result URLs are canonicalised to / — no value in crawling every query.
+Disallow: /?q=
+Disallow: /*?q=
+
+Sitemap: https://kashaf-alkulify.assoli.site/sitemap-index.xml

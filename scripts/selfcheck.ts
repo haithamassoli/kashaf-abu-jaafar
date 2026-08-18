@@ -4,6 +4,7 @@ import { highlight } from '../src/lib/meili.ts'
 import { normalize } from '../src/lib/normalize.ts'
 import { clean } from '../src/lib/clean.ts'
 import { timestamp, duration, arabicDate, lessons, hours, lists, withDigits } from '../src/lib/format.ts'
+import { breadcrumb, SITE_URL } from '../src/lib/seo.ts'
 
 // highlight: escapes everything except <mark>, so a hostile transcript cannot inject HTML
 assert.equal(
@@ -55,3 +56,17 @@ assert.equal(lists(2), 'قائمتان')
 assert.equal(withDigits('109 ساعات'), '<span class="digits">109</span> ساعات')
 
 console.log('selfcheck ok')
+
+// seo: breadcrumbs must be absolute, 1-indexed, and root-anchored — Google drops the
+// whole BreadcrumbList otherwise, and relative `item` URLs are the usual way that breaks.
+const crumbs = breadcrumb([['القوائم', '/p/'], ['قائمة', '/p/abc/']]).itemListElement
+assert.equal(crumbs.length, 3)
+assert.deepEqual(
+  crumbs.map((c) => [c.position, c.item]),
+  [
+    [1, `${SITE_URL}/`],
+    [2, `${SITE_URL}/p/`],
+    [3, `${SITE_URL}/p/abc/`],
+  ],
+)
+assert.ok(crumbs.every((c) => c.item.startsWith('https://')))

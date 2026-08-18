@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@astrojs/react": "^4.2.0",
+    "@astrojs/sitemap": "^3.7.3",
     "@fontsource-variable/noto-naskh-arabic": "^5.1.0",
     "@fontsource/ibm-plex-sans-arabic": "^5.1.0",
     "@tailwindcss/vite": "^4.0.0",

@@ -4,6 +4,7 @@ import Search from '../islands/Search.tsx'
 import Charts from '../components/Charts.astro'
 import { playlists, totalHours, videos } from '../lib/data'
 import { arabicDate, withDigits } from '../lib/format'
+import { SITE, SITE_URL, SHEIKH, person } from '../lib/seo'
 
 const options = playlists.map((p) => ({ id: p.id, title: p.title, count: p.videoIds.length }))
 
@@ -46,11 +47,36 @@ const cards = [
   },
 ]
 
+// ?q= is a real, shareable URL (Search.tsx keeps state there), so the SearchAction is honest.
+const siteSchema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': `${SITE_URL}/#website`,
+      url: `${SITE_URL}/`,
+      name: SITE,
+      description: `فهرس بحث في نصوص دروس ${SHEIKH} المفرَّغة آليًا.`,
+      inLanguage: 'ar',
+      about: { '@id': person['@id'] },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: { '@type': 'EntryPoint', urlTemplate: `${SITE_URL}/?q={search_term_string}` },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    person,
+  ],
+}
+
 // Whole-number values stay LTR as one run; Arabic ones only isolate their digits.
 const value = (s: string) => (/^[\d,]+$/.test(s) ? `<span class="digits">${s}</span>` : withDigits(s))
 ---
 
-<Base description="ابحث في نصوص دروس الشيخ أبي جعفر عبد الله بن فهد الخليفي المفرَّغة آليًا.">
+<Base
+  description="ابحث في نصوص دروس الشيخ أبي جعفر عبد الله بن فهد الخليفي المفرَّغة آليًا."
+  schema={[siteSchema]}
+>
   <section class="pt-10 sm:pt-16">
     <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">كشّاف أبي جعفر</h1>
     <p class="mt-3 text-muted">ابحث في دروس الشيخ أبي جعفر عبد الله بن فهد الخليفي</p>

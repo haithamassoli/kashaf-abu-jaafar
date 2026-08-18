@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro'
 import { playlists, playlistDuration } from '../../lib/data'
 import { duration, lessons, lists, withDigits } from '../../lib/format'
 import { normalize } from '../../lib/normalize'
+import { SITE_URL, SHEIKH, breadcrumb } from '../../lib/seo'
 
 const rows = playlists.map((p) => ({
   id: p.id,
@@ -11,9 +12,31 @@ const rows = playlists.map((p) => ({
   count: p.videoIds.length,
   length: playlistDuration(p),
 }))
+
+const indexSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  '@id': `${SITE_URL}/p/#collection`,
+  name: 'القوائم',
+  inLanguage: 'ar',
+  mainEntity: {
+    '@type': 'ItemList',
+    numberOfItems: rows.length,
+    itemListElement: rows.map((r, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: new URL(`/p/${r.id}/`, SITE_URL).href,
+      name: r.title,
+    })),
+  },
+}
 ---
 
-<Base title="القوائم" description="قوائم تشغيل دروس الشيخ أبي جعفر عبد الله بن فهد الخليفي">
+<Base
+  title="القوائم"
+  description={`قوائم تشغيل دروس ${SHEIKH}`}
+  schema={[indexSchema, breadcrumb([['القوائم', '/p/']])]}
+>
   <h1 class="mt-10 text-2xl font-semibold tracking-tight sm:text-3xl">القوائم</h1>
 
   <label for="playlist-filter" class="sr-only">ابحث في القوائم</label>
@@ -39,7 +62,7 @@ const rows = playlists.map((p) => ({
       rows.map((p) => (
         <li data-title={p.key}>
           <a
-            href={`/p/${p.id}`}
+            href={`/p/${p.id}/`}
             class="card block px-4 py-4 transition-colors hover:bg-surface-2"
           >
             <span class="block font-medium leading-relaxed">{p.title}</span>

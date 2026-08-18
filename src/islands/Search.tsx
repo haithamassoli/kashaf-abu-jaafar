@@ -197,7 +197,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
               return (
                 <li key={cue.id}>
                   <a
-                    href={`/v/${cue.video_id}?t=${Math.floor(cue.start)}`}
+                    href={`/v/${cue.video_id}/?t=${Math.floor(cue.start)}`}
                     className="card block p-4 transition-colors hover:bg-surface-2"
                   >
                     <h2 className="text-base font-medium text-fg">{cue.title}</h2>

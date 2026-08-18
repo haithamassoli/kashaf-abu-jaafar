@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro'
 import Player from '../../islands/Player'
 import { videos, segmentsOf, type Video } from '../../lib/data'
 import { arabicDate, duration, youtubeUrl } from '../../lib/format'
+import { SITE_URL, person, breadcrumb } from '../../lib/seo'
 
 export function getStaticPaths() {
   return videos.map((video) => ({ params: { id: video.id }, props: { video } }))
@@ -29,16 +30,28 @@ const isoDuration = `PT${Math.floor(total / 3600)}H${Math.floor((total % 3600) /
 
 // ponytail: hqdefault is the only thumb size YouTube guarantees, so cards crop its
 // 4:3 to 16:9. Switch to maxresdefault if we ever verify each id has one (many 404).
-const jsonLd = JSON.stringify({
+const videoSchema = {
   '@context': 'https://schema.org',
   '@type': 'VideoObject',
+  '@id': `${SITE_URL}/v/${video.id}/#video`,
   name: video.title,
   description: description || undefined,
   uploadDate: video.uploadDate ?? undefined,
   duration: isoDuration,
+  url: new URL(`/v/${video.id}/`, SITE_URL).href,
   embedUrl: `https://www.youtube-nocookie.com/embed/${video.id}`,
-  thumbnailUrl: `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`,
-}).replaceAll('<', '\\u003c')
+  contentUrl: youtubeUrl(video.id),
+  thumbnailUrl: [
+    `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`,
+    `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`,
+  ],
+  inLanguage: 'ar',
+  author: person,
+  // No `transcript` field: the Player island server-renders every cue, so the text is
+  // already in the HTML — repeating it here would double a 32 KB page for nothing.
+}
+
+const crumbs = breadcrumb([['القوائم', '/p/'], [video.title, `/v/${video.id}/`]])
 ---
 
 <Base
@@ -46,6 +59,8 @@ const jsonLd = JSON.stringify({
   title={video.title}
   description={description || undefined}
   image={`https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`}
+  type="video.other"
+  schema={[videoSchema, crumbs]}
 >
   <div class="pt-8">
     {
@@ -53,7 +68,7 @@ const jsonLd = JSON.stringify({
         <nav aria-label="قوائم التشغيل" class="flex flex-wrap items-center gap-2">
           {video.playlists.map((p) => (
             <a
-              href={`/p/${p.id}`}
+              href={`/p/${p.id}/`}
               class="inline-flex min-h-11 items-center rounded-full bg-surface-2 px-4 text-sm text-muted transition-colors hover:text-fg"
             >
               {p.title}
@@ -79,5 +94,4 @@ const jsonLd = JSON.stringify({
 
   <Player client:load videoId={video.id} segments={segments} title={video.title} />
 
-  <script type="application/ld+json" is:inline set:html={jsonLd} />
 </Base>

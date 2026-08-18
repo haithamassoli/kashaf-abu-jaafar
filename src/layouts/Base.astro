@@ -3,6 +3,8 @@
 // plugin inlines @import without rewriting url(), which drops the woff2 files.
 import '@fontsource-variable/noto-naskh-arabic/wght.css'
 import '../styles/global.css'
+import { SITE, SHEIKH } from '../lib/seo'
+import JsonLd from '../components/JsonLd.astro'
 
 interface Props {
   title?: string
@@ -11,20 +13,24 @@ interface Props {
   wide?: boolean
   /** Absolute or root-relative; falls back to the site card. */
   image?: string
+  /** Open Graph type — lesson pages are video.other, everything else website. */
+  type?: 'website' | 'video.other'
+  /** JSON-LD for this page; rendered in <head> so it can't land before the doctype. */
+  schema?: Record<string, unknown>[]
 }
 
 const {
   title,
-  description = 'ابحث في دروس الشيخ أبي جعفر عبد الله بن فهد الخليفي',
+  description = `ابحث في دروس ${SHEIKH}`,
   noindex = false,
   wide = false,
   // Homepage screenshot at 1200×630. Regenerate against a running dev server:
   //   agent-browser set viewport 1200 630 && agent-browser open http://localhost:4321/
   //   agent-browser eval "scrollTo(0,36)" && agent-browser screenshot public/og.png
   image = '/og.png',
+  type = 'website',
+  schema = [],
 } = Astro.props
-
-const SITE = 'كشّاف أبي جعفر'
 
 // Simple Icons paths (24×24, filled).
 const social = [
@@ -53,6 +59,8 @@ const fullTitle = title ? `${title} — ${SITE}` : SITE
 const base = Astro.site ?? Astro.url.origin
 const canonical = new URL(Astro.url.pathname, base).href
 const ogImage = new URL(image, base).href
+// Only the site card's dimensions are known ahead of time; YouTube thumbs are 480×360.
+const ogSize = image === '/og.png' ? { w: '1200', h: '630' } : { w: '480', h: '360' }
 ---
 
 <!doctype html>
@@ -63,19 +71,28 @@ const ogImage = new URL(image, base).href
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    {noindex && <meta name="robots" content="noindex, follow" />}
+    <meta
+      name="robots"
+      content={noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large, max-snippet:-1'}
+    />
     <meta property="og:site_name" content={SITE} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={type} />
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content="ar_AR" />
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:alt" content={title ?? SITE} />
+    <meta property="og:image:width" content={ogSize.w} />
+    <meta property="og:image:height" content={ogSize.h} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#101210" media="(prefers-color-scheme: dark)" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    {schema.map((data) => <JsonLd data={data} />)}
     <script is:inline>
       // Applied before first paint so the theme never flashes.
       try {
@@ -117,7 +134,7 @@ const ogImage = new URL(image, base).href
 
         <nav class="flex items-center gap-1 text-sm" aria-label="روابط رئيسية">
           <a
-            href="/p"
+            href="/p/"
             class="inline-flex h-11 items-center rounded-lg px-3 text-muted transition-colors hover:bg-surface-2 hover:text-fg"
             >القوائم</a
           >
