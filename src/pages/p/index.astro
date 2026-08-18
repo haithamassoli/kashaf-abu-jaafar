@@ -1,0 +1,88 @@
+---
+import Base from '../../layouts/Base.astro'
+import { playlists, playlistDuration } from '../../lib/data'
+import { duration, lessons, lists, withDigits } from '../../lib/format'
+import { normalize } from '../../lib/normalize'
+
+const rows = playlists.map((p) => ({
+  id: p.id,
+  title: p.title,
+  key: normalize(p.title),
+  count: p.videoIds.length,
+  length: playlistDuration(p),
+}))
+---
+
+<Base title="القوائم" description="قوائم تشغيل دروس الشيخ أبي جعفر عبد الله بن فهد الخليفي">
+  <h1 class="mt-10 text-2xl font-semibold tracking-tight sm:text-3xl">القوائم</h1>
+
+  <label for="playlist-filter" class="sr-only">ابحث في القوائم</label>
+  <input
+    id="playlist-filter"
+    type="search"
+    data-search-input
+    autocomplete="off"
+    placeholder="ابحث في القوائم"
+    class="mt-6 w-full rounded-xl border border-border-strong bg-surface px-4 py-3 text-base placeholder:text-muted"
+  />
+
+  <p id="playlist-count" class="mt-3 text-sm text-muted" aria-live="polite" aria-atomic="true">
+    <span id="playlist-shown" class="digits">{rows.length}</span> من <span
+      set:html={withDigits(lists(rows.length))}
+    />
+  </p>
+
+  <p id="playlist-empty" class="mt-3 text-sm text-muted" hidden>لا نتائج</p>
+
+  <ul id="playlist-list" class="mt-4 space-y-2">
+    {
+      rows.map((p) => (
+        <li data-title={p.key}>
+          <a
+            href={`/p/${p.id}`}
+            class="card block px-4 py-4 transition-colors hover:bg-surface-2"
+          >
+            <span class="block font-medium leading-relaxed">{p.title}</span>
+            <span class="mt-1 block text-sm text-muted">
+              <span set:html={withDigits(`${lessons(p.count)} · ${duration(p.length)}`)} />
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+
+  <script is:inline>
+    // Client-side title filter: fold the query the same way build-time data-title was folded.
+    const input = document.getElementById('playlist-filter')
+    const shownEl = document.getElementById('playlist-shown')
+    const count = document.getElementById('playlist-count')
+    const empty = document.getElementById('playlist-empty')
+    const items = document.querySelectorAll('#playlist-list > li')
+    const total = items.length
+    const fold = (s) =>
+      s
+        .replace(/[ً-ْٰـ]/g, '')
+        .replace(/[أإآٱ]/g, 'ا')
+        .replace(/ة/g, 'ه')
+        .replace(/ى/g, 'ي')
+        .replace(/ؤ/g, 'و')
+        .replace(/ئ/g, 'ي')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase()
+
+    input.addEventListener('input', () => {
+      const q = fold(input.value)
+      let shown = 0
+      items.forEach((li) => {
+        const hit = !q || li.dataset.title.includes(q)
+        li.hidden = !hit
+        if (hit) shown++
+      })
+      shownEl.textContent = shown
+      count.hidden = shown === 0
+      empty.hidden = shown !== 0
+    })
+  </script>
+</Base>

@@ -1,43 +1,79 @@
-# كشّاف أبي جعفر — search pipeline prototype
+# كشّاف أبي جعفر
 
-Proves the Arabic retrieval pipeline before any UI is built:
+Full-text search over the lectures of Sheikh أبو جعفر عبد الله بن فهد الخليفي.
+Arabic-only, RTL, no login, no database.
 
 ```
-YouTube → tafrigh/wit.ai → *.chunks.ndjson → Meilisearch
+YouTube ── tafrigh (YouTube captions → wit.ai fallback) ──▶ *.chunks.ndjson ──▶ Meilisearch
+                                                        └─▶ *.transcript.json ─▶ data/ ──▶ Astro (static)
 ```
 
-Full product spec: [docs/PRD.md](docs/PRD.md).
+Product spec: [docs/PRD.md](docs/PRD.md).
 
-## Run it
+## Run it locally
 
 ```bash
 pnpm install
-brew install meilisearch                     # prod uses compose.yml on the VPS
-pnpm meili &                                 # db in git-ignored ./data/
+cp .env.example .env                 # RAW_DIR = tafrigh's output dir
 
-cp .env.example .env                         # RAW_DIR = tafrigh's output/ dir
-pnpm ingest                                  # settings + all *.chunks.ndjson → `cues` index
+brew install meilisearch             # production uses compose.yml on a VPS
+pnpm meili &                         # db in git-ignored ./data/
+
+pnpm ingest                          # data/ snapshot + Meilisearch index; prints the search-only key
+                                     # paste PUBLIC_MEILI_SEARCH_KEY into .env
+pnpm dev                             # http://localhost:4321
 ```
 
-Transcription lives in the [tafrigh](https://github.com/ieasybooks/tafrigh) checkout, not here — it
-already emits index-ready cues (`--chunk_target_words` / `--chunk_max_duration`), so there is no
-cue-merging step on our side. Re-running `pnpm ingest` after new videos overwrites by `id` and
-leaves everything else alone.
+| script | what it does |
+|---|---|
+| `pnpm data` | `RAW_DIR/*.transcript.json` → `data/{videos,playlists}.json` + `data/segments/<id>.json` |
+| `pnpm index` | `RAW_DIR/*.chunks.ndjson` → Meilisearch `cues`, and creates/reuses the browser's search-only key |
+| `pnpm ingest` | both, in order |
+| `pnpm check` | self-checks for the text plumbing (highlighting, folding, cleaning, formatting) |
+| `pnpm build` / `preview` | static build of every page / serve `dist/` |
+| `pnpm deploy` | `wrangler pages deploy dist` — refuses if the build still points at localhost |
 
-## Searching
+Both steps are safe to re-run. `pnpm data` rebuilds `data/` from scratch, so a lecture removed
+from `RAW_DIR` also disappears from the next build. `pnpm index` overwrites cues by `id` and
+only deletes cues whose text cleaned to empty — a lecture removed from `RAW_DIR` keeps its
+documents in Meilisearch until you delete them by filter (`videoId = "<id>"`).
 
-Both params are required or results are wrong:
+## Transcription
+
+Lives in the [tafrigh](https://github.com/ieasybooks/tafrigh) checkout, unmodified (flags only):
+
+```bash
+cd ~/Downloads/tafrigh && .venv312/bin/tafrigh "<playlist or channel URL>" \
+  --skip_if_output_exist --use_youtube_transcript -o output -f none \
+  -w "$WIT_TOKEN" "$WIT_TOKEN_2" "$WIT_TOKEN_3" \
+  --min_words_per_segment 0 --max_cutting_duration 15
+```
+
+It takes the channel's own Arabic caption track when there is one (~2000× real time) and falls
+back to wit.ai when there is not (~8× real time per token, linear in the number of tokens).
+Use `.venv312`, not `.venv`: the wit path is broken on Python 3.14 (`pydub` → removed `audioop`).
+
+Each lecture yields `<id>.chunks.ndjson` (index-ready search cues, already overlapping and
+capped at 30 s) and `<id>.transcript.json` (fine-grained segments + video metadata, which is
+what the site's transcript panel and `data/` are built from).
+
+## Search
+
+Both parameters are required or the results are wrong:
 
 ```json
 { "q": "بر الوالدين", "locales": ["ara"], "matchingStrategy": "all" }
 ```
 
-`locales` makes charabia fold hamza/ta-marbuta at query time; `matchingStrategy: "all"` stops the
-split-off definite article `ال` from matching the entire corpus (the default `last` returns ~99% of
-docs for any query starting with `ال`). `minWordSizeForTypos.oneTypo: 4` is set in
-`meilisearch-settings.json` so short Arabic roots still tolerate a typo (`الطلاك` → `الطلاق`).
+`locales` makes charabia fold hamza and ta-marbuta at query time; `matchingStrategy: "all"`
+stops the split-off definite article `ال` from matching the whole corpus (the default `last`
+returns ~99% of documents for any query starting with `ال`). `minWordSizeForTypos.oneTypo: 4`
+in `meilisearch-settings.json` keeps short Arabic roots typo-tolerant (`الطلاك` → `الطلاق`).
 
-## Prototype-only shortcuts
+The browser only ever holds a search-only key (actions `search`, index `cues`); the admin key
+stays in `.env`.
 
-Docker skipped locally (native brew binary); `compose.yml` remains the VPS path. No articles index,
-no incremental state hashing, no site yet — see the `ponytail:` comments for where each ends.
+## Not in this build
+
+No articles index — `alkulify.com` has been returning 522 since ~2026-07, so the articles tab,
+`/a/<id>` and the `articles` index are unbuilt. Everything else in the PRD's v1 scope is here.

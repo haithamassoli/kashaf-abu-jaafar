@@ -1,0 +1,81 @@
+---
+import Base from '../../layouts/Base.astro'
+import { playlists, videoById, playlistDuration, type Playlist } from '../../lib/data'
+import { arabicDate, duration, lessons, withDigits } from '../../lib/format'
+
+export function getStaticPaths() {
+  return playlists.map((playlist) => ({ params: { id: playlist.id }, props: { playlist } }))
+}
+
+type Props = { playlist: Playlist }
+
+const { playlist } = Astro.props
+const videos = playlist.videoIds.map((id) => videoById.get(id)).filter((v) => v !== undefined)
+
+---
+
+<Base
+  title={playlist.title}
+  description={`${playlist.title} — ${lessons(videos.length)} من دروس الشيخ أبي جعفر عبد الله بن فهد الخليفي`}
+>
+  <p class="mt-8 text-sm">
+    <a href="/p" class="text-muted underline underline-offset-4 hover:text-fg">القوائم</a>
+  </p>
+
+  <h1 class="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">{playlist.title}</h1>
+
+  <p class="mt-2 text-sm text-muted">
+    <span set:html={withDigits(`${lessons(videos.length)} · ${duration(playlistDuration(playlist))}`)} />
+  </p>
+
+  <form action="/" method="get" role="search" class="mt-6 flex gap-2">
+    <label for="scoped-search" class="sr-only">ابحث داخل هذه القائمة</label>
+    <input
+      id="scoped-search"
+      name="q"
+      type="search"
+      data-search-input
+      required
+      autocomplete="off"
+      placeholder="ابحث داخل هذه القائمة"
+      class="min-w-0 flex-1 rounded-xl border border-border-strong bg-surface px-4 py-3 text-base placeholder:text-muted"
+    />
+    <input type="hidden" name="pl" value={playlist.id} />
+    <button
+      type="submit"
+      class="rounded-xl bg-accent px-5 py-3 font-medium text-accent-fg transition-opacity hover:opacity-90"
+      >بحث</button
+    >
+  </form>
+
+  <ol class="mt-6 space-y-2">
+    {
+      videos.map((v) => (
+        <li>
+          <a
+            href={`/v/${v.id}`}
+            class="card flex items-start gap-3 p-3 transition-colors hover:bg-surface-2"
+          >
+            <img
+              src={`https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`}
+              alt=""
+              width="320"
+              height="180"
+              loading="lazy"
+              class="aspect-video w-28 shrink-0 rounded-lg object-cover sm:w-40"
+            />
+            <span class="min-w-0 flex-1">
+              <span class="line-clamp-3 font-medium leading-relaxed">{v.title}</span>
+              <span
+                class="mt-1 block text-sm text-muted"
+                set:html={withDigits(
+                  [arabicDate(v.uploadDate), duration(v.duration)].filter(Boolean).join(' · '),
+                )}
+              />
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</Base>

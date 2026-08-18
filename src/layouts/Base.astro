@@ -1,0 +1,178 @@
+---
+// Font CSS must be imported here, not @import-ed from global.css: Tailwind's Vite
+// plugin inlines @import without rewriting url(), which drops the woff2 files.
+import '@fontsource-variable/noto-naskh-arabic/wght.css'
+import '../styles/global.css'
+
+interface Props {
+  title?: string
+  description?: string
+  noindex?: boolean
+  wide?: boolean
+}
+
+const {
+  title,
+  description = 'ابحث في دروس الشيخ أبي جعفر عبد الله بن فهد الخليفي',
+  noindex = false,
+  wide = false,
+} = Astro.props
+
+const SITE = 'كشّاف أبي جعفر'
+const fullTitle = title ? `${title} — ${SITE}` : SITE
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href
+---
+
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <meta property="og:site_name" content={SITE} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#101210" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script is:inline>
+      // Applied before first paint so the theme never flashes.
+      try {
+        const saved = localStorage.getItem('theme')
+        const dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches
+        document.documentElement.classList.toggle('dark', dark)
+      } catch {}
+    </script>
+  </head>
+
+  <body class="bg-bg text-fg antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-fg"
+      >تخطَّ إلى المحتوى</a
+    >
+
+    <header class="sticky top-0 z-30 border-b border-border bg-bg">
+      <div
+        class:list={[
+          'mx-auto flex h-14 items-center justify-between gap-3 px-4',
+          wide ? 'max-w-6xl' : 'max-w-3xl',
+        ]}
+      >
+        <a href="/" class="-ms-2 flex h-11 items-center gap-2 rounded-lg px-2 text-base font-semibold tracking-tight">
+          <svg
+            class="size-5 text-accent"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            aria-hidden="true"
+          >
+            <circle cx="10.5" cy="10.5" r="6.5"></circle>
+            <path d="m15.5 15.5 4.5 4.5" stroke-linecap="round"></path>
+          </svg>
+          <span>{SITE}</span>
+        </a>
+
+        <nav class="flex items-center gap-1 text-sm" aria-label="روابط رئيسية">
+          <a
+            href="/p"
+            class="inline-flex h-11 items-center rounded-lg px-3 text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+            >القوائم</a
+          >
+          <button
+            type="button"
+            id="theme-toggle"
+            class="grid size-11 place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+            aria-pressed="false"
+            aria-label="الوضع الداكن"
+          >
+            <svg
+              class="size-5 dark:hidden"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              aria-hidden="true"
+            >
+              <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke-linejoin="round"></path>
+            </svg>
+            <svg
+              class="hidden size-5 dark:block"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+                stroke-linecap="round"></path>
+            </svg>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class:list={['mx-auto px-4 pb-24', wide ? 'max-w-6xl' : 'max-w-3xl']}>
+      <slot />
+    </main>
+
+    <footer class="border-t border-border">
+      <div
+        class:list={[
+          'mx-auto px-4 py-8 text-center text-sm text-muted',
+          wide ? 'max-w-6xl' : 'max-w-3xl',
+        ]}
+      >
+        <p>كشّاف غير رسمي لدروس الشيخ أبي جعفر عبد الله بن فهد الخليفي.</p>
+        <p class="mt-1">
+          النصوص مفرَّغة آليًا وقد تحتوي أخطاء؛ الأصل هو
+          <a
+            href="https://www.youtube.com/@Alkulify1"
+            class="text-accent underline underline-offset-4"
+            rel="noopener">التسجيل الصوتي</a
+          >.
+        </p>
+      </div>
+    </footer>
+
+    <script is:inline>
+      const toggle = document.getElementById('theme-toggle')
+      const syncToggle = () =>
+        toggle?.setAttribute('aria-pressed', String(document.documentElement.classList.contains('dark')))
+      syncToggle()
+      toggle?.addEventListener('click', () => {
+        const dark = document.documentElement.classList.toggle('dark')
+        syncToggle()
+        try {
+          localStorage.setItem('theme', dark ? 'dark' : 'light')
+        } catch {}
+      })
+
+      // "/" focuses the page's search box, unless the user is already typing.
+      addEventListener('keydown', (e) => {
+        if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return
+        const el = document.activeElement
+        if (
+          el instanceof HTMLInputElement ||
+          el instanceof HTMLTextAreaElement ||
+          el instanceof HTMLSelectElement ||
+          (el instanceof HTMLElement && el.isContentEditable)
+        )
+          return
+        const box = document.querySelector('[data-search-input]')
+        if (box instanceof HTMLInputElement) {
+          e.preventDefault()
+          box.focus()
+          box.select()
+        }
+      })
+    </script>
+  </body>
+</html>

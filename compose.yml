@@ -1,9 +1,34 @@
-# ponytail: prototype only — no Caddy/TLS, binds to localhost. Add the reverse proxy when it leaves this Mac.
+# Meilisearch on the VPS, behind Caddy for TLS. Local dev uses the brew binary instead
+# (`pnpm meili`), so this file only ever runs in production.
 services:
   meilisearch:
     image: getmeili/meilisearch:v1.53
-    ports: ["127.0.0.1:7700:7700"]
+    restart: unless-stopped
     environment:
-      MEILI_MASTER_KEY: devMasterKeyChangeMe
-      MEILI_ENV: development
-    volumes: ["./data/meili:/meili_data"]
+      MEILI_ENV: production
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?set MEILI_MASTER_KEY}
+    volumes:
+      - meili_data:/meili_data
+    expose:
+      - '7700'
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      SEARCH_DOMAIN: ${SEARCH_DOMAIN:?set SEARCH_DOMAIN}
+    command: >
+      caddy reverse-proxy --from ${SEARCH_DOMAIN} --to meilisearch:7700
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - meilisearch
+
+volumes:
+  meili_data:
+  caddy_data:
+  caddy_config:

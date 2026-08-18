@@ -1,0 +1,76 @@
+---
+import Base from '../../layouts/Base.astro'
+import Player from '../../islands/Player'
+import { videos, segmentsOf, type Video } from '../../lib/data'
+import { arabicDate, duration, youtubeUrl } from '../../lib/format'
+
+export function getStaticPaths() {
+  return videos.map((video) => ({ params: { id: video.id }, props: { video } }))
+}
+
+interface Props {
+  video: Video
+}
+
+const { video } = Astro.props
+const segments = segmentsOf(video.id)
+
+const intro = segments
+  .slice(0, 8)
+  .map((s) => s.t)
+  .join(' ')
+const description = intro.length > 150 ? `${intro.slice(0, 150).trimEnd()}…` : intro
+
+/** Wrap Western digit runs so they keep LTR order and tabular figures. */
+const digits = (s: string) => s.replace(/\d+/g, '<span class="digits">$&</span>')
+
+const total = Math.floor(video.duration)
+const isoDuration = `PT${Math.floor(total / 3600)}H${Math.floor((total % 3600) / 60)}M${total % 60}S`
+
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'VideoObject',
+  name: video.title,
+  description: description || undefined,
+  uploadDate: video.uploadDate ?? undefined,
+  duration: isoDuration,
+  embedUrl: `https://www.youtube-nocookie.com/embed/${video.id}`,
+  thumbnailUrl: `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`,
+}).replaceAll('<', '\\u003c')
+---
+
+<Base wide title={video.title} description={description || undefined}>
+  <div class="pt-8">
+    {
+      video.playlists.length > 0 && (
+        <nav aria-label="قوائم التشغيل" class="flex flex-wrap items-center gap-2">
+          {video.playlists.map((p) => (
+            <a
+              href={`/p/${p.id}`}
+              class="inline-flex min-h-11 items-center rounded-full bg-surface-2 px-4 text-sm text-muted transition-colors hover:text-fg"
+            >
+              {p.title}
+            </a>
+          ))}
+        </nav>
+      )
+    }
+
+    <h1 class="mt-4 text-xl font-semibold leading-relaxed sm:text-2xl">{video.title}</h1>
+
+    <div class="mt-1 flex flex-wrap items-center gap-x-5 text-sm text-muted">
+      {video.uploadDate && <span set:html={digits(arabicDate(video.uploadDate))} />}
+      <span set:html={digits(duration(video.duration))} />
+      <a
+        href={youtubeUrl(video.id)}
+        rel="noopener"
+        class="inline-flex min-h-11 items-center text-accent underline underline-offset-4"
+        >افتح في يوتيوب</a
+      >
+    </div>
+  </div>
+
+  <Player client:load videoId={video.id} segments={segments} title={video.title} />
+
+  <script type="application/ld+json" is:inline set:html={jsonLd} />
+</Base>
