@@ -1,5 +1,9 @@
 node_modules/
-data/
+data/*
+!data/videos.json
+!data/playlists.json
+!data/segments/
+!data/segments/*.json
 .env
 dist/
 .DS_Store
