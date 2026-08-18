@@ -7,6 +7,7 @@ import { join } from 'node:path'
 import { homedir } from 'node:os'
 import { Meilisearch } from 'meilisearch'
 import { clean } from '../src/lib/clean.ts'
+import { articleSynonyms } from '../src/lib/normalize.ts'
 
 const RAW_DIR = (process.env.RAW_DIR ?? '').replace(/^~/, homedir())
 const host = process.env.MEILI_HOST ?? 'http://127.0.0.1:7700'
@@ -26,6 +27,8 @@ let sent = 0
 const BATCH = 20_000
 
 let batch: unknown[] = []
+// every cue text, kept for the synonym pass below
+const texts: string[] = []
 // chunks that were nothing but sound tags: drop them, and delete any already indexed
 const dropped: string[] = []
 const flush = async () => {
@@ -42,13 +45,23 @@ for (const file of files) {
   for (const line of lines) {
     const cue = JSON.parse(line)
     cue.text = clean(cue.text ?? '')
-    cue.search_text = clean(cue.search_text ?? '')
-    if (cue.text) batch.push(cue)
-    else dropped.push(cue.id)
+    // Not searchable, not displayed, nothing reads it — but ~30% of the index on disk.
+    delete cue.search_text
+    if (cue.text) {
+      batch.push(cue)
+      texts.push(cue.text)
+    } else dropped.push(cue.id)
   }
   if (batch.length >= BATCH) await flush()
 }
 await flush()
+
+// charabia splits `ال` off but leaves `وال/بال/فال/كال/لل` whole — teach Meilisearch the
+// equivalence. Settings-only, so it applies in well under a second with no re-index.
+const synonyms = articleSynonyms(texts)
+const syn = await client.index('cues').updateSettings({ synonyms })
+await client.tasks.waitForTask(syn.taskUid, { timeout: 300_000 })
+console.log(`\n${Object.keys(synonyms).length} article synonyms`)
 
 if (dropped.length) {
   const task = await client.index('cues').deleteDocuments(dropped)

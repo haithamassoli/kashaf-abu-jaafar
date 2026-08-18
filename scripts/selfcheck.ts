@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { highlight } from '../src/lib/meili.ts'
 import { normalize } from '../src/lib/normalize.ts'
 import { clean } from '../src/lib/clean.ts'
+import { markMatches } from '../src/lib/mark.ts'
 import { timestamp, duration, arabicDate, lessons, hours, lists, withDigits } from '../src/lib/format.ts'
 import { breadcrumb, SITE_URL } from '../src/lib/seo.ts'
 
@@ -55,8 +56,6 @@ assert.equal(hours(109), '109 ساعات')
 assert.equal(lists(2), 'قائمتان')
 assert.equal(withDigits('109 ساعات'), '<span class="digits">109</span> ساعات')
 
-console.log('selfcheck ok')
-
 // seo: breadcrumbs must be absolute, 1-indexed, and root-anchored — Google drops the
 // whole BreadcrumbList otherwise, and relative `item` URLs are the usual way that breaks.
 const crumbs = breadcrumb([['القوائم', '/p/'], ['قائمة', '/p/abc/']]).itemListElement
@@ -70,3 +69,18 @@ assert.deepEqual(
   ],
 )
 assert.ok(crumbs.every((c) => c.item.startsWith('https://')))
+
+// markMatches: the in-video transcript filter. Same contract as meili's highlight, but it
+// runs on raw transcript text in the browser, so escaping is the security boundary here.
+assert.equal(markMatches('<img src=x onerror=alert(1)>', 'zzz'), '&lt;img src=x onerror=alert(1)&gt;')
+assert.equal(markMatches('باب الصلاة', normalize('الصلاة')), 'باب <mark>الصلاة</mark>')
+// a phrase spanning two words comes back as one continuous mark, not two
+assert.equal(markMatches('كفارة اليمين واجبة', normalize('كفارة اليمين')), '<mark>كفارة اليمين</mark> واجبة')
+// no match leaves the text alone (still escaped)
+assert.equal(markMatches('باب الصلاة', normalize('الزكاة')), 'باب الصلاة')
+// folding means the query matches undiacritised text and vice versa
+assert.equal(markMatches('الصَّلاة نعم', normalize('الصلاه')), '<mark>الصَّلاة</mark> نعم')
+// an empty query must return early: indexOf('') never reaches -1, so the match loop hangs
+assert.equal(markMatches('باب الصلاة', ''), 'باب الصلاة')
+
+console.log('selfcheck ok')

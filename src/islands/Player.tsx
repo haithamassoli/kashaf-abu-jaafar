@@ -1,10 +1,9 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { timestamp, youtubeUrl } from '../lib/format'
+import { useEffect, useRef, useState } from 'react'
+import { youtubeUrl } from '../lib/format'
 import { normalize } from '../lib/normalize'
+import { markMatches } from '../lib/mark'
 
-type Segment = { s: number; e: number; t: string }
-
-type Props = { videoId: string; segments: Segment[]; title: string }
+type Props = { videoId: string; title: string }
 
 type YTPlayer = {
   destroy(): void
@@ -49,13 +48,13 @@ function loadApi(): Promise<NonNullable<Window['YT']>> {
 }
 
 /** Last segment that has started at `t`, or -1 before the first one. */
-function indexAt(segments: Segment[], t: number): number {
+function indexAt(starts: number[], t: number): number {
   let lo = 0
-  let hi = segments.length - 1
+  let hi = starts.length - 1
   let found = -1
   while (lo <= hi) {
     const mid = (lo + hi) >> 1
-    if (segments[mid].s <= t) {
+    if (starts[mid] <= t) {
       found = mid
       lo = mid + 1
     } else {
@@ -65,58 +64,162 @@ function indexAt(segments: Segment[], t: number): number {
   return found
 }
 
-const ESCAPE: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' }
-const escape = (s: string) => s.replace(/[&<>]/g, (c) => ESCAPE[c])
-
 /**
- * Escape first, then <mark> every word overlapping a match of the normalized query.
- * Folding shifts character offsets, so matches are mapped back word by word.
+ * The transcript is server-rendered by Cues.astro and driven from here by hand, not
+ * re-rendered by React. Handing ~1,400 cues to an island would serialize the whole
+ * transcript into the page a second time as island props, and re-rendering that many
+ * rows on every keystroke is work no one asked for.
  */
-function markMatches(text: string, nq: string): string {
-  const words = text.split(/\s+/)
-  const folded = words.map(normalize)
-  let at = 0
-  const offsets = folded.map((f) => {
-    const start = at
-    if (f) at += f.length + 1
-    return start
-  })
-  const line = folded.filter(Boolean).join(' ')
-  const hit = words.map(() => false)
-
-  for (let i = line.indexOf(nq); i !== -1; i = line.indexOf(nq, i + 1)) {
-    const end = i + nq.length
-    for (let w = 0; w < words.length; w++) {
-      if (folded[w] && offsets[w] < end && i < offsets[w] + folded[w].length) hit[w] = true
-    }
-  }
-  return words
-    .map((w, i) => (hit[i] ? `<mark>${escape(w)}</mark>` : escape(w)))
-    .join(' ')
-    .replace(/<\/mark> <mark>/g, ' ') // one continuous mark per phrase, as in search results
-}
-
-export default function Player({ videoId, segments, title }: Props) {
-  const [active, setActive] = useState(-1)
-  const [playing, setPlaying] = useState(false)
+export default function Player({ videoId, title }: Props) {
   const [blocked, setBlocked] = useState(false)
-  const [follow, setFollow] = useState(true)
-  const [query, setQuery] = useState('')
-  const [announced, setAnnounced] = useState('')
-  const [toast, setToast] = useState('')
 
-  const playerRef = useRef<YTPlayer | null>(null)
   const hostRef = useRef<HTMLDivElement>(null)
-  const listRef = useRef<HTMLOListElement>(null)
+  const playerRef = useRef<YTPlayer | null>(null)
   const timeRef = useRef(0)
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
+    const list = document.getElementById('cues') as HTMLOListElement | null
+    const search = document.querySelector<HTMLInputElement>('[data-search-input]')
+    const followBox = document.querySelector<HTMLInputElement>('[data-follow]')
+    const count = document.getElementById('cue-count')
+    const status = document.getElementById('cue-status')
+    if (!list) return
+
+    const rows = Array.from(list.children) as HTMLLIElement[]
+    const starts = rows.map((r) => Number(r.dataset.s))
+    const texts = rows.map((r) => r.querySelector('p')!.textContent ?? '')
+    const folded = texts.map(normalize)
+    const marked = rows.map(() => false)
+
+    const toast = document.querySelector<HTMLElement>('#toast > span')
+
+    let active = -1
+    let toastTimer: ReturnType<typeof setTimeout> | undefined
+    let savedScroll = 0
+    let filtering = false
+    let cancelled = false
+    let poll: ReturnType<typeof setInterval> | undefined
+    let announce: ReturnType<typeof setTimeout> | undefined
+
+    const flash = (message: string) => {
+      if (!toast) return
+      toast.textContent = message
+      toast.hidden = false
+      clearTimeout(toastTimer)
+      toastTimer = setTimeout(() => (toast.hidden = true), 2000)
+    }
+
+    const setActive = (i: number) => {
+      if (i === active) return
+      const prev = rows[active]
+      if (prev) {
+        prev.classList.remove('cue-on')
+        prev.classList.add('cue-off')
+      }
+      active = i
+      const row = rows[i]
+      if (!row) return
+      row.classList.remove('cue-off')
+      row.classList.add('cue-on')
+      if (!followBox?.checked || row.hidden) return
+      list.scrollTo({
+        top: row.offsetTop - list.clientHeight / 2 + row.clientHeight / 2,
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      })
+    }
+
+    const seek = (i: number) => {
+      const s = starts[i]
+      timeRef.current = s
+      setActive(i)
+      playerRef.current?.seekTo(s, true)
+      playerRef.current?.playVideo()
+      history.replaceState(null, '', `?t=${Math.floor(s)}`)
+    }
+
+    const copy = async (i: number) => {
+      // trailingSlash is 'always', so the slash before the query keeps this off a 301.
+      const url = `${location.origin}/v/${videoId}/?t=${Math.floor(starts[i])}`
+      try {
+        await navigator.clipboard.writeText(url)
+        flash('تم النسخ')
+      } catch {
+        flash('تعذّر النسخ')
+      }
+    }
+
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      const row = target.closest<HTMLLIElement>('li[data-seg]')
+      if (!row) return
+      const i = Number(row.dataset.seg)
+      if (target.closest('.cue-copy')) return void copy(i)
+      // Let the reader select transcript text without jumping the player.
+      if (target.closest('.cue-ts') || !getSelection()?.toString()) seek(i)
+    }
+
+    const onFilter = () => {
+      const nq = normalize(search?.value ?? '')
+      // Capture before the loop: hiding rows collapses the list and clamps scrollTop.
+      if (nq && !filtering) savedScroll = list.scrollTop
+      let hits = 0
+      for (let i = 0; i < rows.length; i++) {
+        const hit = !nq || folded[i].includes(nq)
+        if (rows[i].hidden === hit) rows[i].hidden = !hit
+        const p = rows[i].firstElementChild!.nextElementSibling as HTMLParagraphElement
+        if (!hit) {
+          if (marked[i]) {
+            p.textContent = texts[i]
+            marked[i] = false
+          }
+          continue
+        }
+        hits++
+        if (nq) {
+          p.innerHTML = markMatches(texts[i], nq)
+          marked[i] = true
+        } else if (marked[i]) {
+          p.textContent = texts[i]
+          marked[i] = false
+        }
+      }
+      // Results read from the top; emptying the box puts the reader back where they were.
+      if (nq) list.scrollTop = 0
+      else if (filtering) list.scrollTop = savedScroll
+      filtering = !!nq
+
+      const typed = (search?.value ?? '').trim()
+      if (count) {
+        count.innerHTML = !typed
+          ? ''
+          : hits
+            ? `النتائج: <span class="digits">${hits}</span>`
+            : 'لا نتائج'
+      }
+      clearTimeout(announce)
+      announce = setTimeout(() => {
+        if (status) status.textContent = !typed ? '' : hits ? `النتائج: ${hits}` : 'لا نتائج'
+      }, 600)
+    }
+
+    // ponytail: 120 ms debounce. One keystroke rewrites up to ~1,400 rows, and a 1-char
+    // Arabic query (`ا`) matches nearly all of them. Raise it if mobile still janks.
+    let filterTimer: ReturnType<typeof setTimeout>
+    const onInput = () => {
+      clearTimeout(filterTimer)
+      filterTimer = setTimeout(onFilter, 120)
+    }
+
+    list.addEventListener('click', onClick)
+    search?.addEventListener('input', onInput)
+    // The box is uncontrolled server-rendered HTML: browsers restore its value on reload,
+    // and the reader can type into it before this island hydrates. Sync once either way.
+    if (search?.value) onFilter()
+
     const start = Math.max(0, Math.floor(Number(new URLSearchParams(location.search).get('t')) || 0))
     timeRef.current = start
-    setActive(indexAt(segments, start))
+    setActive(indexAt(starts, start))
 
-    let cancelled = false
     loadApi().then((YT) => {
       if (cancelled || !hostRef.current) return
       // The API replaces its target node with the iframe, so hand it a node React does not own.
@@ -138,7 +241,17 @@ export default function Player({ videoId, segments, title }: Props) {
           onReady: (e: { target: YTPlayer }) => {
             e.target.getIframe().title = title
           },
-          onStateChange: (e: { data: number }) => setPlaying(e.data === YT.PlayerState.PLAYING),
+          onStateChange: (e: { data: number }) => {
+            clearInterval(poll)
+            if (e.data !== YT.PlayerState.PLAYING) return
+            // Follow playback: 500 ms is well under the ~9 s segment length.
+            poll = setInterval(() => {
+              const t = playerRef.current?.getCurrentTime()
+              if (typeof t !== 'number') return
+              timeRef.current = t
+              setActive(indexAt(starts, t))
+            }, 500)
+          },
           onError: (e: { data: number }) => {
             if (EMBED_ERRORS.has(e.data)) setBlocked(true)
           },
@@ -148,253 +261,41 @@ export default function Player({ videoId, segments, title }: Props) {
 
     return () => {
       cancelled = true
+      clearInterval(poll)
+      clearTimeout(announce)
+      clearTimeout(toastTimer)
+      clearTimeout(filterTimer)
+      list.removeEventListener('click', onClick)
+      search?.removeEventListener('input', onInput)
       try {
         playerRef.current?.destroy()
       } catch {}
       playerRef.current = null
     }
-  }, [videoId, segments, title])
-
-  // Follow playback: 500 ms is well under the ~9 s segment length.
-  useEffect(() => {
-    if (!playing) return
-    const id = setInterval(() => {
-      const t = playerRef.current?.getCurrentTime()
-      if (typeof t !== 'number') return
-      timeRef.current = t
-      const i = indexAt(segments, t)
-      setActive((prev) => (prev === i ? prev : i))
-    }, 500)
-    return () => clearInterval(id)
-  }, [playing, segments])
-
-  useEffect(() => {
-    if (!follow || active < 0) return
-    const list = listRef.current
-    const row = list?.querySelector<HTMLElement>(`[data-seg="${active}"]`)
-    if (!list || !row) return
-    list.scrollTo({
-      top: row.offsetTop - list.clientHeight / 2 + row.clientHeight / 2,
-      behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-    })
-  }, [active, follow])
-
-  useEffect(() => () => clearTimeout(toastTimer.current), [])
-
-  const flash = useCallback((message: string) => {
-    setToast(message)
-    clearTimeout(toastTimer.current)
-    toastTimer.current = setTimeout(() => setToast(''), 2000)
-  }, [])
-
-  const seek = useCallback(
-    (index: number) => {
-      const { s } = segments[index]
-      timeRef.current = s
-      setActive(index)
-      playerRef.current?.seekTo(s, true)
-      playerRef.current?.playVideo()
-      history.replaceState(null, '', `?t=${Math.floor(s)}`)
-    },
-    [segments],
-  )
-
-  const copy = useCallback(
-    async (index: number) => {
-      const url = `${location.origin}/v/${videoId}?t=${Math.floor(segments[index].s)}`
-      try {
-        await navigator.clipboard.writeText(url)
-        flash('تم النسخ')
-      } catch {
-        flash('تعذّر النسخ')
-      }
-    },
-    [flash, segments, videoId],
-  )
-
-  const folded = useMemo(() => segments.map((seg) => normalize(seg.t)), [segments])
-
-  const rows = useMemo(() => {
-    const nq = normalize(query)
-    if (!nq) return segments.map((seg, i) => ({ i, seg, html: '' }))
-    const matched: { i: number; seg: Segment; html: string }[] = []
-    for (let i = 0; i < segments.length; i++) {
-      if (folded[i].includes(nq)) matched.push({ i, seg: segments[i], html: markMatches(segments[i].t, nq) })
-    }
-    return matched
-  }, [folded, query, segments])
-
-  useEffect(() => {
-    const id = setTimeout(
-      () => setAnnounced(query.trim() ? (rows.length ? `النتائج: ${rows.length}` : 'لا نتائج') : ''),
-      600,
-    )
-    return () => clearTimeout(id)
-  }, [query, rows.length])
+  }, [videoId, title])
 
   return (
-    <div className="mt-6 grid items-start gap-6 lg:grid-cols-2 lg:gap-8">
-      <div className="sticky top-14 z-10 -mx-4 bg-bg px-4 pb-3 pt-2 lg:top-20 lg:mx-0 lg:px-0 lg:pt-0">
-        <div
-          ref={hostRef}
-          className={
-            blocked
-              ? 'hidden'
-              : 'aspect-video w-full overflow-hidden rounded-xl bg-surface-2 [&>iframe]:size-full'
-          }
-        />
-        {blocked && (
-          <div className="card flex aspect-video w-full flex-col items-center justify-center gap-4 p-6 text-center">
-            <p className="text-muted">تعذّر تشغيل الفيديو هنا، شاهده على يوتيوب</p>
-            <a
-              href={youtubeUrl(videoId, timeRef.current)}
-              rel="noopener"
-              className="inline-flex min-h-11 items-center rounded-lg bg-accent px-4 text-sm font-medium text-accent-fg"
-            >
-              افتح في يوتيوب
-            </a>
-          </div>
-        )}
-      </div>
-
-      <section aria-label="التفريغ" className="min-w-0">
-        <div className="-mx-2 flex flex-wrap items-center gap-x-4 gap-y-2 bg-bg px-2 py-2 lg:sticky lg:top-14 lg:z-20">
-          <input
-            type="search"
-            data-search-input=""
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="ابحث داخل الفيديو"
-            aria-label="ابحث داخل الفيديو"
-            className="h-11 min-w-0 flex-1 rounded-lg border border-border-strong bg-surface px-3 text-sm placeholder:text-muted"
-          />
-          <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm text-muted">
-            <input
-              type="checkbox"
-              checked={follow}
-              onChange={(e) => setFollow(e.target.checked)}
-              className="size-4 accent-accent"
-            />
-            متابعة تلقائية
-          </label>
-        </div>
-
-        <p className="min-h-6 pt-1 text-sm text-muted">
-          {query.trim() &&
-            (rows.length ? (
-              <>
-                النتائج: <span className="digits">{rows.length}</span>
-              </>
-            ) : (
-              'لا نتائج'
-            ))}
-        </p>
-        <span aria-live="polite" className="sr-only">
-          {announced}
-        </span>
-
-        <a
-          href="#after-transcript"
-          className="sr-only focus:not-sr-only focus:mb-2 focus:inline-flex focus:h-11 focus:items-center focus:rounded-lg focus:bg-accent focus:px-4 focus:text-accent-fg"
-        >
-          تخطَّ التفريغ
-        </a>
-
-        <ol
-          ref={listRef}
-          className="relative mt-1 h-[55dvh] overflow-y-auto overscroll-contain rounded-lg lg:h-[calc(100dvh-10rem)] lg:pe-1"
-        >
-          {rows.map(({ i, seg, html }) => (
-            <Row
-              key={i}
-              index={i}
-              seg={seg}
-              html={html}
-              active={i === active}
-              onSeek={seek}
-              onCopy={copy}
-            />
-          ))}
-        </ol>
-        <div id="after-transcript" tabIndex={-1} className="outline-none" />
-      </section>
-
+    <div className="sticky top-14 z-10 -mx-4 bg-bg px-4 pb-3 pt-2 lg:top-20 lg:mx-0 lg:px-0 lg:pt-0">
       <div
-        role="status"
-        aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center"
-      >
-        {toast && <span className="card px-4 py-2 text-sm shadow-lg">{toast}</span>}
-      </div>
+        ref={hostRef}
+        className={
+          blocked
+            ? 'hidden'
+            : 'aspect-video w-full overflow-hidden rounded-xl bg-surface-2 [&>iframe]:size-full'
+        }
+      />
+      {blocked && (
+        <div className="card flex aspect-video w-full flex-col items-center justify-center gap-4 p-6 text-center">
+          <p className="text-muted">تعذّر تشغيل الفيديو هنا، شاهده على يوتيوب</p>
+          <a
+            href={youtubeUrl(videoId, timeRef.current)}
+            rel="noopener"
+            className="inline-flex min-h-11 items-center rounded-lg bg-accent px-4 text-sm font-medium text-accent-fg"
+          >
+            افتح في يوتيوب
+          </a>
+        </div>
+      )}
     </div>
   )
 }
-
-type RowProps = {
-  index: number
-  seg: Segment
-  html: string
-  active: boolean
-  onSeek: (index: number) => void
-  onCopy: (index: number) => void
-}
-
-const Row = memo(function Row({ index, seg, html, active, onSeek, onCopy }: RowProps) {
-  return (
-    <li
-      data-seg={index}
-      onClick={() => {
-        // Let the reader select transcript text without jumping the player.
-        if (!getSelection()?.toString()) onSeek(index)
-      }}
-      className={`group flex scroll-mt-72 cursor-pointer items-start gap-2 rounded-lg border-s-2 pe-1 ps-2 transition-colors lg:scroll-mt-28 ${
-        active ? 'border-accent bg-accent-soft' : 'border-transparent hover:bg-surface-2'
-      }`}
-    >
-      <button
-        type="button"
-        aria-label={`تشغيل من ${timestamp(seg.s)}`}
-        onClick={(e) => {
-          e.stopPropagation()
-          onSeek(index)
-        }}
-        className="inline-flex min-h-11 shrink-0 items-center rounded-md px-1.5 text-xs text-muted transition-colors group-hover:text-accent"
-      >
-        <span className="digits">{timestamp(seg.s)}</span>
-      </button>
-
-      {html ? (
-        <p
-          className="prose-naskh min-w-0 flex-1 py-2"
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
-      ) : (
-        <p className="prose-naskh min-w-0 flex-1 py-2">{seg.t}</p>
-      )}
-
-      <button
-        type="button"
-        aria-label={`نسخ الرابط عند ${timestamp(seg.s)}`}
-        onClick={(e) => {
-          e.stopPropagation()
-          onCopy(index)
-        }}
-        className="mt-1 grid size-11 shrink-0 place-items-center rounded-md text-muted opacity-0 transition-opacity hover:text-fg no-hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-          className="size-4"
-        >
-          <path d="M10.5 13.5a4.5 4.5 0 0 0 6.6.3l2.4-2.4a4.5 4.5 0 0 0-6.4-6.4l-1.4 1.4" />
-          <path d="M13.5 10.5a4.5 4.5 0 0 0-6.6-.3l-2.4 2.4a4.5 4.5 0 0 0 6.4 6.4l1.4-1.4" />
-        </svg>
-      </button>
-    </li>
-  )
-})

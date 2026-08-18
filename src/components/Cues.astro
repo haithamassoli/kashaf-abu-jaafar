@@ -1,0 +1,43 @@
+---
+/**
+ * The transcript list, as plain server-rendered HTML — no island props.
+ * Player.tsx drives this DOM directly; keeping it out of React is what stops the
+ * transcript being written into the page twice (once as markup, once as island props).
+ * Every byte here is multiplied by ~1,400 rows, so the row markup stays terse:
+ * the row classes collapse into `cue*` utilities and the copy icon is one <use>.
+ */
+import { timestamp } from '../lib/format'
+import type { Segment } from '../lib/data'
+
+interface Props {
+  segments: Segment[]
+}
+
+const { segments } = Astro.props
+---
+
+<svg hidden aria-hidden="true">
+  <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10.5 13.5a4.5 4.5 0 0 0 6.6.3l2.4-2.4a4.5 4.5 0 0 0-6.4-6.4l-1.4 1.4"></path>
+    <path d="M13.5 10.5a4.5 4.5 0 0 0-6.6-.3l-2.4 2.4a4.5 4.5 0 0 0 6.4 6.4l1.4-1.4"></path>
+  </symbol>
+</svg>
+
+<ol
+  id="cues"
+  class="relative mt-1 h-[55dvh] overflow-y-auto overscroll-contain rounded-lg lg:h-[calc(100dvh-10rem)] lg:pe-1"
+>
+  {
+    segments.map((seg, i) => (
+      <li data-seg={i} data-s={seg.s} class="group cue cue-off">
+        <button type="button" class="cue-ts" aria-label={`تشغيل من ${timestamp(seg.s)}`}>
+          <span class="digits">{timestamp(seg.s)}</span>
+        </button>
+        <p class="cue-txt">{seg.t}</p>
+        <button type="button" class="cue-copy" aria-label={`نسخ الرابط عند ${timestamp(seg.s)}`}>
+          <svg class="size-4" aria-hidden="true"><use href="#i-link"></use></svg>
+        </button>
+      </li>
+    ))
+  }
+</ol>

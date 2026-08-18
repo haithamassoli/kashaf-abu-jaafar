@@ -208,3 +208,34 @@
   border: 1px solid var(--border);
   border-radius: 0.875rem;
 }
+
+/* Transcript cue rows. Player.tsx repeats these strings on every one of ~1,371
+   rows; collapsing them to single classes drops ~600 KB of duplicated class
+   attributes from the built HTML.
+
+   `group` is NOT included in `cue` — it is a marker class, not a utility, so
+   `@apply group` is a hard build error. Markup must keep it: class="group cue".
+   The `group-hover:` variants below still resolve against that ancestor. */
+@utility cue {
+  @apply flex scroll-mt-72 cursor-pointer items-start gap-2 rounded-lg border-s-2 pe-1 ps-2 transition-colors lg:scroll-mt-28;
+}
+
+@utility cue-on {
+  @apply border-accent bg-accent-soft;
+}
+
+@utility cue-off {
+  @apply border-transparent hover:bg-surface-2;
+}
+
+@utility cue-ts {
+  @apply inline-flex min-h-11 shrink-0 items-center rounded-md px-1.5 text-xs text-muted transition-colors group-hover:text-accent;
+}
+
+@utility cue-txt {
+  @apply prose-naskh min-w-0 flex-1 py-2;
+}
+
+@utility cue-copy {
+  @apply mt-1 grid size-11 shrink-0 place-items-center rounded-md text-muted opacity-0 transition-opacity hover:text-fg no-hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100;
+}

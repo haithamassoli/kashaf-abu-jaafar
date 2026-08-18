@@ -152,8 +152,11 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
             {/* Base UI takes direction from context, not the <html dir> the page uses. */}
             <DirectionProvider direction="rtl">
               <Select multiple value={pl} onValueChange={changePlaylist}>
+                {/* Not aria-labelledby: eab3908 removed the visible label but kept the
+                    reference, and a dangling one beats the trigger's own text — the
+                    combobox ended up with no accessible name at all (a11y 95 -> 100). */}
                 <SelectTrigger
-                  aria-labelledby="search-pl-label"
+                  aria-label="قائمة التشغيل"
                   className="h-11 min-w-0 flex-1 border-border-strong bg-surface px-3 text-fg sm:max-w-xs"
                 >
                   <SelectValue>{() => playlistLabel(pl, playlists)}</SelectValue>

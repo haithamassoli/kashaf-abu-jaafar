@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro'
 import Player from '../../islands/Player'
+import Cues from '../../components/Cues.astro'
 import { videos, segmentsOf, type Video } from '../../lib/data'
 import { arabicDate, duration, youtubeUrl } from '../../lib/format'
 import { SITE_URL, person, breadcrumb } from '../../lib/seo'
@@ -92,6 +93,60 @@ const crumbs = breadcrumb([['القوائم', '/p/'], [video.title, `/v/${video.
     </div>
   </div>
 
-  <Player client:load videoId={video.id} segments={segments} title={video.title} />
+  <div class="mt-6 grid items-start gap-6 lg:grid-cols-2 lg:gap-8">
+    <!--
+      client:load, not client:visible: the island no longer owns only the player — it also
+      drives the whole server-rendered transcript (click-to-seek, filter, auto-follow).
+      Measured on a mobile reload deep in the transcript: the <astro-island> wrapper itself
+      has a zero-area, non-intersecting rect (the player inside it is sticky, so the wrapper
+      collapses), and under client:visible the observer never fires — the transcript would
+      stay inert with no seek and no filter.
+    -->
+    <Player client:load videoId={video.id} title={video.title} />
+
+    <section aria-label="التفريغ" class="min-w-0">
+      <div
+        class="-mx-2 flex flex-wrap items-center gap-x-4 gap-y-2 bg-bg px-2 py-2 lg:sticky lg:top-14 lg:z-20"
+      >
+        <input
+          type="search"
+          data-search-input
+          placeholder="ابحث داخل الفيديو"
+          aria-label="ابحث داخل الفيديو"
+          class="h-11 min-w-0 flex-1 rounded-lg border border-border-strong bg-surface px-3 text-sm placeholder:text-muted"
+        />
+        <label class="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm text-muted">
+          <input type="checkbox" data-follow checked class="size-4 accent-accent" />
+          متابعة تلقائية
+        </label>
+      </div>
+
+      <p id="cue-count" class="min-h-6 pt-1 text-sm text-muted"></p>
+      <span id="cue-status" aria-live="polite" class="sr-only"></span>
+
+      <a
+        href="#after-transcript"
+        class="sr-only focus:not-sr-only focus:mb-2 focus:inline-flex focus:h-11 focus:items-center focus:rounded-lg focus:bg-accent focus:px-4 focus:text-accent-fg"
+        >تخطَّ التفريغ</a
+      >
+
+      <Cues segments={segments} />
+      <div id="after-transcript" tabindex="-1" class="outline-none"></div>
+    </section>
+  </div>
+
+  <!--
+    Outside the grid on purpose: the player column is `position: sticky`, which creates a
+    stacking context of its own, and a toast inside it can never paint over the install
+    banner (Base.astro, z-40) whatever z-index it carries. Player.tsx fills it in.
+  -->
+  <div
+    id="toast"
+    role="status"
+    aria-live="polite"
+    class="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center"
+  >
+    <span class="card px-4 py-2 text-sm shadow-lg" hidden></span>
+  </div>
 
 </Base>
