@@ -6,7 +6,10 @@
   "engines": {
     "node": ">=22"
   },
-  "scripts": {},
+  "scripts": {
+    "ingest": "./scripts/ingest.sh",
+    "meili": "meilisearch --db-path ./data/meili/data.ms --master-key $MEILI_ADMIN_KEY --http-addr 127.0.0.1:7700 --env development"
+  },
   "dependencies": {
     "meilisearch": "^0.60.0"
   },

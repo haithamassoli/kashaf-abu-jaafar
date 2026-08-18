@@ -3,7 +3,7 @@
 Proves the Arabic retrieval pipeline before any UI is built:
 
 ```
-YouTube → tafrigh/wit.ai → raw chunks → cues → Meilisearch
+YouTube → tafrigh/wit.ai → *.chunks.ndjson → Meilisearch
 ```
 
 Full product spec: [docs/PRD.md](docs/PRD.md).
@@ -12,20 +12,32 @@ Full product spec: [docs/PRD.md](docs/PRD.md).
 
 ```bash
 pnpm install
-brew install meilisearch                                    # prod uses compose.yml on the VPS
-meilisearch --db-path ./data/meili/data.ms --master-key devMasterKeyChangeMe --env development &
+brew install meilisearch                     # prod uses compose.yml on the VPS
+pnpm meili &                                 # db in git-ignored ./data/
 
-LIMIT=3 scripts/transcribe.sh   # tafrigh + wit.ai  (slow: ~12 min per hour of audio per token)
-pnpm cues                       # raw chunks → 20-word / 30-second cues
-pnpm index                      # → Meilisearch `cues` index
+cp .env.example .env                         # RAW_DIR = tafrigh's output/ dir
+pnpm ingest                                  # settings + all *.chunks.ndjson → `cues` index
 ```
 
-`scripts/transcribe.sh` with no `LIMIT` takes the whole channel (`CHANNEL_URL`); pass video ids or
-URLs to do only those. Everything except `transcribe.sh` is re-runnable and incremental.
-Data lives in git-ignored `data/`; browse the index at <http://localhost:7700>.
+Transcription lives in the [tafrigh](https://github.com/ieasybooks/tafrigh) checkout, not here — it
+already emits index-ready cues (`--chunk_target_words` / `--chunk_max_duration`), so there is no
+cue-merging step on our side. Re-running `pnpm ingest` after new videos overwrites by `id` and
+leaves everything else alone.
+
+## Searching
+
+Both params are required or results are wrong:
+
+```json
+{ "q": "بر الوالدين", "locales": ["ara"], "matchingStrategy": "all" }
+```
+
+`locales` makes charabia fold hamza/ta-marbuta at query time; `matchingStrategy: "all"` stops the
+split-off definite article `ال` from matching the entire corpus (the default `last` returns ~99% of
+docs for any query starting with `ال`). `minWordSizeForTypos.oneTypo: 4` is set in
+`meilisearch-settings.json` so short Arabic roots still tolerate a typo (`الطلاك` → `الطلاق`).
 
 ## Prototype-only shortcuts
 
-Docker is skipped locally (native brew binary); `compose.yml` remains the VPS path. No search eval
-harness, no articles index, no `data/state.json` hashing, no site — see the `ponytail:` comments for
-where each shortcut ends.
+Docker skipped locally (native brew binary); `compose.yml` remains the VPS path. No articles index,
+no incremental state hashing, no site yet — see the `ponytail:` comments for where each ends.

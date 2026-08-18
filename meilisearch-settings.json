@@ -1,0 +1,46 @@
+{
+  "searchableAttributes": [
+    "text"
+  ],
+  "filterableAttributes": [
+    "video_id",
+    "playlist_ids",
+    "channel",
+    "upload_date"
+  ],
+  "sortableAttributes": [
+    "start",
+    "upload_date"
+  ],
+  "displayedAttributes": [
+    "id",
+    "video_id",
+    "title",
+    "url",
+    "start",
+    "end",
+    "text",
+    "playlist_ids",
+    "upload_date",
+    "duration",
+    "channel"
+  ],
+  "localizedAttributes": [
+    {
+      "attributePatterns": [
+        "*"
+      ],
+      "locales": [
+        "ara"
+      ]
+    }
+  ],
+  "pagination": {
+    "maxTotalHits": 1000
+  },
+  "typoTolerance": {
+    "minWordSizeForTypos": {
+      "oneTypo": 4
+    }
+  }
+}
