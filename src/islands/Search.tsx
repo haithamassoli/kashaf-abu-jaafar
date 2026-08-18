@@ -149,9 +149,6 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
 
         {playlists.length > 0 && (
           <div className="mt-3 flex items-center gap-3">
-            <span id="search-pl-label" className="shrink-0 text-sm text-muted">
-              قائمة التشغيل
-            </span>
             {/* Base UI takes direction from context, not the <html dir> the page uses. */}
             <DirectionProvider direction="rtl">
               <Select multiple value={pl} onValueChange={changePlaylist}>
