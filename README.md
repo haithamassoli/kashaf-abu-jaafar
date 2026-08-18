@@ -73,6 +73,15 @@ in `meilisearch-settings.json` keeps short Arabic roots typo-tolerant (`الطل
 The browser only ever holds a search-only key (actions `search`, index `cues`); the admin key
 stays in `.env`.
 
+## Homepage numbers
+
+The `محتوى المنصة` section (six cards + the two Chart.js canvases) is computed at build time from
+`data/`, so it moves with `pnpm ingest` and needs no runtime query. Chart.js is a lazy chunk: it
+downloads only when the section scrolls into view, and repaints on the theme toggle because every
+colour is a scriptable option reading the CSS custom properties. The section hides itself, in CSS,
+as soon as the search box holds a query. The `المقالات` card shows `قريبًا` until an articles
+ingest exists.
+
 ## Not in this build
 
 No articles index — `alkulify.com` has been returning 522 since ~2026-07, so the articles tab,

@@ -1,0 +1,206 @@
+---
+/** Two build-time-fed Chart.js canvases: hours per playlist, and cumulative hours. */
+import { playlists, playlistDuration, videos } from '../lib/data'
+
+const H = 3600
+const round1 = (n: number) => Math.round(n * 10) / 10
+
+/** Chart.js renders a string[] label as one line per entry. */
+const wrap = (s: string, max = 20) => {
+  const lines: string[] = []
+  let line = ''
+  for (const word of s.split(/\s+/)) {
+    if (line && (line + ' ' + word).length > max) {
+      lines.push(line)
+      line = word
+    } else line = line ? line + ' ' + word : word
+  }
+  if (line) lines.push(line)
+  return lines
+}
+
+const bars = playlists
+  .map((p) => ({ title: p.title, hours: round1(playlistDuration(p) / H) }))
+  .sort((a, b) => b.hours - a.hours)
+
+const loose = videos.filter((v) => v.playlists.length === 0).reduce((n, v) => n + v.duration, 0) / H
+if (loose >= 1) bars.push({ title: 'خارج القوائم', hours: round1(loose) })
+
+// One point per month across the whole span — the empty months are part of the story.
+const byMonth = new Map<string, number>()
+for (const v of videos) {
+  if (!v.uploadDate) continue
+  const k = v.uploadDate.slice(0, 7)
+  byMonth.set(k, (byMonth.get(k) ?? 0) + v.duration / H)
+}
+const months = [...byMonth.keys()].sort()
+const cum: { label: string; hours: number }[] = []
+if (months.length) {
+  const last = months.at(-1)
+  let [y, m] = months[0].split('-').map(Number)
+  let run = 0
+  for (;;) {
+    const key = `${y}-${String(m).padStart(2, '0')}`
+    run += byMonth.get(key) ?? 0
+    cum.push({ label: `${String(m).padStart(2, '0')}/${y}`, hours: Math.round(run) })
+    if (key === last) break
+    if (m === 12) (y += 1), (m = 1)
+    else m += 1
+  }
+}
+
+const payload = JSON.stringify({
+  bars: bars.map((b) => ({ label: wrap(b.title), hours: b.hours })),
+  cum,
+}).replace(/</g, '\\u003c')
+
+const barsAlt = `الساعات المفرَّغة لكل قائمة: ${bars.map((b) => `${b.title} ${b.hours} ساعة`).join('، ')}.`
+const cumAlt = cum.length
+  ? `الساعات المفرَّغة تراكميًا من ${cum[0].label} إلى ${cum.at(-1)?.label}، وصولًا إلى ${cum.at(-1)?.hours} ساعة.`
+  : ''
+---
+
+<div id="charts" class="mt-3 grid gap-3 md:grid-cols-2">
+  <section class="card p-4">
+    <h3 class="text-base font-semibold">الساعات المفرَّغة لكل قائمة</h3>
+    <p class="mt-1 text-sm text-muted">عدد ساعات الدروس المفرَّغة في كل قائمة تشغيل</p>
+    <div class="relative mt-4 h-56">
+      <canvas id="chart-playlists" role="img" aria-label={barsAlt}></canvas>
+    </div>
+  </section>
+
+  <section class="card p-4">
+    <h3 class="text-base font-semibold">الساعات المفرَّغة تراكميًا</h3>
+    <p class="mt-1 text-sm text-muted">مجموع الساعات المفرَّغة شهرًا بعد شهر</p>
+    <div class="relative mt-4 h-56">
+      <canvas id="chart-cumulative" role="img" aria-label={cumAlt}></canvas>
+    </div>
+  </section>
+</div>
+
+<script type="application/json" id="charts-data" set:html={payload} is:inline></script>
+
+<script>
+  const root = document.getElementById('charts')
+  const raw = document.getElementById('charts-data')?.textContent
+
+  if (root && raw) {
+    const { bars, cum } = JSON.parse(raw)
+
+    // Chart.js freezes plain option values but re-runs scriptable ones on every update,
+    // so every colour is a function reading the palette captured at the last theme flip.
+    const readTheme = () => {
+      const s = getComputedStyle(document.documentElement)
+      const v = (name: string) => s.getPropertyValue(name).trim()
+      return { accent: v('--accent'), muted: v('--muted'), border: v('--border'), surface: v('--surface'), fg: v('--fg') }
+    }
+    let theme = readTheme()
+
+    const load = async () => {
+      const {
+        Chart, BarController, BarElement, LineController, LineElement, PointElement,
+        CategoryScale, LinearScale, Filler, Tooltip,
+      } = await import('chart.js')
+      Chart.register(BarController, BarElement, LineController, LineElement, PointElement, CategoryScale, LinearScale, Filler, Tooltip)
+      Chart.defaults.font.family = getComputedStyle(document.body).fontFamily
+      Chart.defaults.font.size = 12
+      Chart.defaults.locale = 'en-US'
+      Chart.defaults.animation = matchMedia('(prefers-reduced-motion: reduce)').matches ? false : { duration: 400 }
+      // Scriptable colours are functions, and Chart.js cannot interpolate those:
+      // animating them throws mid-frame and kills the render loop.
+      Chart.defaults.animations.colors = false
+
+      const tooltip = {
+        rtl: true,
+        textDirection: 'rtl' as const,
+        displayColors: false,
+        padding: 10,
+        borderWidth: 1,
+        backgroundColor: () => theme.surface,
+        titleColor: () => theme.fg,
+        bodyColor: () => theme.fg,
+        borderColor: () => theme.border,
+        callbacks: {
+          // U+200F keeps the number on the right of the unit inside the RTL tooltip.
+          label: (c: any) => `\u200f${c.parsed[c.chart.options.indexAxis === 'y' ? 'x' : 'y']} ساعة`,
+        },
+      }
+      const ticks = (extra = {}) => ({ color: () => theme.muted, maxTicksLimit: 5, ...extra })
+      const grid = { color: () => theme.border }
+      const border = { color: () => theme.border }
+
+      const playlistHours = new Chart(document.getElementById('chart-playlists') as HTMLCanvasElement, {
+        type: 'bar',
+        data: {
+          labels: bars.map((b: any) => b.label),
+          datasets: [
+            {
+              data: bars.map((b: any) => b.hours),
+              backgroundColor: () => theme.accent,
+              borderRadius: 4,
+              borderWidth: 0,
+              barThickness: 22,
+            },
+          ],
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false, axis: 'y' },
+          plugins: { legend: { display: false }, tooltip },
+          scales: {
+            x: { reverse: true, beginAtZero: true, ticks: ticks({ precision: 0 }), grid, border },
+            y: { position: 'right', ticks: ticks(), grid: { display: false }, border },
+          },
+        },
+      })
+
+      const cumulativeHours = new Chart(document.getElementById('chart-cumulative') as HTMLCanvasElement, {
+        type: 'line',
+        data: {
+          labels: cum.map((p: any) => p.label),
+          datasets: [
+            {
+              data: cum.map((p: any) => p.hours),
+              borderColor: () => theme.accent,
+              backgroundColor: () => theme.accent + '22',
+              pointBackgroundColor: () => theme.accent,
+              fill: true,
+              tension: 0.25,
+              borderWidth: 2,
+              pointRadius: 0,
+              pointHoverRadius: 4,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { display: false }, tooltip },
+          scales: {
+            x: { reverse: true, ticks: ticks({ maxRotation: 0 }), grid: { display: false }, border },
+            y: { position: 'right', beginAtZero: true, ticks: ticks(), grid, border },
+          },
+        },
+      })
+
+      const charts = [playlistHours, cumulativeHours]
+      new MutationObserver(() => {
+        theme = readTheme()
+        for (const chart of charts) chart.update('none')
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    }
+
+    // Chart.js only downloads once the section is actually approached.
+    new IntersectionObserver(
+      (entries, obs) => {
+        if (!entries.some((e) => e.isIntersecting)) return
+        obs.disconnect()
+        load()
+      },
+      { rootMargin: '200px' },
+    ).observe(root)
+  }
+</script>

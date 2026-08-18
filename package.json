@@ -24,6 +24,7 @@
     "@fontsource/ibm-plex-sans-arabic": "^5.1.0",
     "@tailwindcss/vite": "^4.0.0",
     "astro": "^5.2.0",
+    "chart.js": "^4.5.1",
     "meilisearch": "^0.60.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

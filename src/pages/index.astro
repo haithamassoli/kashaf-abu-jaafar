@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro'
 import Search from '../islands/Search.tsx'
+import Charts from '../components/Charts.astro'
 import { playlists, totalHours, videos } from '../lib/data'
 import { arabicDate, withDigits } from '../lib/format'
 
@@ -87,6 +88,8 @@ const value = (s: string) => (/^[\d,]+$/.test(s) ? `<span class="digits">${s}</s
         ))
       }
     </ul>
+
+    <Charts />
   </section>
 
   <style is:global>
