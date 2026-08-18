@@ -206,6 +206,35 @@ const ogSize = image === '/og.png' ? { w: '1200', h: '630' } : { w: '480', h: '3
       </div>
     </footer>
 
+    <!-- Install offer; shown at most once per session. -->
+    <div
+      id="install-prompt"
+      hidden
+      class="fixed inset-x-3 bottom-3 z-40 mx-auto flex max-w-md items-center gap-3 rounded-xl border border-border bg-surface p-3 shadow-lg"
+    >
+      <img src="/favicon.png" width="40" height="40" alt="" class="size-10 rounded-lg" />
+      <div class="min-w-0 flex-1 text-sm">
+        <p class="font-semibold">ثبِّت الكشّاف</p>
+        <p id="install-hint" class="text-muted">للوصول السريع من شاشتك الرئيسية.</p>
+      </div>
+      <button
+        type="button"
+        id="install-go"
+        class="h-11 shrink-0 rounded-lg bg-accent px-4 text-sm font-medium text-accent-fg"
+        >تثبيت</button
+      >
+      <button
+        type="button"
+        id="install-close"
+        aria-label="إغلاق"
+        class="grid size-11 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+      >
+        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"></path>
+        </svg>
+      </button>
+    </div>
+
     <script is:inline>
       const toggle = document.getElementById('theme-toggle')
       const syncToggle = () =>
@@ -237,6 +266,47 @@ const ogSize = image === '/og.png' ? { w: '1200', h: '630' } : { w: '480', h: '3
           box.select()
         }
       })
+
+      // PWA: register the worker, then offer the install prompt once per session.
+      if ('serviceWorker' in navigator)
+        addEventListener('load', () => navigator.serviceWorker.register('/sw.js'))
+
+      const installUI = document.getElementById('install-prompt')
+      const installSeen = () => {
+        try {
+          return sessionStorage.getItem('install-seen')
+        } catch {
+          return '1'
+        }
+      }
+      const hideInstall = () => {
+        installUI.hidden = true
+        try {
+          sessionStorage.setItem('install-seen', '1')
+        } catch {}
+      }
+      document.getElementById('install-close').addEventListener('click', hideInstall)
+
+      let installEvent
+      addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault()
+        installEvent = e
+        if (!installSeen()) installUI.hidden = false
+      })
+      document.getElementById('install-go').addEventListener('click', () => {
+        hideInstall()
+        installEvent?.prompt()
+      })
+
+      // Safari never fires beforeinstallprompt; navigator.standalone exists only there,
+      // and is false only while the site isn't installed yet.
+      if (!installSeen() && navigator.standalone === false) {
+        document.getElementById('install-hint').textContent =
+          'من زر المشاركة، اختر «إضافة إلى الشاشة الرئيسية».'
+        document.getElementById('install-go').hidden = true
+        installUI.hidden = false
+      }
+
     </script>
   </body>
 </html>
