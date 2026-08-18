@@ -22,9 +22,9 @@ Arabic-only, RTL, no-login website to full-text search everything Sheikh **أب�
 - PRD/code/comments in English; all UI copy in Arabic.
 
 ## Data pipeline (offline, maintainer's Mac)
-### 1. Transcription (tafrigh, existing repo `~/Documents/tafrigh`)
+### 1. Transcription (tafrigh, existing repo `~/Downloads/tafrigh`)
 ```
-cd ~/Documents/tafrigh && .venv/bin/tafrigh "<playlist|channel|video URL>" ... \
+cd ~/Downloads/tafrigh && .venv/bin/tafrigh "<playlist|channel|video URL>" ... \
   -w $WIT_TOKEN [$WIT_TOKEN_2 ...] \
   --max_cutting_duration 15 --min_words_per_segment 0 \
   -f json --yt_dlp_options '{"writeinfojson": true}' \
@@ -36,7 +36,7 @@ for f in out/*.mp3; do [ -f "${f%.mp3}.json" ] && rm "$f"; done
 - Idempotent reruns: `out/archive.txt` (yt-dlp) skips downloads, `--skip_if_output_exist` skips transcribed IDs. Feed playlist URLs in priority order, then `https://www.youtube.com/@Alkulify1/videos` (+ `/streams`, `/shorts`) for the rest.
 - Throughput ≈ 1 h audio per 12 min per token; extra tokens (separate Arabic wit apps) scale linearly. tafrigh does not read `.env`; pass tokens with `-w`.
 
-### 2. `pnpm ingest` (TypeScript scripts in `scripts/`, run with `tsx`; `.env`: `MEILI_HOST`, `MEILI_ADMIN_KEY`, `RAW_DIR=~/Documents/tafrigh/out`, `CHANNEL_URL`)
+### 2. `pnpm ingest` (TypeScript scripts in `scripts/`, run with `tsx`; `.env`: `MEILI_HOST`, `MEILI_ADMIN_KEY`, `RAW_DIR=~/Downloads/tafrigh/out`, `CHANNEL_URL`)
 `data/` is git-ignored (hundreds of MB); back it up separately. `pnpm ingest` = `meta` → `cues` → `articles` → `index`.
 
 **`meta.ts`** — spawns `yt-dlp` (from tafrigh `.venv`):

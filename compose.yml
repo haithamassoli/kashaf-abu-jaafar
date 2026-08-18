@@ -1,0 +1,9 @@
+# ponytail: prototype only — no Caddy/TLS, binds to localhost. Add the reverse proxy when it leaves this Mac.
+services:
+  meilisearch:
+    image: getmeili/meilisearch:v1.53
+    ports: ["127.0.0.1:7700:7700"]
+    environment:
+      MEILI_MASTER_KEY: devMasterKeyChangeMe
+      MEILI_ENV: development
+    volumes: ["./data/meili:/meili_data"]
