@@ -74,10 +74,10 @@ Transcription and indexing run on the maintainer's machine, never on a server. T
 
 | | |
 |---|---|
-| Lectures transcribed | 1,134 (≈828 h) — out of ~4,000 on the channel, ongoing |
-| Cues indexed | 46,613 |
+| Lectures transcribed | 1,396 (≈974 h) — out of ~4,000 on the channel, ongoing |
+| Cues indexed | 54,098 |
 | Articles | 3,333 (≈37k paragraphs) |
-| Playlists | 14 |
+| Playlists | 31 |
 
 ## Run it locally
 
