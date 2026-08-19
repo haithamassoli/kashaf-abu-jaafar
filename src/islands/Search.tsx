@@ -175,10 +175,14 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
               <Select multiple value={pl} onValueChange={changePlaylist}>
                 {/* Not aria-labelledby: eab3908 removed the visible label but kept the
                     reference, and a dangling one beats the trigger's own text — the
-                    combobox ended up with no accessible name at all (a11y 95 -> 100). */}
+                    combobox ended up with no accessible name at all (a11y 95 -> 100).
+                    h-11 alone also loses: select.tsx ships data-[size=default]:h-8, and
+                    tailwind-merge cannot dedupe across variant prefixes, so the more
+                    specific one wins and the control renders 32px, not the 44px the rest
+                    of the site uses. Match the prefix to beat it. */}
                 <SelectTrigger
                   aria-label="قائمة التشغيل"
-                  className="h-11 min-w-0 flex-1 border-border-strong bg-surface px-3 text-fg sm:max-w-xs"
+                  className="h-11 min-w-0 flex-1 border-border-strong bg-surface px-3 text-fg data-[size=default]:h-11 sm:max-w-xs"
                 >
                   <SelectValue>{() => playlistLabel(pl, playlists)}</SelectValue>
                 </SelectTrigger>
