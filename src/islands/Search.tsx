@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { HITS_PER_PAGE, MAX_PAGES, highlight, searchCues, type SearchResult } from '../lib/meili'
+import {
+  HITS_PER_PAGE,
+  MAX_PAGES,
+  highlight,
+  search,
+  type ArticleHit,
+  type Cue,
+  type SearchResult,
+  type Tab,
+} from '../lib/meili'
 import { arabicDate, timestamp } from '../lib/format'
 import { DirectionProvider } from '@base-ui/react/direction-provider'
 import { Input } from '@/components/ui/input'
@@ -14,19 +23,21 @@ import {
 type PlaylistOption = { id: string; title: string; count: number }
 type Status = 'idle' | 'loading' | 'done' | 'error'
 
-/** The URL is the state: ?q=<query>&pl=<playlistId>&pl=<…>&p=<page>. */
+/** The URL is the state: ?q=<query>&t=v|a&pl=<playlistId>&pl=<…>&p=<page>. */
 function readUrl() {
   const p = new URLSearchParams(location.search)
   return {
     q: p.get('q') ?? '',
     pl: p.getAll('pl'),
+    tab: (p.get('t') === 'a' ? 'a' : 'v') as Tab,
     page: Math.min(Math.max(Number(p.get('p')) || 1, 1), MAX_PAGES),
   }
 }
 
-function pushUrl(q: string, pl: string[], page: number) {
+function pushUrl(q: string, pl: string[], page: number, tab: Tab) {
   const p = new URLSearchParams()
   if (q) p.set('q', q)
+  if (tab === 'a') p.set('t', 'a')
   for (const id of pl) p.append('pl', id)
   if (page > 1) p.set('p', String(page))
   const qs = p.toString()
@@ -42,9 +53,12 @@ function playlistLabel(ids: string[], playlists: PlaylistOption[]) {
   return `${ids.length} ${ids.length <= 10 ? 'قوائم' : 'قائمة'}`
 }
 
+const KIND: Record<string, string> = { post: 'مقالة', fatwa: 'فتوى', book: 'كتاب' }
+
 export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
   const [q, setQ] = useState('')
   const [pl, setPl] = useState<string[]>([])
+  const [tab, setTab] = useState<Tab>('v')
   const [asked, setAsked] = useState('')
   const [status, setStatus] = useState<Status>('idle')
   const [result, setResult] = useState<SearchResult | null>(null)
@@ -52,10 +66,11 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
   const top = useRef<HTMLDivElement>(null)
 
   // Only the newest request may set state; older responses are ignored.
-  const run = async (query: string, playlist: string[], page: number) => {
+  const run = async (query: string, playlist: string[], page: number, next: Tab) => {
     const id = ++seq.current
     const text = query.trim()
     setPl(playlist)
+    setTab(next)
     setAsked(text)
     if (!text) {
       setStatus('idle')
@@ -64,10 +79,10 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
     }
     setStatus('loading')
     try {
-      const res = await searchCues(text, { page, playlists: playlist })
+      const res = await search(text, { tab: next, page, playlists: playlist })
       if (id !== seq.current) return
       if (res.hits.length === 0 && res.totalPages >= 1 && page > res.totalPages) {
-        go(text, playlist, res.totalPages)
+        go(text, playlist, res.totalPages, next)
         return
       }
       setResult(res)
@@ -87,16 +102,16 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
       // showed "كل القوائم" — drop it instead
       const pl = u.pl.filter((id) => known.has(id))
       setQ(u.q)
-      run(u.q, pl, u.page)
+      run(u.q, pl, u.page, u.tab)
     }
     sync()
     addEventListener('popstate', sync)
     return () => removeEventListener('popstate', sync)
   }, [])
 
-  const go = (query: string, playlist: string[], page: number) => {
-    pushUrl(query.trim(), playlist, page)
-    run(query, playlist, page)
+  const go = (query: string, playlist: string[], page: number, next: Tab = tab) => {
+    pushUrl(query.trim(), playlist, page, next)
+    run(query, playlist, page, next)
   }
 
   const goPage = (page: number) => {
@@ -108,6 +123,12 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
   const changePlaylist = (value: string[]) => {
     setPl(value)
     if (q.trim()) go(q, value, 1)
+  }
+
+  const changeTab = (next: Tab) => {
+    if (next === tab) return
+    setTab(next)
+    if (asked) go(asked, pl, 1, next)
   }
 
   const from = result ? (result.page - 1) * HITS_PER_PAGE + 1 : 0
@@ -147,7 +168,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
           </button>
         </div>
 
-        {playlists.length > 0 && (
+        {playlists.length > 0 && tab === 'v' && (
           <div className="mt-3 flex items-center gap-3">
             {/* Base UI takes direction from context, not the <html dir> the page uses. */}
             <DirectionProvider direction="rtl">
@@ -183,6 +204,32 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
           </div>
         )}
       </form>
+
+      {result && (
+        <nav aria-label="نوع النتائج" className="mt-6 flex gap-2 border-b border-border">
+          {(
+            [
+              ['v', 'فيديوهات', result.counts.v],
+              ['a', 'مقالات', result.counts.a],
+            ] as [Tab, string, number][]
+          ).map(([key, label, n]) => (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={tab === key}
+              onClick={() => changeTab(key)}
+              className={`-mb-px inline-flex min-h-11 items-center gap-2 border-b-2 px-3 text-sm transition-colors ${
+                tab === key
+                  ? 'border-accent font-medium text-fg'
+                  : 'border-transparent text-muted hover:text-fg'
+              }`}
+            >
+              {label}
+              <span className="digits text-xs">{n >= 1000 ? '+1000' : n}</span>
+            </button>
+          ))}
+        </nav>
+      )}
 
       <div
         ref={top}
@@ -221,34 +268,67 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
       {status === 'done' && result && result.hits.length > 0 && (
         <>
           <ul className="mt-4 space-y-3">
-            {result.hits.map((cue) => {
-              const date = arabicDate(cue.upload_date)
-              return (
-                <li key={cue.id}>
-                  <a
-                    href={`/v/${cue.video_id}/?t=${Math.floor(cue.start)}`}
-                    className="card block p-4 transition-colors hover:bg-surface-2"
-                  >
-                    <h2 className="text-base font-medium text-fg">{cue.title}</h2>
-                    <p
-                      className="prose-naskh mt-2 line-clamp-3 text-muted"
-                      dangerouslySetInnerHTML={{
-                        __html: highlight(cue._formatted?.text, cue.text),
-                      }}
-                    ></p>
-                    <p className="mt-3 flex flex-wrap items-center gap-x-2 text-xs text-muted">
-                      <span className="digits">{timestamp(cue.start)}</span>
-                      {date && (
-                        <>
-                          <span aria-hidden="true">·</span>
-                          <span>{date}</span>
-                        </>
+            {result.tab === 'a'
+              ? (result.hits as ArticleHit[]).map((a) => (
+                  <li key={a.id}>
+                    <a
+                      href={`/a/${a.articleId}/#p${a.n}`}
+                      className="card block p-4 transition-colors hover:bg-surface-2"
+                    >
+                      <p className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                        <span className="rounded-full bg-surface-2 px-2 py-0.5">
+                          {KIND[a.type] ?? 'مقالة'}
+                        </span>
+                        {a.categories.slice(0, 2).map((c) => (
+                          <span key={c}>{c}</span>
+                        ))}
+                      </p>
+                      <h2
+                        className="mt-2 text-base font-medium text-fg"
+                        dangerouslySetInnerHTML={{
+                          __html: highlight(a._formatted?.title, a.title),
+                        }}
+                      ></h2>
+                      <p
+                        className="prose-naskh mt-2 line-clamp-3 text-muted"
+                        dangerouslySetInnerHTML={{
+                          __html: highlight(a._formatted?.text, a.text),
+                        }}
+                      ></p>
+                      {a.date && (
+                        <p className="digits mt-3 text-xs text-muted">{arabicDate(a.date)}</p>
                       )}
-                    </p>
-                  </a>
-                </li>
-              )
-            })}
+                    </a>
+                  </li>
+                ))
+              : (result.hits as Cue[]).map((cue) => {
+                const date = arabicDate(cue.upload_date)
+                return (
+                  <li key={cue.id}>
+                    <a
+                      href={`/v/${cue.video_id}/?t=${Math.floor(cue.start)}`}
+                      className="card block p-4 transition-colors hover:bg-surface-2"
+                    >
+                      <h2 className="text-base font-medium text-fg">{cue.title}</h2>
+                      <p
+                        className="prose-naskh mt-2 line-clamp-3 text-muted"
+                        dangerouslySetInnerHTML={{
+                          __html: highlight(cue._formatted?.text, cue.text),
+                        }}
+                      ></p>
+                      <p className="mt-3 flex flex-wrap items-center gap-x-2 text-xs text-muted">
+                        <span className="digits">{timestamp(cue.start)}</span>
+                        {date && (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <span>{date}</span>
+                          </>
+                        )}
+                      </p>
+                    </a>
+                  </li>
+                )
+                })}
           </ul>
 
           {result.totalPages > 1 && (

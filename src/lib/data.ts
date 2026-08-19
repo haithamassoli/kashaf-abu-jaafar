@@ -1,5 +1,5 @@
 /** Build-time reads of the data/ snapshot produced by scripts/build-data.ts. */
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, readdirSync } from 'node:fs'
 
 export type Video = {
   id: string
@@ -26,6 +26,29 @@ export const videoById = new Map(videos.map((v) => [v.id, v]))
 export const playlistById = new Map(playlists.map((p) => [p.id, p]))
 
 export const segmentsOf = (id: string): Segment[] => read<Segment[]>(`segments/${id}.json`, [])
+
+export type Article = {
+  id: string
+  type: string
+  source: string
+  title: string
+  date: string | null
+  modified: string | null
+  categories: string[]
+  url: string
+  paragraphs: string[]
+}
+
+const articleDir = `${dir}articles/`
+const articleFiles = existsSync(articleDir)
+  ? readdirSync(articleDir).filter((f) => f.endsWith('.json'))
+  : []
+
+export const articleCount = articleFiles.length
+
+/** ~20 MB of text: a function, so only /a/[id] pays for it. */
+export const allArticles = (): Article[] =>
+  articleFiles.map((f) => JSON.parse(readFileSync(articleDir + f, 'utf8')) as Article)
 
 export const playlistDuration = (p: Playlist): number =>
   p.videoIds.reduce((n, id) => n + (videoById.get(id)?.duration ?? 0), 0)

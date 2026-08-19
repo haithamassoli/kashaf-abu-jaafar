@@ -209,6 +209,16 @@
   border-radius: 0.875rem;
 }
 
+/* An article hit links to /a/<id>#p<n>: tint the paragraph that matched, the same way
+   the transcript marks the playing cue. */
+.prose-naskh p:target {
+  background: var(--accent-soft);
+  border-inline-start: 2px solid var(--accent);
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  margin-inline: -0.75rem;
+}
+
 /* Transcript cue rows. Player.tsx repeats these strings on every one of ~1,371
    rows; collapsing them to single classes drops ~600 KB of duplicated class
    attributes from the built HTML.

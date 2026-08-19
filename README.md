@@ -27,16 +27,38 @@ pnpm dev                             # http://localhost:4321
 | script | what it does |
 |---|---|
 | `pnpm data` | `RAW_DIR/*.transcript.json` → `data/{videos,playlists}.json` + `data/segments/<id>.json` |
-| `pnpm index` | `RAW_DIR/*.chunks.ndjson` → Meilisearch `cues`, and creates/reuses the browser's search-only key |
-| `pnpm ingest` | both, in order |
+| `pnpm articles` | Blogger Atom feed → `data/articles/<id>.json` |
+| `pnpm index` | `RAW_DIR/*.chunks.ndjson` → Meilisearch `cues`, `data/articles/` → `articles`, and creates/reuses the browser's search-only key (`pnpm index cues\|articles` does one side) |
+| `pnpm ingest` | all three, in order |
 | `pnpm check` | self-checks for the text plumbing (highlighting, folding, cleaning, formatting) |
 | `pnpm build` / `preview` | static build of every page / serve `dist/` |
 | `pnpm deploy` | `wrangler pages deploy dist` — refuses if the build still points at localhost |
 
-Both steps are safe to re-run. `pnpm data` rebuilds `data/` from scratch, so a lecture removed
+All steps are safe to re-run. `pnpm data` rebuilds `data/` from scratch, so a lecture removed
 from `RAW_DIR` also disappears from the next build. `pnpm index` overwrites cues by `id` and
 only deletes cues whose text cleaned to empty — a lecture removed from `RAW_DIR` keeps its
 documents in Meilisearch until you delete them by filter (`videoId = "<id>"`).
+
+## Articles
+
+`alkulify.com` (WordPress, the sheikh's own site) has been answering Cloudflare 522 since
+~2026-07, so the corpus is assembled from the two sources that do answer:
+
+```bash
+pnpm articles                        # Blogger mirror: 2,346 posts, but it stops at 2019-06
+npx tsx scripts/wayback.ts           # archive.org snapshots of alkulify.com, through 2026
+```
+
+`wayback.ts` reads the CDX index, pulls the newest usable capture of every archived post
+(falling back through older captures when one is a Cloudflare interstitial), and finishes by
+deleting the Blogger copy of every post the site itself covers. It logs finished URLs to
+`data/wayback-done.txt`, so an interrupted run resumes where it stopped. Result: 3,333 articles
+(3,232 `wp` + 101 Blogger-only), ~37k paragraph chunks. Four posts are unrecoverable — their
+only capture is an interstitial — and are listed in `data/wayback-failed.txt`.
+
+The PDF collection of the blog is *not* a usable source: `pdftotext` reverses digit runs (hadith
+no. 2135 → 5312) and injects plain spaces inside words (`معاو ية`), which no cleanup short of
+re-merging glyph coordinates undoes.
 
 ## Transcription
 
@@ -79,10 +101,9 @@ The `محتوى المنصة` section (six cards + the two Chart.js canvases) is
 `data/`, so it moves with `pnpm ingest` and needs no runtime query. Chart.js is a lazy chunk: it
 downloads only when the section scrolls into view, and repaints on the theme toggle because every
 colour is a scriptable option reading the CSS custom properties. The section hides itself, in CSS,
-as soon as the search box holds a query. The `المقالات` card shows `قريبًا` until an articles
-ingest exists.
+as soon as the search box holds a query.
 
 ## Not in this build
 
-No articles index — `alkulify.com` has been returning 522 since ~2026-07, so the articles tab,
-`/a/<id>` and the `articles` index are unbuilt. Everything else in the PRD's v1 scope is here.
+Everything in the PRD's v1 scope is here. The four articles archive.org never captured cleanly
+are the only known gap in the corpus.

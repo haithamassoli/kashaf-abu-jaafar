@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro'
 import Search from '../islands/Search.tsx'
 import Charts from '../components/Charts.astro'
-import { playlists, totalHours, videos } from '../lib/data'
+import { articleCount, playlists, totalHours, videos } from '../lib/data'
 import { arabicDate, withDigits } from '../lib/format'
 import { SITE, SITE_URL, SHEIKH, person } from '../lib/seo'
 
@@ -12,8 +12,6 @@ const num = (n: number) => n.toLocaleString('en-US')
 const cues = videos.reduce((n, v) => n + v.segmentCount, 0)
 const lastUpload = videos.map((v) => v.uploadDate ?? '').sort().at(-1)
 
-// ponytail: المقالات has no ingest yet (alkulify.com has been 522 since ~2026-07),
-// so the card says قريبًا; swap in a count when scripts/ starts writing data/articles.
 const cards = [
   {
     label: 'الدروس',
@@ -37,7 +35,7 @@ const cards = [
   },
   {
     label: 'المقالات',
-    value: 'قريبًا',
+    value: num(articleCount),
     icon: ['M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z', 'M14 3v5h5', 'M9 13h6M9 17h4'],
   },
   {

@@ -1,6 +1,7 @@
 /**
- * RAW_DIR/*.chunks.ndjson -> Meilisearch `cues` index, plus the browser's search-only key.
- * Same chunk ids overwrite, so re-running after new videos is safe and incremental.
+ * RAW_DIR/*.chunks.ndjson -> `cues`, data/articles/*.json -> `articles`, plus the browser's
+ * search-only key. Same ids overwrite, so re-running after new videos/articles is incremental.
+ * `pnpm index cues` / `pnpm index articles` does one side only — the cue pass is the slow one.
  */
 import { readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -14,6 +15,7 @@ const host = process.env.MEILI_HOST ?? 'http://127.0.0.1:7700'
 const apiKey = process.env.MEILI_ADMIN_KEY
 if (!RAW_DIR || !apiKey) throw new Error('RAW_DIR and MEILI_ADMIN_KEY must be set (see .env.example)')
 
+const ONLY = process.argv[2]
 const client = new Meilisearch({ host, apiKey })
 const settings = JSON.parse(
   await readFile(new URL('../meilisearch-settings.json', import.meta.url), 'utf8'),
@@ -22,7 +24,7 @@ const settings = JSON.parse(
 await client.createIndex('cues', { primaryKey: 'id' }).catch(() => {})
 await client.index('cues').updateSettings(settings).then((t) => client.tasks.waitForTask(t.taskUid))
 
-const files = (await readdir(RAW_DIR)).filter((f) => f.endsWith('.chunks.ndjson'))
+const files = ONLY === 'articles' ? [] : (await readdir(RAW_DIR)).filter((f) => f.endsWith('.chunks.ndjson'))
 let sent = 0
 const BATCH = 20_000
 
@@ -58,10 +60,12 @@ await flush()
 
 // charabia splits `ال` off but leaves `وال/بال/فال/كال/لل` whole — teach Meilisearch the
 // equivalence. Settings-only, so it applies in well under a second with no re-index.
-const synonyms = articleSynonyms(texts)
-const syn = await client.index('cues').updateSettings({ synonyms })
-await client.tasks.waitForTask(syn.taskUid, { timeout: 300_000 })
-console.log(`\n${Object.keys(synonyms).length} article synonyms`)
+if (texts.length) {
+  const synonyms = articleSynonyms(texts)
+  const syn = await client.index('cues').updateSettings({ synonyms })
+  await client.tasks.waitForTask(syn.taskUid, { timeout: 300_000 })
+  console.log(`\n${Object.keys(synonyms).length} article synonyms`)
+}
 
 if (dropped.length) {
   const task = await client.index('cues').deleteDocuments(dropped)
@@ -69,21 +73,76 @@ if (dropped.length) {
   console.log(`dropped ${dropped.length} empty cues`)
 }
 
+// data/articles/<id>.json -> one doc per paragraph, so a hit points at `#p<n>`.
+if (ONLY !== 'cues') {
+  const ART = new URL('../data/articles/', import.meta.url).pathname
+  const artSettings = JSON.parse(
+    await readFile(new URL('../meilisearch-articles-settings.json', import.meta.url), 'utf8'),
+  )
+  await client.createIndex('articles', { primaryKey: 'id' }).catch(() => {})
+  await client
+    .index('articles')
+    .updateSettings(artSettings)
+    .then((t) => client.tasks.waitForTask(t.taskUid))
+
+  let docs: Record<string, unknown>[] = []
+  let sentDocs = 0
+  const push = async (force = false) => {
+    if (!docs.length || (!force && docs.length < BATCH)) return
+    const task = await client.index('articles').addDocuments(docs)
+    await client.tasks.waitForTask(task.taskUid, { timeout: 300_000 })
+    sentDocs += docs.length
+    process.stdout.write(`\r${sentDocs} article chunks indexed`)
+    docs = []
+  }
+  const names = (await readdir(ART)).filter((f) => f.endsWith('.json'))
+  for (const name of names) {
+    const a = JSON.parse(await readFile(join(ART, name), 'utf8'))
+    for (const [n, text] of (a.paragraphs as string[]).entries()) {
+      docs.push({
+        id: `${a.id}-p${n}`,
+        articleId: a.id,
+        type: a.type,
+        source: a.source,
+        title: a.title,
+        categories: a.categories,
+        date: a.date,
+        n,
+        text,
+      })
+    }
+    await push()
+  }
+  await push(true)
+  console.log(`\n${names.length} articles indexed`)
+}
+
 // Search-only key for the browser. Reuse the existing one so redeploys keep working.
 const name = 'kashaf-search-only'
+const SCOPE = ['cues', 'articles']
 const keys = await client.getKeys({ limit: 100 })
-const existing = keys.results.find((k) => k.name === name)
+const found = keys.results.find((k) => k.name === name)
+// Meilisearch only lets you rename a key, so widening its index scope means recreating it.
+// Reusing the uid keeps the key string itself (an HMAC of master key + uid) identical, so a
+// already-deployed PUBLIC_MEILI_SEARCH_KEY keeps working.
+const stale = found && !found.indexes.includes('*') && SCOPE.some((i) => !found.indexes.includes(i))
+if (stale) {
+  await client.deleteKey(found.uid)
+  console.log(`re-scoped ${name} to ${SCOPE.join(', ')}`)
+}
 const key =
-  existing ??
+  (stale ? null : found) ??
   (await client.createKey({
+    uid: found?.uid,
     name,
     description: 'browser search-only key',
     actions: ['search'],
-    indexes: ['cues'],
+    indexes: SCOPE,
     expiresAt: null,
   }))
 
 const stats = await client.index('cues').getStats()
-console.log(`\ndone: ${stats.numberOfDocuments} cues in ${files.length} files`)
+const artStats = await client.index('articles').getStats().catch(() => ({ numberOfDocuments: 0 }))
+console.log(`\ndone: ${stats.numberOfDocuments} cues, ${artStats.numberOfDocuments} article chunks`)
 console.log(`PUBLIC_MEILI_HOST=${host}`)
 console.log(`PUBLIC_MEILI_SEARCH_KEY=${key.key}`)

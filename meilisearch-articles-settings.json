@@ -1,0 +1,34 @@
+{
+  "searchableAttributes": [
+    "title",
+    "text"
+  ],
+  "filterableAttributes": [
+    "articleId",
+    "type",
+    "source",
+    "categories"
+  ],
+  "sortableAttributes": [
+    "date"
+  ],
+  "distinctAttribute": "articleId",
+  "localizedAttributes": [
+    {
+      "attributePatterns": [
+        "*"
+      ],
+      "locales": [
+        "ara"
+      ]
+    }
+  ],
+  "pagination": {
+    "maxTotalHits": 1000
+  },
+  "typoTolerance": {
+    "minWordSizeForTypos": {
+      "oneTypo": 4
+    }
+  }
+}

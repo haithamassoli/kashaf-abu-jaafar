@@ -26,8 +26,27 @@ export type Cue = {
   _formatted?: { text?: string }
 }
 
+/** One paragraph of an article; `articles` is distinct on articleId, so hits are one per article. */
+export type ArticleHit = {
+  id: string
+  articleId: string
+  type: string
+  source: string
+  title: string
+  categories: string[]
+  date: string | null
+  n: number
+  text: string
+  _formatted?: { title?: string; text?: string }
+}
+
+export type Tab = 'v' | 'a'
+
 export type SearchResult = {
-  hits: Cue[]
+  tab: Tab
+  hits: Cue[] | ArticleHit[]
+  /** Both tabs' totals, so the tab strip can show counts without a second round trip. */
+  counts: Record<Tab, number>
   total: number
   totalIsCapped: boolean
   page: number
@@ -38,33 +57,62 @@ export type SearchResult = {
 /** YouTube list ids only — anything else would be injected into the filter expression. */
 const safePlaylist = (id: string) => (/^[\w-]{1,64}$/.test(id) ? id : '')
 
-export async function searchCues(
+export async function search(
   q: string,
-  { page = 1, playlists = [] }: { page?: number; playlists?: string[] } = {},
+  { tab = 'v', page = 1, playlists = [] }: { tab?: Tab; page?: number; playlists?: string[] } = {},
 ): Promise<SearchResult> {
   const ids = playlists.map(safePlaylist).filter(Boolean)
-
-  const res = await client.index('cues').search(q, {
-    // `locales` folds hamza/ta-marbuta at query time; `all` stops the split-off
-    // definite article "ال" from matching the whole corpus.
+  const at = Math.min(page, MAX_PAGES)
+  // `locales` folds hamza/ta-marbuta at query time; `all` stops the split-off
+  // definite article "ال" from matching the whole corpus.
+  const common = {
     locales: ['ara'],
-    matchingStrategy: 'all',
-    page: Math.min(page, MAX_PAGES),
-    hitsPerPage: HITS_PER_PAGE,
-    attributesToHighlight: ['text'],
+    matchingStrategy: 'all' as const,
     highlightPreTag: '<mark>',
     highlightPostTag: '</mark>',
-    ...(ids.length ? { filter: `playlist_ids IN [${ids.map((id) => `"${id}"`).join(', ')}]` } : {}),
+  }
+
+  // One round trip for both tabs: the inactive one asks for 0 hits, just its count.
+  const { results } = await client.multiSearch({
+    queries: [
+      {
+        indexUid: 'cues',
+        q,
+        ...common,
+        page: tab === 'v' ? at : 1,
+        hitsPerPage: tab === 'v' ? HITS_PER_PAGE : 0,
+        attributesToHighlight: ['text'],
+        ...(ids.length
+          ? { filter: `playlist_ids IN [${ids.map((id) => `"${id}"`).join(', ')}]` }
+          : {}),
+      },
+      {
+        indexUid: 'articles',
+        q,
+        ...common,
+        page: tab === 'a' ? at : 1,
+        hitsPerPage: tab === 'a' ? HITS_PER_PAGE : 0,
+        attributesToHighlight: ['title', 'text'],
+        // A hit is one paragraph out of an article; crop it to the words around the match.
+        attributesToCrop: ['text'],
+        cropLength: 40,
+        cropMarker: '…',
+      },
+    ],
   })
 
-  const total = res.totalHits ?? 0
+  const [cues, articles] = results
+  const active = tab === 'v' ? cues : articles
+  const total = active.totalHits ?? 0
   return {
-    hits: res.hits as Cue[],
+    tab,
+    hits: active.hits as Cue[] | ArticleHit[],
+    counts: { v: cues.totalHits ?? 0, a: articles.totalHits ?? 0 },
     total,
     totalIsCapped: total >= 1000,
-    page: res.page ?? 1,
-    totalPages: Math.min(res.totalPages ?? 1, MAX_PAGES),
-    processingTimeMs: res.processingTimeMs,
+    page: active.page ?? 1,
+    totalPages: Math.min(active.totalPages ?? 1, MAX_PAGES),
+    processingTimeMs: active.processingTimeMs,
   }
 }
 

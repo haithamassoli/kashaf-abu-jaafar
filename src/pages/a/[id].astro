@@ -1,0 +1,87 @@
+---
+import Base from '../../layouts/Base.astro'
+import { allArticles, type Article } from '../../lib/data'
+import { arabicDate } from '../../lib/format'
+import { SITE_URL, person, breadcrumb } from '../../lib/seo'
+
+export function getStaticPaths() {
+  return allArticles().map((article) => ({ params: { id: article.id }, props: { article } }))
+}
+
+interface Props {
+  article: Article
+}
+
+const { article } = Astro.props
+
+const LABEL: Record<string, string> = { post: 'مقالة', fatwa: 'فتوى', book: 'كتاب' }
+const kind = LABEL[article.type] ?? 'مقالة'
+
+const intro = article.paragraphs[0] ?? ''
+const description = intro.length > 150 ? `${intro.slice(0, 150).trimEnd()}…` : intro
+
+// The WordPress origin has been 522 for months, so its own URL is a dead end for now —
+// the archived copy we ingested from is the link that actually opens.
+const archive = article.source === 'wp' ? `https://web.archive.org/web/${article.url}` : null
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  '@id': `${SITE_URL}/a/${article.id}/#article`,
+  headline: article.title,
+  description: description || undefined,
+  datePublished: article.date ?? undefined,
+  dateModified: article.modified ?? undefined,
+  articleSection: article.categories.length ? article.categories : undefined,
+  url: new URL(`/a/${article.id}/`, SITE_URL).href,
+  mainEntityOfPage: new URL(`/a/${article.id}/`, SITE_URL).href,
+  isBasedOn: article.url,
+  inLanguage: 'ar',
+  author: person,
+}
+
+const crumbs = breadcrumb([[article.title, `/a/${article.id}/`]])
+---
+
+<Base
+  title={article.title}
+  description={description || undefined}
+  schema={[articleSchema, crumbs]}
+>
+  <article class="pt-8">
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="rounded-full bg-surface-2 px-3 py-1 text-xs text-muted">{kind}</span>
+      {
+        article.categories.map((c) => (
+          <span class="rounded-full bg-surface-2 px-3 py-1 text-xs text-muted">{c}</span>
+        ))
+      }
+    </div>
+
+    <h1 class="mt-4 text-xl font-semibold leading-relaxed sm:text-2xl">{article.title}</h1>
+
+    <div class="mt-1 flex flex-wrap items-center gap-x-5 text-sm text-muted">
+      {article.date && <span class="digits">{arabicDate(article.date)}</span>}
+      <a
+        href={article.url}
+        rel="noopener nofollow"
+        class="inline-flex min-h-11 items-center text-accent underline underline-offset-4">المصدر</a
+      >
+      {
+        archive && (
+          <a
+            href={archive}
+            rel="noopener nofollow"
+            class="inline-flex min-h-11 items-center text-accent underline underline-offset-4"
+          >
+            نسخة الأرشيف
+          </a>
+        )
+      }
+    </div>
+
+    <div class="prose-naskh mt-6 max-w-none space-y-4 text-fg">
+      {article.paragraphs.map((p, n) => <p id={`p${n}`} class="scroll-mt-20">{p}</p>)}
+    </div>
+  </article>
+</Base>

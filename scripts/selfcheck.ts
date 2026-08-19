@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { highlight } from '../src/lib/meili.ts'
 import { normalize } from '../src/lib/normalize.ts'
 import { clean } from '../src/lib/clean.ts'
+import { decode, paragraphs, titleKey } from '../src/lib/html.ts'
 import { markMatches } from '../src/lib/mark.ts'
 import { timestamp, duration, arabicDate, lessons, hours, lists, withDigits } from '../src/lib/format.ts'
 import { breadcrumb, SITE_URL } from '../src/lib/seo.ts'
@@ -33,6 +34,17 @@ assert.equal(normalize('مصطفى'), 'مصطفي')
 assert.equal(clean('قال [موسيقى] الشيخ'), 'قال الشيخ')
 assert.equal(clean('[تصفيق]'), '')
 assert.equal(clean('باب الطلاق'), 'باب الطلاق')
+
+// html: Word-pasted article markup in, ~paragraph-sized chunks out
+assert.deepEqual(paragraphs('<div>سطر أول</div><div>سطر ثانٍ</div>'), ['سطر أول سطر ثانٍ'])
+assert.deepEqual(paragraphs('<!--[if gte mso 9]><xml>junk</xml><![endif]--><p>نص</p>'), ['نص'])
+assert.equal(decode('&#1575;&amp;&nbsp;ب'), 'ا& ب')
+// a line that is already long enough closes its chunk instead of swallowing the next one
+const long = 'ك'.repeat(600)
+assert.deepEqual(paragraphs(`<p>${long}</p><p>ذيل</p>`), [long, 'ذيل'])
+// titleKey: the same post on wp and blogger, differing only in diacritics/punctuation
+assert.equal(titleKey('الصَّلاة … '), titleKey('الصلاه'))
+assert.notEqual(titleKey('تقويم المعاصرين ( الحلقة الثانية )'), titleKey('تقويم المعاصرين ( الحلقة الثانية عشر )'))
 
 // format
 assert.equal(timestamp(0), '00:00')

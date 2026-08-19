@@ -12,8 +12,9 @@
     "preview": "astro preview",
     "meili": "meilisearch --db-path ./data/meili/data.ms --master-key $MEILI_ADMIN_KEY --http-addr 127.0.0.1:7700 --env development",
     "data": "tsx --env-file-if-exists=.env scripts/build-data.ts",
+    "articles": "tsx scripts/articles.ts",
     "index": "tsx --env-file-if-exists=.env scripts/index.ts",
-    "ingest": "pnpm data && pnpm index",
+    "ingest": "pnpm data && pnpm articles && pnpm index",
     "deploy": "wrangler pages deploy dist",
     "check": "tsx scripts/selfcheck.ts",
     "predeploy": "! grep -rql '127.0.0.1:7700' dist || (echo 'PUBLIC_MEILI_HOST is still localhost — set the public one and rebuild' && false)"
