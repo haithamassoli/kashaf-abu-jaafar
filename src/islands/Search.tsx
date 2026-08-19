@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   HITS_PER_PAGE,
   MAX_PAGES,
@@ -11,14 +11,9 @@ import {
 } from '../lib/meili'
 import { arabicDate, timestamp } from '../lib/format'
 import { DirectionProvider } from '@base-ui/react/direction-provider'
+import { Combobox } from '@base-ui/react/combobox'
+import { CheckIcon, ChevronDownIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 
 type PlaylistOption = { id: string; title: string; count: number }
 type Status = 'idle' | 'loading' | 'done' | 'error'
@@ -64,6 +59,10 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
   const [result, setResult] = useState<SearchResult | null>(null)
   const seq = useRef(0)
   const top = useRef<HTMLDivElement>(null)
+  // The combobox filters `items` through itemToStringLabel, so ids are the items and the
+  // map turns one back into its playlist.
+  const byId = useMemo(() => new Map(playlists.map((p) => [p.id, p])), [playlists])
+  const ids = useMemo(() => [...byId.keys()], [byId])
 
   // Only the newest request may set state; older responses are ignored.
   const run = async (query: string, playlist: string[], page: number, next: Tab) => {
@@ -172,29 +171,57 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
           <div className="mt-3 flex items-center gap-3">
             {/* Base UI takes direction from context, not the <html dir> the page uses. */}
             <DirectionProvider direction="rtl">
-              <Select multiple value={pl} onValueChange={changePlaylist}>
-                {/* Not aria-labelledby: eab3908 removed the visible label but kept the
-                    reference, and a dangling one beats the trigger's own text — the
-                    combobox ended up with no accessible name at all (a11y 95 -> 100).
-                    h-11 alone also loses: select.tsx ships data-[size=default]:h-8, and
-                    tailwind-merge cannot dedupe across variant prefixes, so the more
-                    specific one wins and the control renders 32px, not the 44px the rest
-                    of the site uses. Match the prefix to beat it. */}
-                <SelectTrigger
+              <Combobox.Root
+                multiple
+                items={ids}
+                value={pl}
+                onValueChange={changePlaylist}
+                itemToStringLabel={(id: string) => byId.get(id)?.title ?? id}
+              >
+                {/* aria-label, not aria-labelledby: eab3908 removed the visible label but kept
+                    the reference, and a dangling one beats the trigger's own text — the
+                    combobox ended up with no accessible name at all (a11y 95 -> 100). */}
+                <Combobox.Trigger
                   aria-label="قائمة التشغيل"
-                  className="h-11 min-w-0 flex-1 border-border-strong bg-surface px-3 text-fg data-[size=default]:h-11 sm:max-w-xs"
+                  className="flex h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-lg border border-border-strong bg-surface px-3 text-sm text-fg transition-colors hover:bg-surface-2 sm:max-w-xs"
                 >
-                  <SelectValue>{() => playlistLabel(pl, playlists)}</SelectValue>
-                </SelectTrigger>
-                <SelectContent className="max-h-80">
-                  {playlists.map((p) => (
-                    <SelectItem key={p.id} value={p.id} className="py-2">
-                      <span className="truncate">{p.title}</span>
-                      <span className="digits shrink-0 text-xs text-muted">({p.count})</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  <span className="truncate">{playlistLabel(pl, playlists)}</span>
+                  <ChevronDownIcon className="size-4 shrink-0 text-muted" />
+                </Combobox.Trigger>
+                <Combobox.Portal>
+                  <Combobox.Positioner sideOffset={4} className="z-50">
+                    <Combobox.Popup
+                      aria-label="قائمة التشغيل"
+                      className="w-(--anchor-width) max-w-(--available-width) overflow-hidden rounded-lg bg-surface text-fg shadow-md ring-1 ring-border"
+                    >
+                      <Combobox.Input
+                        placeholder="ابحث في القوائم"
+                        className="h-11 w-full border-b border-border bg-transparent px-3 text-base outline-none placeholder:text-muted"
+                      />
+                      <Combobox.Empty>
+                        <p className="px-3 py-4 text-sm text-muted">لا قوائم مطابقة</p>
+                      </Combobox.Empty>
+                      <Combobox.List className="max-h-64 overflow-y-auto overscroll-contain p-1">
+                        {(id: string) => (
+                          <Combobox.Item
+                            key={id}
+                            value={id}
+                            className="relative flex cursor-default items-center gap-2 rounded-md py-2 pe-8 ps-2 text-sm outline-none select-none data-highlighted:bg-surface-2"
+                          >
+                            <span className="truncate">{byId.get(id)?.title}</span>
+                            <span className="digits shrink-0 text-xs text-muted">
+                              ({byId.get(id)?.count})
+                            </span>
+                            <Combobox.ItemIndicator className="absolute end-2 flex size-4 items-center justify-center">
+                              <CheckIcon className="size-4" />
+                            </Combobox.ItemIndicator>
+                          </Combobox.Item>
+                        )}
+                      </Combobox.List>
+                    </Combobox.Popup>
+                  </Combobox.Positioner>
+                </Combobox.Portal>
+              </Combobox.Root>
             </DirectionProvider>
             {pl.length > 0 && (
               <button
@@ -207,6 +234,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
             )}
           </div>
         )}
+
       </form>
 
       {result && (
