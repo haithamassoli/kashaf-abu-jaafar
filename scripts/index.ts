@@ -29,7 +29,8 @@ if (ONLY !== 'articles') {
   await client
     .index('cues')
     .updateSettings(settings)
-    .then((t) => client.tasks.waitForTask(t.taskUid))
+    // a settings change that forces a re-index takes minutes; the client default is 5s
+    .then((t) => client.tasks.waitForTask(t.taskUid, { timeout: 300_000 }))
 }
 
 const files = ONLY === 'articles' ? [] : (await readdir(RAW_DIR)).filter((f) => f.endsWith('.chunks.ndjson'))
@@ -91,7 +92,7 @@ if (ONLY !== 'cues') {
   await client
     .index('articles')
     .updateSettings(artSettings)
-    .then((t) => client.tasks.waitForTask(t.taskUid))
+    .then((t) => client.tasks.waitForTask(t.taskUid, { timeout: 300_000 }))
 
   let docs: Record<string, unknown>[] = []
   let sentDocs = 0
