@@ -4,6 +4,8 @@ data/*
 !data/playlists.json
 !data/segments/
 !data/segments/*.json
+!data/articles/
+!data/articles/*.json
 .env
 dist/
 .DS_Store

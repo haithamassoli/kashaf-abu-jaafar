@@ -72,34 +72,40 @@ export async function search(
     highlightPostTag: '</mark>',
   }
 
-  // One round trip for both tabs: the inactive one asks for 0 hits, just its count.
-  const { results } = await client.multiSearch({
-    queries: [
-      {
-        indexUid: 'cues',
-        q,
-        ...common,
-        page: tab === 'v' ? at : 1,
-        hitsPerPage: tab === 'v' ? HITS_PER_PAGE : 0,
-        attributesToHighlight: ['text'],
-        ...(ids.length
-          ? { filter: `playlist_ids IN [${ids.map((id) => `"${id}"`).join(', ')}]` }
-          : {}),
-      },
-      {
-        indexUid: 'articles',
-        q,
-        ...common,
-        page: tab === 'a' ? at : 1,
-        hitsPerPage: tab === 'a' ? HITS_PER_PAGE : 0,
-        attributesToHighlight: ['title', 'text'],
-        // A hit is one paragraph out of an article; crop it to the words around the match.
-        attributesToCrop: ['text'],
-        cropLength: 40,
-        cropMarker: '…',
-      },
-    ],
-  })
+  const cueOpts = {
+    ...common,
+    page: tab === 'v' ? at : 1,
+    hitsPerPage: tab === 'v' ? HITS_PER_PAGE : 0,
+    attributesToHighlight: ['text'],
+    ...(ids.length ? { filter: `playlist_ids IN [${ids.map((id) => `"${id}"`).join(', ')}]` } : {}),
+  }
+  const articleOpts = {
+    ...common,
+    page: tab === 'a' ? at : 1,
+    hitsPerPage: tab === 'a' ? HITS_PER_PAGE : 0,
+    attributesToHighlight: ['title', 'text'],
+    // A hit is one paragraph out of an article; crop it to the words around the match.
+    attributesToCrop: ['text'],
+    cropLength: 40,
+    cropMarker: '…',
+  }
+
+  // One round trip for both tabs: the inactive one asks for 0 hits, just its count. A deployment
+  // whose Meilisearch has no `articles` index yet (or a search key still scoped to `cues`) fails
+  // the whole multi-search, so fall back to the cue query alone rather than take search down.
+  const { results } = await client
+    .multiSearch({
+      queries: [
+        { indexUid: 'cues', q, ...cueOpts },
+        { indexUid: 'articles', q, ...articleOpts },
+      ],
+    })
+    .catch(async () => ({
+      results: [
+        await client.index('cues').search(q, cueOpts),
+        { hits: [], totalHits: 0, page: 1, totalPages: 0, processingTimeMs: 0 },
+      ],
+    }))
 
   const [cues, articles] = results
   const active = tab === 'v' ? cues : articles
