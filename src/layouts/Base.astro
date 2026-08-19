@@ -3,7 +3,7 @@
 // plugin inlines @import without rewriting url(), which drops the woff2 files.
 import '@fontsource-variable/noto-naskh-arabic/wght.css'
 import '../styles/global.css'
-import { SITE, SHEIKH } from '../lib/seo'
+import { SITE, SHEIKH, HOME_TITLE } from '../lib/seo'
 import JsonLd from '../components/JsonLd.astro'
 
 interface Props {
@@ -53,7 +53,7 @@ const social = [
     d: 'M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z',
   },
 ]
-const fullTitle = title ? `${title} — ${SITE}` : SITE
+const fullTitle = title ? `${title} — ${SITE}` : HOME_TITLE
 const base = Astro.site ?? Astro.url.origin
 const canonical = new URL(Astro.url.pathname, base).href
 const ogImage = new URL(image, base).href

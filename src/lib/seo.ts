@@ -2,6 +2,9 @@ export const SITE = 'كشّاف أبي جعفر'
 export const SITE_URL = 'https://kashaf-alkulify.assoli.site'
 export const SHEIKH = 'الشيخ أبو جعفر عبد الله بن فهد الخليفي'
 
+/** The home page's <title>; every other page is `${title} — ${SITE}`. */
+export const HOME_TITLE = `${SITE} — بحث في نصوص دروس الشيخ عبد الله الخليفي`
+
 /** The lessons' author — referenced by @id from every VideoObject. */
 export const person = {
   '@type': 'Person',
