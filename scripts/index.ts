@@ -13,16 +13,24 @@ import { articleSynonyms } from '../src/lib/normalize.ts'
 const RAW_DIR = (process.env.RAW_DIR ?? '').replace(/^~/, homedir())
 const host = process.env.MEILI_HOST ?? 'http://127.0.0.1:7700'
 const apiKey = process.env.MEILI_ADMIN_KEY
-if (!RAW_DIR || !apiKey) throw new Error('RAW_DIR and MEILI_ADMIN_KEY must be set (see .env.example)')
-
 const ONLY = process.argv[2]
+if (!apiKey) throw new Error('MEILI_ADMIN_KEY must be set (see .env.example)')
+// The article pass reads data/, so it runs fine on a box that has no tafrigh output.
+if (!RAW_DIR && ONLY !== 'articles') throw new Error('RAW_DIR must be set (see .env.example)')
 const client = new Meilisearch({ host, apiKey })
 const settings = JSON.parse(
   await readFile(new URL('../meilisearch-settings.json', import.meta.url), 'utf8'),
 )
 
-await client.createIndex('cues', { primaryKey: 'id' }).catch(() => {})
-await client.index('cues').updateSettings(settings).then((t) => client.tasks.waitForTask(t.taskUid))
+// Not on an articles-only run: the cue settings would go up without the synonyms this run
+// never computes, and there is no reason to touch a live `cues` index to index articles.
+if (ONLY !== 'articles') {
+  await client.createIndex('cues', { primaryKey: 'id' }).catch(() => {})
+  await client
+    .index('cues')
+    .updateSettings(settings)
+    .then((t) => client.tasks.waitForTask(t.taskUid))
+}
 
 const files = ONLY === 'articles' ? [] : (await readdir(RAW_DIR)).filter((f) => f.endsWith('.chunks.ndjson'))
 let sent = 0
