@@ -9,7 +9,9 @@ import { SITE, SITE_URL, SHEIKH, person } from '../lib/seo'
 const options = playlists.map((p) => ({ id: p.id, title: p.title, count: p.videoIds.length }))
 
 const num = (n: number) => n.toLocaleString('en-US')
-const cues = videos.reduce((n, v) => n + v.segmentCount, 0)
+// transcript lines across every lecture — not the cue count in Meilisearch, which merges these
+// into ~75 s windows and is roughly 8x smaller
+const segments = videos.reduce((n, v) => n + v.segmentCount, 0)
 const lastUpload = videos.map((v) => v.uploadDate ?? '').sort().at(-1)
 
 const cards = [
@@ -29,8 +31,8 @@ const cards = [
     icon: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18', 'M12 7.5V12l3 2'],
   },
   {
-    label: 'المقاطع المفهرسة',
-    value: num(cues),
+    label: 'مقاطع التفريغ',
+    value: num(segments),
     icon: ['M20 15a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2Z', 'M8 9h8M8 13h5'],
   },
   {

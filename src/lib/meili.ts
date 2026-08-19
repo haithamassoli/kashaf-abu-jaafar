@@ -6,7 +6,10 @@ const env = import.meta.env ?? ({} as ImportMetaEnv)
 export const HOST = env.PUBLIC_MEILI_HOST || 'http://127.0.0.1:7700'
 const KEY = env.PUBLIC_MEILI_SEARCH_KEY || ''
 
-export const client = new Meilisearch({ host: HOST, apiKey: KEY })
+// Without this the fetch is unbounded: a Meilisearch that stalls rather than refuses leaves the
+// UI on «جارٍ البحث…» forever with no retry. ponytail: the fallback below re-requests once, so a
+// dead host costs two timeouts before the error shows — bounded, which is the point.
+export const client = new Meilisearch({ host: HOST, apiKey: KEY, timeout: 10_000 })
 
 export const HITS_PER_PAGE = 20
 export const MAX_PAGES = 50

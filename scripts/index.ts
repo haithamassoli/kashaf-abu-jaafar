@@ -34,6 +34,15 @@ if (ONLY !== 'articles') {
 }
 
 const files = ONLY === 'articles' ? [] : (await readdir(RAW_DIR)).filter((f) => f.endsWith('.chunks.ndjson'))
+// A video that shows up in a second playlist gets its transcript.json merged but its ndjson left
+// alone, so playlist_ids there goes stale. data/videos.json is built from the transcripts, so it
+// is the one that knows the full membership.
+const playlistsOf = new Map(
+  (JSON.parse(await readFile(new URL('../data/videos.json', import.meta.url), 'utf8')) as {
+    id: string
+    playlists: { id: string }[]
+  }[]).map((v) => [v.id, v.playlists.map((p) => p.id)]),
+)
 let sent = 0
 const BATCH = 20_000
 
@@ -56,6 +65,7 @@ for (const file of files) {
   for (const line of lines) {
     const cue = JSON.parse(line)
     cue.text = clean(cue.text ?? '')
+    cue.playlist_ids = playlistsOf.get(cue.video_id) ?? cue.playlist_ids
     // Not searchable, not displayed, nothing reads it — but ~30% of the index on disk.
     delete cue.search_text
     if (cue.text) {

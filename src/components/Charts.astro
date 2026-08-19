@@ -49,8 +49,23 @@ if (months.length) {
   }
 }
 
+// The bar chart is horizontal, so it needs vertical room per playlist — a fixed height silently
+// overlaps the bars once the corpus grows past a dozen or so lists. Chart.js splits the plot area
+// *evenly*, so the slot has to fit the tallest label: sizing by the total would under-provision
+// every label above the average. Two lines keeps the chart a sane height; the tooltip and the
+// aria-label still carry the whole title.
+const LABEL_LINES = 2
+const SLOT = LABEL_LINES * 16 + 12
+const label = (title: string) => {
+  const lines = wrap(title)
+  return lines.length <= LABEL_LINES
+    ? lines
+    : [...lines.slice(0, LABEL_LINES - 1), lines[LABEL_LINES - 1] + '…']
+}
+const chartH = Math.max(224, bars.length * SLOT)
+
 const payload = JSON.stringify({
-  bars: bars.map((b) => ({ label: wrap(b.title), hours: b.hours })),
+  bars: bars.map((b) => ({ label: label(b.title), hours: b.hours })),
   cum,
 }).replace(/</g, '\\u003c')
 
@@ -60,11 +75,13 @@ const cumAlt = cum.length
   : ''
 ---
 
-<div id="charts" class="mt-3 grid gap-3 md:grid-cols-2">
+<!-- stacked, not side by side: at 31 playlists this chart is far taller than the cumulative one
+     and the shortest bars are about a pixel wide in a half-width canvas -->
+<div id="charts" class="mt-3 grid gap-3">
   <section class="card p-4">
     <h3 class="text-base font-semibold">الساعات المفرَّغة لكل قائمة</h3>
     <p class="mt-1 text-sm text-muted">عدد ساعات الدروس المفرَّغة في كل قائمة تشغيل</p>
-    <div class="relative mt-4 h-56">
+    <div class="relative mt-4" style={`height:${chartH}px`}>
       <canvas id="chart-playlists" role="img" aria-label={barsAlt}></canvas>
     </div>
   </section>
@@ -139,7 +156,6 @@ const cumAlt = cum.length
               backgroundColor: () => theme.accent,
               borderRadius: 4,
               borderWidth: 0,
-              barThickness: 22,
             },
           ],
         },
@@ -151,7 +167,12 @@ const cumAlt = cum.length
           plugins: { legend: { display: false }, tooltip },
           scales: {
             x: { reverse: true, beginAtZero: true, ticks: ticks({ precision: 0 }), grid, border },
-            y: { position: 'right', ticks: ticks(), grid: { display: false }, border },
+            y: {
+              position: 'right',
+              ticks: ticks({ autoSkip: false, maxTicksLimit: bars.length }),
+              grid: { display: false },
+              border,
+            },
           },
         },
       })

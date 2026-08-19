@@ -32,12 +32,12 @@ const meili = (path: string, body?: unknown) =>
     .then((r) => r.json())
     .catch((e: Error) => ({ error: e.message }))
 
-type Video = { id: string; duration: number; playlists: { id: string }[] }
+type Video = { id: string; duration: number; segmentCount: number; playlists: { id: string }[] }
 type Seg = { s: number; e: number; t: string }
 
 const rawFiles = await readdir(RAW)
 const videos: Video[] = await json('videos.json')
-const playlists: { id: string; videoIds: string[] }[] = await json('playlists.json')
+const playlists: { id: string; title?: string; videoIds: string[] }[] = await json('playlists.json')
 const videoIds = new Set(videos.map((v) => v.id))
 
 // 1 — RAW_DIR *.transcript.json <-> videos.json <-> data/segments/<id>.json
@@ -72,8 +72,12 @@ check(2, `refs — ${playlists.length} playlists, ${videos.length} videos`, [
 const SLACK = 3
 const bad = { negative: 0, reversed: 0, pastEnd: 0, dupPair: 0, emptyText: 0 }
 const worst: string[] = []
+// the transcript panel renders one row per segment off segmentCount, so drift here is invisible
+// in the data and wrong on every page
+const miscount: string[] = []
 for (const v of videos) {
   const segs: Seg[] = await json(`segments/${v.id}.json`).catch(() => [])
+  if (segs.length !== v.segmentCount) miscount.push(`${v.id} ${segs.length}!=${v.segmentCount}`)
   segs.forEach((s, i) => {
     const hit =
       (s.s < 0 && (bad.negative++, `start ${s.s}`)) ||
@@ -85,8 +89,10 @@ for (const v of videos) {
   })
 }
 const badTotal = Object.values(bad).reduce((a, b) => a + b, 0)
-check(3, `segments — ${videos.length} videos scanned, ${JSON.stringify(bad)}`,
-  [badTotal && `${badTotal} bad segments, e.g. ${worst.join(' | ')}`], 'all timings sane')
+check(3, `segments — ${videos.length} videos scanned, ${JSON.stringify(bad)}`, [
+  badTotal && `${badTotal} bad segments, e.g. ${worst.join(' | ')}`,
+  miscount.length && `${miscount.length} videos whose segmentCount lies: ${few(miscount)}`,
+], 'all timings sane, every segmentCount matches')
 
 // 4 — meili `cues` vs the ndjson line count, and every cue's video_id resolving
 const chunkFiles = rawFiles.filter((f) => f.endsWith('.chunks.ndjson'))
@@ -113,6 +119,29 @@ for (const f of articleFiles) paragraphs += (await json(`articles/${f}`)).paragr
 const articles = stats.indexes?.articles?.numberOfDocuments ?? -1
 check(5, `articles — meili ${articles} docs vs ${paragraphs} paragraphs in ${articleFiles.length} files`,
   [articles !== paragraphs && `off by ${Math.abs(paragraphs - articles)} (run \`pnpm index articles\`)`], 'counts match')
+
+// 6 — a cue's playlist_ids vs the membership in playlists.json. tafrigh merges a re-crawled
+// video's playlists into its transcript but not into its ndjson, so this is the one that catches
+// a video that joined a second playlist after it was first transcribed.
+const staleP: string[] = []
+for (const p of playlists) {
+  if (!p.videoIds.length) continue
+  const r = await meili('/indexes/cues/search', {
+    q: '',
+    hitsPerPage: 1,
+    filter: `video_id IN [${p.videoIds.map((i) => JSON.stringify(i)).join(',')}] AND NOT playlist_ids = ${JSON.stringify(p.id)}`,
+  })
+  if (r.totalHits) staleP.push(`${p.title ?? p.id}: ${r.totalHits} cues from ${r.hits?.[0]?.video_id} and others omit it`)
+  const extra = await meili('/indexes/cues/search', {
+    q: '',
+    hitsPerPage: 1,
+    filter: `playlist_ids = ${JSON.stringify(p.id)} AND NOT video_id IN [${p.videoIds.map((i) => JSON.stringify(i)).join(',')}]`,
+  })
+  if (extra.totalHits) staleP.push(`${p.title ?? p.id}: ${extra.totalHits} cues claim it but their video left`)
+}
+check(6, `playlist_ids — every cue of all ${videos.length} videos checked against its ${playlists.length} playlists`,
+  [staleP.length && `${staleP.length} playlist(s) with cues that do not claim them — ${few(staleP, 2)} (run \`pnpm index cues\`)`],
+  'cue membership matches playlists.json')
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed')
 process.exit(failed ? 1 : 0)

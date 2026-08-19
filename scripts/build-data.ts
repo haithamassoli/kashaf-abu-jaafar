@@ -93,7 +93,9 @@ async function main() {
       title,
       videoIds: entries.sort((a, b) => a.index - b.index).map((e) => e.id),
     }))
-    .sort((a, b) => b.videoIds.length - a.videoIds.length)
+    // ties are common and readdir order is not stable, so name breaks them or the combobox,
+    // the /p list and the JSON-LD positions all reshuffle between rebuilds
+    .sort((a, b) => b.videoIds.length - a.videoIds.length || a.title.localeCompare(b.title, 'ar'))
 
   await writeFile(join(DATA, 'videos.json'), JSON.stringify(videos, null, 0))
   await writeFile(join(DATA, 'playlists.json'), JSON.stringify(playlistList, null, 0))

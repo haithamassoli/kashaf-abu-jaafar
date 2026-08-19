@@ -10,6 +10,7 @@ import {
   type Tab,
 } from '../lib/meili'
 import { arabicDate, timestamp } from '../lib/format'
+import { normalize } from '../lib/normalize'
 import { DirectionProvider } from '@base-ui/react/direction-provider'
 import { Combobox } from '@base-ui/react/combobox'
 import { CheckIcon, ChevronDownIcon } from 'lucide-react'
@@ -177,6 +178,11 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
                 value={pl}
                 onValueChange={changePlaylist}
                 itemToStringLabel={(id: string) => byId.get(id)?.title ?? id}
+                // One playlist title is fully vowelised, and the default collator filter is
+                // literal — typing «السلف» matched nothing. Fold both sides the way search does.
+                filter={(id: string, query: string) =>
+                  normalize(byId.get(id)?.title ?? id).includes(normalize(query))
+                }
               >
                 {/* aria-label, not aria-labelledby: eab3908 removed the visible label but kept
                     the reference, and a dangling one beats the trigger's own text — the
