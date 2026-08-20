@@ -317,3 +317,10 @@
     line-height: 1.7;
   }
 }
+
+/* /a/ lists all 3,333 articles in one document. Off-screen rows cost nothing to lay out
+   or paint; the intrinsic size keeps the scrollbar honest before they are rendered. */
+@utility skip-offscreen {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 5rem;
+}

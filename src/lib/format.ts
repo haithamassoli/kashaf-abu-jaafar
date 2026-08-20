@@ -41,17 +41,21 @@ export function youtubeUrl(videoId: string, t?: number): string {
  */
 function counted(n: number, one: string, two: string, few: string, many: string): string {
   if (n === 2) return two
+  const num = n.toLocaleString('en-US')
   if (n === 0) return `0 ${few}`
   const r = n % 100
-  if (r === 0 || r === 1) return `${n} ${one}`
-  if (r === 2) return `${n} ${two}`
-  if (r <= 10) return `${n} ${few}`
-  return `${n} ${many}`
+  if (r === 0 || r === 1) return `${num} ${one}`
+  if (r === 2) return `${num} ${two}`
+  if (r <= 10) return `${num} ${few}`
+  return `${num} ${many}`
 }
 
 export const lessons = (n: number) => counted(n, 'درس', 'درسان', 'دروس', 'درسًا')
 export const hours = (n: number) => counted(n, 'ساعة', 'ساعتان', 'ساعات', 'ساعة')
 export const lists = (n: number) => counted(n, 'قائمة', 'قائمتان', 'قوائم', 'قائمة')
+export const articles = (n: number) => counted(n, 'مقالة', 'مقالتان', 'مقالات', 'مقالة')
 
 /** Wrap Western digit runs so they stay LTR-ordered and tabular inside Arabic text. */
-export const withDigits = (s: string) => s.replace(/\d+/g, '<span class="digits">$&</span>')
+export const withDigits = (s: string) =>
+  // One run per number, group separators included — `3,333` must not split into `3` and `333`.
+  s.replace(/\d+(?:,\d{3})*/g, '<span class="digits">$&</span>')

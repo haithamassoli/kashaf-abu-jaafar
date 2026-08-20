@@ -5,7 +5,7 @@ import { normalize } from '../src/lib/normalize.ts'
 import { clean } from '../src/lib/clean.ts'
 import { decode, paragraphs, titleKey } from '../src/lib/html.ts'
 import { markMatches } from '../src/lib/mark.ts'
-import { timestamp, duration, arabicDate, lessons, hours, lists, withDigits } from '../src/lib/format.ts'
+import { timestamp, duration, arabicDate, lessons, hours, lists, articles, withDigits } from '../src/lib/format.ts'
 import { breadcrumb, mailto, CONTACT_EMAIL, SITE, SITE_URL } from '../src/lib/seo.ts'
 
 // highlight: escapes everything except <mark>, so a hostile transcript cannot inject HTML
@@ -67,6 +67,11 @@ assert.equal(lessons(112), '112 درسًا')
 assert.equal(hours(109), '109 ساعات')
 assert.equal(lists(2), 'قائمتان')
 assert.equal(withDigits('109 ساعات'), '<span class="digits">109</span> ساعات')
+// four figures group, and the separator must stay inside the one digit run — a `\d+` regex
+// splits `3,333` into two spans, which renders as `3,333` with the comma outside both
+assert.equal(articles(3333), '3,333 مقالة')
+assert.equal(lessons(1584), '1,584 درسًا')
+assert.equal(withDigits(articles(3333)), '<span class="digits">3,333</span> مقالة')
 
 // seo: breadcrumbs must be absolute, 1-indexed, and root-anchored — Google drops the
 // whole BreadcrumbList otherwise, and relative `item` URLs are the usual way that breaks.

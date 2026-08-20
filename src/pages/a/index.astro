@@ -1,0 +1,104 @@
+---
+import Base from '../../layouts/Base.astro'
+import { allArticles } from '../../lib/data'
+import { arabicDate, articles as counted, withDigits } from '../../lib/format'
+import { SITE_URL, SHEIKH, breadcrumb } from '../../lib/seo'
+
+const LABEL: Record<string, string> = { post: 'مقالة', fatwa: 'فتوى', book: 'كتاب' }
+
+// Newest first; the undated few sink to the bottom rather than to 1970.
+const rows = allArticles()
+  .map((a) => ({
+    id: a.id,
+    title: a.title,
+    date: a.date,
+    // The type is only worth showing when it isn't the default; otherwise the topic is.
+    tag: a.type === 'post' ? (a.categories[0] ?? '') : (LABEL[a.type] ?? ''),
+  }))
+  .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '') || a.title.localeCompare(b.title, 'ar'))
+
+const indexSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  '@id': `${SITE_URL}/a/#collection`,
+  name: 'المقالات',
+  inLanguage: 'ar',
+  // The full 3,333 would be a megabyte of JSON-LD nobody reads; the page itself is the list.
+  mainEntity: { '@type': 'ItemList', numberOfItems: rows.length },
+}
+---
+
+<Base
+  title="المقالات"
+  description={`مقالات وفتاوى ${SHEIKH}`}
+  schema={[indexSchema, breadcrumb([['المقالات', '/a/']])]}
+>
+  <h1 class="mt-10 text-2xl font-semibold tracking-tight sm:text-3xl">المقالات</h1>
+  <p class="mt-3 text-muted">
+    فلترة فورية على العنوان والتصنيف والتاريخ؛ للبحث داخل نصوص المقالات استخدم
+    <a href="/" class="text-accent underline underline-offset-4">البحث الرئيسي</a>.
+  </p>
+
+  <label for="article-filter" class="sr-only">ابحث في المقالات</label>
+  <input
+    id="article-filter"
+    type="search"
+    data-search-input
+    autocomplete="off"
+    placeholder="ابحث في المقالات"
+    class="mt-6 w-full rounded-xl border border-border-strong bg-surface px-4 py-3 text-base placeholder:text-muted"
+  />
+
+  <p id="article-count" class="mt-3 text-sm text-muted" aria-live="polite" aria-atomic="true">
+    <span id="article-shown" class="digits">{rows.length.toLocaleString('en-US')}</span> من <span
+      set:html={withDigits(counted(rows.length))}
+    />
+  </p>
+
+  <p id="article-empty" class="mt-3 text-sm text-muted" hidden>لا نتائج</p>
+
+  <ul id="article-list" class="mt-4 space-y-2">
+    {
+      rows.map((a) => (
+        <li class="skip-offscreen">
+          <a href={`/a/${a.id}/`} class="card block px-4 py-3 transition-colors hover:bg-surface-2">
+            <span class="block font-medium leading-relaxed">{a.title}</span>
+            <span class="mt-1 block text-sm text-muted">
+              {a.date && <bdi>{arabicDate(a.date)}</bdi>}
+              {a.date && a.tag && ' · '}
+              {a.tag}
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</Base>
+
+<script>
+  import { normalize } from '../../lib/normalize'
+
+  const input = document.querySelector<HTMLInputElement>('#article-filter')!
+  const shownEl = document.querySelector('#article-shown')!
+  const count = document.querySelector<HTMLElement>('#article-count')!
+  const empty = document.querySelector<HTMLElement>('#article-empty')!
+  const items = [...document.querySelectorAll<HTMLLIElement>('#article-list > li')]
+
+  // The folded titles are built here rather than shipped as data-title attributes: at 3,333
+  // rows that duplication was ~300 KB of HTML, against one ~5 ms pass on the first keystroke.
+  let folded: string[] | null = null
+
+  input.addEventListener('input', () => {
+    folded ??= items.map((li) => normalize(li.textContent ?? ''))
+    const q = normalize(input.value)
+    let shown = 0
+    items.forEach((li, i) => {
+      const hit = !q || folded![i].includes(q)
+      li.hidden = !hit
+      if (hit) shown++
+    })
+    shownEl.textContent = shown.toLocaleString('en-US')
+    count.hidden = shown === 0
+    empty.hidden = shown !== 0
+  })
+</script>

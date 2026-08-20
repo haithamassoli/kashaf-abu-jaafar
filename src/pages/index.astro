@@ -23,6 +23,7 @@ const cards = [
   {
     label: 'قوائم التشغيل',
     value: num(playlists.length),
+    href: '/p/',
     icon: ['M4 7h12M4 12h12M4 17h7', 'm17 13 4 2.5-4 2.5Z'],
   },
   {
@@ -38,6 +39,7 @@ const cards = [
   {
     label: 'المقالات',
     value: num(articleCount),
+    href: '/a/',
     icon: ['M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z', 'M14 3v5h5', 'M9 13h6M9 17h4'],
   },
   {
@@ -90,28 +92,40 @@ const value = (s: string) => (/^[\d,]+$/.test(s) ? `<span class="digits">${s}</s
 
     <ul class="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
       {
-        cards.map((c) => (
-          <li class="card flex items-center justify-between gap-3 px-4 py-4">
-            <div class="min-w-0">
-              <span class="block text-sm text-muted">{c.label}</span>
-              <span class="mt-1 block text-xl font-semibold" set:html={value(c.value)} />
-            </div>
-            <svg
-              class="size-5 shrink-0 text-muted"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.6"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              {c.icon.map((d) => (
-                <path d={d} />
-              ))}
-            </svg>
-          </li>
-        ))
+        cards.map((c) => {
+          // The two cards that have somewhere to go become links; the rest stay plain.
+          const Cell = c.href ? 'a' : 'div'
+          return (
+            <li class="card">
+              <Cell
+                href={c.href}
+                class:list={[
+                  'flex items-center justify-between gap-3 px-4 py-4',
+                  c.href && 'rounded-[inherit] transition-colors hover:bg-surface-2',
+                ]}
+              >
+                <div class="min-w-0">
+                  <span class="block text-sm text-muted">{c.label}</span>
+                  <span class="mt-1 block text-xl font-semibold" set:html={value(c.value)} />
+                </div>
+                <svg
+                  class="size-5 shrink-0 text-muted"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  {c.icon.map((d) => (
+                    <path d={d} />
+                  ))}
+                </svg>
+              </Cell>
+            </li>
+          )
+        })
       }
     </ul>
 

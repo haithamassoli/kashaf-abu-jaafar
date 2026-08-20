@@ -444,7 +444,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
                         }}
                       ></p>
                       {a.date && (
-                        <p className="digits mt-3 text-xs text-muted">{arabicDate(a.date)}</p>
+                        <p className="mt-3 text-xs text-muted"><bdi>{arabicDate(a.date)}</bdi></p>
                       )}
                     </a>
                   </li>
