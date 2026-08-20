@@ -5,26 +5,18 @@ import { playlists, playlistDuration, videos } from '../lib/data'
 const H = 3600
 const round1 = (n: number) => Math.round(n * 10) / 10
 
-/** Chart.js renders a string[] label as one line per entry. */
-const wrap = (s: string, max = 20) => {
-  const lines: string[] = []
-  let line = ''
-  for (const word of s.split(/\s+/)) {
-    if (line && (line + ' ' + word).length > max) {
-      lines.push(line)
-      line = word
-    } else line = line ? line + ' ' + word : word
-  }
-  if (line) lines.push(line)
-  return lines
-}
-
-const bars = playlists
+const all = playlists
   .map((p) => ({ title: p.title, hours: round1(playlistDuration(p) / H) }))
   .sort((a, b) => b.hours - a.hours)
 
 const loose = videos.filter((v) => v.playlists.length === 0).reduce((n, v) => n + v.duration, 0) / H
-if (loose >= 1) bars.push({ title: 'خارج القوائم', hours: round1(loose) })
+if (loose >= 1) all.push({ title: 'خارج القوائم', hours: round1(loose) })
+
+// The full list lives on /p — this card is a glance, so it stays as tall as the cumulative chart
+// next to it instead of growing a row per playlist. One line per label, tooltip carries the rest.
+const TOP = 8
+const bars = all.slice(0, TOP)
+const label = (t: string) => (t.length > 20 ? t.slice(0, 19).trimEnd() + '…' : t)
 
 // One point per month across the whole span — the empty months are part of the story.
 const byMonth = new Map<string, number>()
@@ -49,39 +41,24 @@ if (months.length) {
   }
 }
 
-// The bar chart is horizontal, so it needs vertical room per playlist — a fixed height silently
-// overlaps the bars once the corpus grows past a dozen or so lists. Chart.js splits the plot area
-// *evenly*, so the slot has to fit the tallest label: sizing by the total would under-provision
-// every label above the average. Two lines keeps the chart a sane height; the tooltip and the
-// aria-label still carry the whole title.
-const LABEL_LINES = 2
-const SLOT = LABEL_LINES * 16 + 12
-const label = (title: string) => {
-  const lines = wrap(title)
-  return lines.length <= LABEL_LINES
-    ? lines
-    : [...lines.slice(0, LABEL_LINES - 1), lines[LABEL_LINES - 1] + '…']
-}
-const chartH = Math.max(224, bars.length * SLOT)
-
 const payload = JSON.stringify({
-  bars: bars.map((b) => ({ label: label(b.title), hours: b.hours })),
+  bars: bars.map((b) => ({ label: label(b.title), title: b.title, hours: b.hours })),
   cum,
 }).replace(/</g, '\\u003c')
 
-const barsAlt = `الساعات المفرَّغة لكل قائمة: ${bars.map((b) => `${b.title} ${b.hours} ساعة`).join('، ')}.`
+const barsAlt = `أكبر ${bars.length} قوائم بالساعات المفرَّغة: ${bars.map((b) => `${b.title} ${b.hours} ساعة`).join('، ')}.`
 const cumAlt = cum.length
   ? `الساعات المفرَّغة تراكميًا من ${cum[0].label} إلى ${cum.at(-1)?.label}، وصولًا إلى ${cum.at(-1)?.hours} ساعة.`
   : ''
 ---
 
-<!-- stacked, not side by side: at 31 playlists this chart is far taller than the cumulative one
-     and the shortest bars are about a pixel wide in a half-width canvas -->
-<div id="charts" class="mt-3 grid gap-3">
+<div id="charts" class="mt-3 grid gap-3 md:grid-cols-2">
   <section class="card p-4">
-    <h3 class="text-base font-semibold">الساعات المفرَّغة لكل قائمة</h3>
-    <p class="mt-1 text-sm text-muted">عدد ساعات الدروس المفرَّغة في كل قائمة تشغيل</p>
-    <div class="relative mt-4" style={`height:${chartH}px`}>
+    <h3 class="text-base font-semibold">أكبر القوائم تفريغًا</h3>
+    <p class="mt-1 text-sm text-muted">
+      أطول {bars.length} قوائم بالساعات المفرَّغة من أصل {all.length}
+    </p>
+    <div class="relative mt-4 h-56">
       <canvas id="chart-playlists" role="img" aria-label={barsAlt}></canvas>
     </div>
   </section>
@@ -164,7 +141,11 @@ const cumAlt = cum.length
           responsive: true,
           maintainAspectRatio: false,
           interaction: { mode: 'index', intersect: false, axis: 'y' },
-          plugins: { legend: { display: false }, tooltip },
+          plugins: {
+            legend: { display: false },
+            // the axis label is truncated to one line; the tooltip shows the whole title
+            tooltip: { ...tooltip, callbacks: { ...tooltip.callbacks, title: (i: any[]) => bars[i[0].dataIndex].title } },
+          },
           scales: {
             x: { reverse: true, beginAtZero: true, ticks: ticks({ precision: 0 }), grid, border },
             y: {
