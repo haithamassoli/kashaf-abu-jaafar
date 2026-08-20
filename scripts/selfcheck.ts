@@ -6,7 +6,7 @@ import { clean } from '../src/lib/clean.ts'
 import { decode, paragraphs, titleKey } from '../src/lib/html.ts'
 import { markMatches } from '../src/lib/mark.ts'
 import { timestamp, duration, arabicDate, lessons, hours, lists, withDigits } from '../src/lib/format.ts'
-import { breadcrumb, SITE_URL } from '../src/lib/seo.ts'
+import { breadcrumb, mailto, CONTACT_EMAIL, SITE, SITE_URL } from '../src/lib/seo.ts'
 
 // highlight: escapes everything except <mark>, so a hostile transcript cannot inject HTML
 assert.equal(
@@ -94,5 +94,13 @@ assert.equal(markMatches('باب الصلاة', normalize('الزكاة')), 'ب�
 assert.equal(markMatches('الصَّلاة نعم', normalize('الصلاه')), '<mark>الصَّلاة</mark> نعم')
 // an empty query must return early: indexOf('') never reaches -1, so the match loop hangs
 assert.equal(markMatches('باب الصلاة', ''), 'باب الصلاة')
+
+// mailto: the contact form hands this straight to the mail client, so an unencoded `&`
+// or `#` in the subject would truncate the message the user just typed.
+const link = mailto('س & ج #1', 'سطر\nآخر')
+assert.ok(link.startsWith(`mailto:${CONTACT_EMAIL}?subject=`))
+const q = new URL(link).searchParams
+assert.equal(q.get('subject'), `[${SITE}] س & ج #1`)
+assert.equal(q.get('body'), 'سطر\nآخر')
 
 console.log('selfcheck ok')

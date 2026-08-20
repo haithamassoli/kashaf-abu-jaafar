@@ -1,0 +1,73 @@
+---
+import Base from '../layouts/Base.astro'
+import { CONTACT_EMAIL, SITE, breadcrumb } from '../lib/seo'
+
+const field =
+  'mt-2 w-full rounded-xl border border-border-strong bg-surface px-4 py-3 text-base placeholder:text-muted'
+---
+
+<Base
+  title="تواصل واقتراحات"
+  description={`أرسل اقتراحًا أو ملاحظة أو تصحيحًا لنصوص ${SITE}.`}
+  schema={[breadcrumb([['تواصل واقتراحات', '/contact/']])]}
+>
+  <h1 class="mt-10 text-2xl font-semibold tracking-tight sm:text-3xl">تواصل واقتراحات</h1>
+  <p class="mt-3 text-muted">
+    اقتراح، أو ملاحظة، أو خطأ في تفريغ درس؟ اكتبه هنا، ثم اضغط الزر ليفتح تطبيق البريد لديك
+    والرسالة جاهزة.
+  </p>
+
+  <form id="contact-form" class="card mt-8 p-5 sm:p-6">
+    <label for="contact-subject" class="block text-sm font-medium">الموضوع</label>
+    <input
+      id="contact-subject"
+      name="subject"
+      required
+      maxlength="120"
+      autocomplete="off"
+      placeholder="مثال: خطأ في تفريغ درس"
+      class={field}
+    />
+
+    <label for="contact-body" class="mt-5 block text-sm font-medium">الرسالة</label>
+    <textarea
+      id="contact-body"
+      name="body"
+      required
+      rows="8"
+      maxlength="1500"
+      placeholder="اكتب رسالتك، ومعها رابط الدرس إن كانت الملاحظة عليه."
+      class={`${field} resize-y`}></textarea>
+
+    <button
+      type="submit"
+      class="mt-6 inline-flex h-11 items-center rounded-xl bg-accent px-5 font-medium text-accent-fg transition-opacity hover:opacity-90"
+      >افتح البريد</button
+    >
+
+    <p class="mt-4 text-sm text-muted">
+      لم يفتح تطبيق البريد؟ راسلنا مباشرة على
+      <a
+        href={`mailto:${CONTACT_EMAIL}`}
+        class="text-accent underline underline-offset-4"
+        dir="ltr">{CONTACT_EMAIL}</a
+      >
+    </p>
+  </form>
+</Base>
+
+<script>
+  import { mailto } from '../lib/seo'
+
+  const form = document.querySelector<HTMLFormElement>('#contact-form')
+  form?.addEventListener('submit', (e) => {
+    // `required` already blocked the empty case; all that's left is handing the browser
+    // a mailto: instead of a GET — form action="mailto:" is unreliable across clients.
+    e.preventDefault()
+    const { subject, body } = form.elements as unknown as {
+      subject: HTMLInputElement
+      body: HTMLTextAreaElement
+    }
+    location.href = mailto(subject.value.trim(), body.value.trim())
+  })
+</script>

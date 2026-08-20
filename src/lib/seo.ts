@@ -30,3 +30,15 @@ export const breadcrumb = (trail: [string, string][]) => ({
     item: new URL(path, SITE_URL).href,
   })),
 })
+
+/** Where the contact form's mail lands. */
+export const CONTACT_EMAIL = 'haitham.b.assoli@gmail.com'
+
+/**
+ * The contact form's `mailto:` — the subject is prefixed so replies are filterable, and
+ * both parts are encoded: an unescaped `&` in the subject would otherwise swallow the body.
+ * ponytail: long messages can exceed a mail handler's URL limit, hence the textarea's
+ * maxlength; a real form endpoint is the fix if that ever bites.
+ */
+export const mailto = (subject: string, body: string) =>
+  `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`[${SITE}] ${subject}`)}&body=${encodeURIComponent(body)}`
