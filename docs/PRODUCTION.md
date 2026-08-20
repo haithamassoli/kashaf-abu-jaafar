@@ -39,8 +39,15 @@ binary back, `rate_limit` would stop parsing, and Caddy would refuse to start. U
 `sudo caddy upgrade`, which keeps the modules — never apt. If it happens anyway, monitor 2 from
 item 3 pages you within three minutes.
 
-Two things the obvious version got wrong, both caught before shipping:
+Three things the obvious version got wrong:
 
+- **The preflight must not be the request that gets refused.** The search POST carries an
+  `Authorization` header, so the browser sends a CORS preflight first — and a browser never shows
+  JS the response to a failed `OPTIONS`. It reports `TypeError: Failed to fetch`, which looks
+  exactly like a dead box and sends the client straight down the retry path this section exists
+  to close. `match { not method OPTIONS }` keeps preflights out of the zone; they are cached for
+  24 hours and never search anything. Only a browser catches this: curl sends no preflight, so
+  every check before that one passed.
 - **The 429 needs CORS of its own.** Meilisearch answers `Access-Control-Allow-Origin: *`; a 429
   that Caddy generates does not, and a browser reports a CORS-blocked reply as a network error
   rather than as a status. `handle_errors 429` puts the header back and answers JSON, which is
@@ -53,7 +60,9 @@ Two things the obvious version got wrong, both caught before shipping:
   reload is more requests.
 
 Measured from outside afterwards: 30 requests through, then 429 with `retry-after: 2`, then 200
-again once the window slid.
+again once the window slid. Then checked in a real browser on the live site, which is where the
+preflight bug turned up: with the limit tripped, the page says «طلبات كثيرة في وقت قصير» and,
+fifteen seconds later, the same query answers with 255 lessons.
 
 ### Cloudflare, if the edge is ever worth the DNS move
 
