@@ -1,6 +1,6 @@
 /** `pnpm check` — the smallest thing that fails if the text plumbing breaks. */
 import assert from 'node:assert/strict'
-import { highlight } from '../src/lib/meili.ts'
+import { client, highlight, peek, search } from '../src/lib/meili.ts'
 import { normalize } from '../src/lib/normalize.ts'
 import { clean } from '../src/lib/clean.ts'
 import { decode, paragraphs, titleKey } from '../src/lib/html.ts'
@@ -107,5 +107,26 @@ assert.ok(link.startsWith(`mailto:${CONTACT_EMAIL}?subject=`))
 const q = new URL(link).searchParams
 assert.equal(q.get('subject'), `[${SITE}] س & ج #1`)
 assert.equal(q.get('body'), 'سطر\nآخر')
+
+// search cache: a tab switch, or a back button, re-asks a question already answered. It must
+// come back from memory — the server embeds every query on one shared core — and the same
+// filters in another order are the same question.
+let calls = 0
+const stub = { hits: [], totalHits: 1, page: 1, totalPages: 1, processingTimeMs: 0 }
+client.multiSearch = (async () => {
+  calls++
+  return { results: [stub, stub] }
+}) as unknown as typeof client.multiSearch
+client.index = (() => ({ search: async () => stub })) as unknown as typeof client.index
+
+await search('كفارة اليمين', { tab: 'v', playlists: ['b', 'a'] })
+await search('كفارة اليمين', { tab: 'v', playlists: ['a', 'b'] })
+assert.equal(calls, 1)
+assert.ok(peek('كفارة اليمين', { tab: 'v', playlists: ['a', 'b'] }))
+// a different tab, page or filter is a different answer, and must still go out
+await search('كفارة اليمين', { tab: 'a', playlists: ['a', 'b'] })
+await search('كفارة اليمين', { tab: 'v', playlists: [] })
+assert.equal(calls, 3)
+assert.equal(peek('كفارة اليمين', { tab: 'v', page: 2 }), undefined)
 
 console.log('selfcheck ok')

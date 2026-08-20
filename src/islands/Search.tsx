@@ -3,6 +3,7 @@ import {
   HITS_PER_PAGE,
   MAX_PAGES,
   highlight,
+  peek,
   search,
   type ArticleHit,
   type Cue,
@@ -16,6 +17,7 @@ import { DirectionProvider } from '@base-ui/react/direction-provider'
 import { Combobox } from '@base-ui/react/combobox'
 import { CheckIcon, ChevronDownIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { track } from '../lib/analytics'
 
 type PlaylistOption = { id: string; title: string; count: number }
 type Status = 'idle' | 'loading' | 'done' | 'error'
@@ -96,16 +98,26 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
       setResult(null)
       return
     }
+    const opts = { tab: next, page, playlists: playlist, types: kinds }
+    const show = (res: SearchResult) => {
+      track('search', { q: text, tab: next, total: res.total, widened: res.widened })
+      setResult(res)
+      setStatus('done')
+    }
+    // Coming back to a tab is not a new question. Answer it from the cache in this same
+    // render — going through 'loading' first would show the skeleton for a frame, which is
+    // exactly the «it searched again» the cache exists to remove.
+    const cached = peek(text, opts)
+    if (cached) return show(cached)
     setStatus('loading')
     try {
-      const res = await search(text, { tab: next, page, playlists: playlist, types: kinds })
+      const res = await search(text, opts)
       if (id !== seq.current) return
       if (res.hits.length === 0 && res.totalPages >= 1 && page > res.totalPages) {
         go(text, playlist, kinds, res.totalPages, next)
         return
       }
-      setResult(res)
-      setStatus('done')
+      show(res)
     } catch {
       if (id !== seq.current) return
       setResult(null)

@@ -244,8 +244,32 @@ async function lessonsFor(q: string, playlists: string[], strategy: Strategy) {
     .catch(() => null)
 }
 
+/**
+ * A tab switch and a back button re-ask a question already answered — same words, same filters,
+ * two more round trips to a box that embeds the query on one shared core. Keyed on everything
+ * that changes the answer; a reload empties it, which is as fresh as a session needs to be.
+ * ponytail: bounded FIFO, no TTL — add one if the index starts changing under a live reader.
+ */
+const CACHE_MAX = 50
+const cache = new Map<string, SearchResult>()
+
+const cacheKey = (q: string, { tab = 'v', page = 1, playlists = [], types = [] }: Options) =>
+  // sorted: ?pl=a&pl=b and ?pl=b&pl=a are the same question
+  JSON.stringify([q.trim(), tab, Math.min(page, MAX_PAGES), [...playlists].sort(), [...types].sort()])
+
+/**
+ * The cached answer, or undefined. Synchronous on purpose: awaiting a resolved promise still
+ * costs a render, and that render is the «جارٍ البحث…» flash that makes a cached tab look
+ * like it went back to the server.
+ */
+export const peek = (q: string, options: Options = {}): SearchResult | undefined =>
+  cache.get(cacheKey(q, options))
+
 export async function search(q: string, options: Options = {}): Promise<SearchResult> {
   const { tab = 'v', playlists = [] } = options
+  const key = cacheKey(q, options)
+  const hit = cache.get(key)
+  if (hit) return hit
 
   const [strict, lessonRes] = await Promise.all([
     both(pair(q, options, 'all')),
@@ -273,7 +297,7 @@ export async function search(q: string, options: Options = {}): Promise<SearchRe
 
   const active = tab === 'v' ? cues : articles
   const total = active.totalHits ?? 0
-  return {
+  const result: SearchResult = {
     tab,
     hits: active.hits as Cue[] | ArticleHit[],
     counts: { v: cues.totalHits ?? 0, a: articles.totalHits ?? 0 },
@@ -287,6 +311,10 @@ export async function search(q: string, options: Options = {}): Promise<SearchRe
     lessons,
     lessonsTotal,
   }
+
+  cache.set(key, result)
+  if (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value!)
+  return result
 }
 
 const ESCAPE: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' }
