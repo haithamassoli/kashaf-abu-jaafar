@@ -1,5 +1,5 @@
 export const SITE = 'كشّاف أبي جعفر'
-export const SITE_URL = 'https://kashaf-alkulify.assoli.site'
+export const SITE_URL = 'https://alkulify.assoli.site'
 export const SHEIKH = 'الشيخ أبو جعفر عبد الله بن فهد الخليفي'
 
 /** The home page's <title>; every other page is `${title} — ${SITE}`. */

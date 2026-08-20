@@ -5,4 +5,4 @@ Allow: /
 Disallow: /?q=
 Disallow: /*?q=
 
-Sitemap: https://kashaf-alkulify.assoli.site/sitemap-index.xml
+Sitemap: https://alkulify.assoli.site/sitemap-index.xml
