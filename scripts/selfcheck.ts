@@ -1,6 +1,6 @@
 /** `pnpm check` — the smallest thing that fails if the text plumbing breaks. */
 import assert from 'node:assert/strict'
-import { client, highlight, peek, search } from '../src/lib/meili.ts'
+import { client, highlight, peek, rateLimited, search } from '../src/lib/meili.ts'
 import { normalize } from '../src/lib/normalize.ts'
 import { clean } from '../src/lib/clean.ts'
 import { decode, paragraphs, titleKey } from '../src/lib/html.ts'
@@ -128,5 +128,17 @@ await search('كفارة اليمين', { tab: 'a', playlists: ['a', 'b'] })
 await search('كفارة اليمين', { tab: 'v', playlists: [] })
 assert.equal(calls, 3)
 assert.equal(peek('كفارة اليمين', { tab: 'v', page: 2 }), undefined)
+
+// A refusal must not become three requests. Caddy answers 429 at 30 per 10 s per IP, and the
+// fallbacks in `both` are there for a missing embedder, not for a closed door — `client.index`
+// is still stubbed to succeed above, so a missing guard shows up here as a resolved search.
+let refused = 0
+client.multiSearch = (async () => {
+  refused++
+  throw Object.assign(new Error('too many requests'), { response: { status: 429 } })
+}) as unknown as typeof client.multiSearch
+await assert.rejects(search('سؤال لم يسبق أن سئل', { tab: 'v' }))
+assert.equal(refused, 1)
+assert.ok(!rateLimited(new Error('the box is simply down')))
 
 console.log('selfcheck ok')

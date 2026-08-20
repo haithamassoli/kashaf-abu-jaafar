@@ -4,6 +4,7 @@ import {
   MAX_PAGES,
   highlight,
   peek,
+  rateLimited,
   search,
   type ArticleHit,
   type Cue,
@@ -20,7 +21,7 @@ import { Input } from '@/components/ui/input'
 import { track } from '../lib/analytics'
 
 type PlaylistOption = { id: string; title: string; count: number }
-type Status = 'idle' | 'loading' | 'done' | 'error'
+type Status = 'idle' | 'loading' | 'done' | 'error' | 'throttled'
 
 /** The URL is the state: ?q=<query>&t=v|a&pl=<playlistId>&pl=<…>&ty=<kind>&p=<page>. */
 function readUrl() {
@@ -118,10 +119,12 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
         return
       }
       show(res)
-    } catch {
+    } catch (e) {
       if (id !== seq.current) return
       setResult(null)
-      setStatus('error')
+      // Being told to slow down is not the search being broken, and a reader who is told the
+      // wrong one of those reloads the page — which is more requests, not fewer.
+      setStatus(rateLimited(e) ? 'throttled' : 'error')
     }
   }
 
@@ -340,6 +343,9 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
       >
         {status === 'loading' && <p className="text-sm text-muted">جارٍ البحث…</p>}
         {status === 'error' && <p className="text-fg">تعذّر الاتصال بالبحث، حاول لاحقًا</p>}
+        {status === 'throttled' && (
+          <p className="text-fg">طلبات كثيرة في وقت قصير، انتظر لحظة ثم أعد المحاولة</p>
+        )}
         {status === 'done' &&
           result &&
           (result.total === 0 && result.lessons.length === 0 ? (

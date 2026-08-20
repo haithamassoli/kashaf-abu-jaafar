@@ -204,6 +204,14 @@ const keywordOnly = (queries: ReturnType<typeof pair>) =>
     return rest
   })
 
+/**
+ * Caddy refuses at 30 requests / 10 s per IP, and its 429 arrives here looking like any other
+ * failure. The fallbacks below exist for a missing embedder, not for a closed door: retrying a
+ * refusal is how a rate limit turns into three times the traffic it was built to stop.
+ */
+export const rateLimited = (e: unknown) =>
+  (e as { response?: { status?: number } } | null)?.response?.status === 429
+
 /** One round trip for both tabs: the inactive one asks for 0 hits, just its count. */
 async function both(queries: ReturnType<typeof pair>) {
   return client
@@ -214,8 +222,12 @@ async function both(queries: ReturnType<typeof pair>) {
     // but is still the whole corpus. Failing that, a deployment whose Meilisearch has no
     // `articles` index yet (or a key still scoped to `cues`) fails the multi-search itself, so
     // fall back to the cue query alone.
-    .catch(() => client.multiSearch({ queries: keywordOnly(queries) }).then((r) => r.results))
-    .catch(async () => {
+    .catch((e) => {
+      if (rateLimited(e)) throw e
+      return client.multiSearch({ queries: keywordOnly(queries) }).then((r) => r.results)
+    })
+    .catch(async (e) => {
+      if (rateLimited(e)) throw e
       // `indexUid` belongs to multi-search only; passing it to a single-index search is a 400,
       // which turned this fallback into a second failure instead of a rescue.
       const { indexUid, q, ...rest } = keywordOnly(queries)[0]

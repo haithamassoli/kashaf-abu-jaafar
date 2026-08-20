@@ -1,0 +1,27 @@
+{
+	order rate_limit before basicauth
+}
+
+search.assoli.site {
+	# The search key is public — it ships inside the JS bundle — so this block is the only thing
+	# between it and a box with one core that also runs Ollama. One search is 2–4 requests, so 30
+	# leaves room for a reader on a shared carrier IP and none for a script.
+	rate_limit {
+		zone search {
+			key {remote_host}
+			events 30
+			window 10s
+		}
+	}
+
+	reverse_proxy 127.0.0.1:7700
+
+	# Meilisearch answers cross-origin; Caddy's own 429 would not, and a CORS-blocked reply reaches
+	# the browser as a network error rather than a status — which src/lib/meili.ts reads as a dead
+	# embedder and retries twice. Making the refusal readable is what stops it tripling the load.
+	handle_errors 429 {
+		header Access-Control-Allow-Origin *
+		header Content-Type application/json
+		respond `{"message":"too many requests","code":"rate_limited"}` 429
+	}
+}
