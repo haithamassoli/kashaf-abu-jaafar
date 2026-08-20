@@ -11,7 +11,7 @@
  */
 import { readFile } from 'node:fs/promises'
 import { Meilisearch, type MatchingStrategies } from 'meilisearch'
-import { search, type Cue } from '../src/lib/meili.ts'
+import { search, type ArticleHit, type Cue } from '../src/lib/meili.ts'
 
 const host = process.env.MEILI_HOST ?? 'http://127.0.0.1:7700'
 const apiKey = process.env.MEILI_ADMIN_KEY
@@ -21,10 +21,22 @@ const strategy = (flag('strategy') ?? 'all') as MatchingStrategies
 const asJson = process.argv.includes('--json')
 
 // a question the corpus can answer, and what a good answer looks like where we could verify it
-type Question = { q: string; expect?: 'none'; expectVideo?: string; note?: string }
+type Question = {
+  q: string
+  expect?: 'none'
+  expectVideo?: string
+  expectVideos?: string[]
+  /** The articles tab has its own targets: an article id, scored on the `a` tab's top 3. */
+  expectArticle?: string
+  note?: string
+}
+// `--file=data/eval-questions-2.json` runs a held-out set instead — same shape, same metrics.
+const file = flag('file') ?? 'data/eval-questions.json'
 const questions: Question[] = JSON.parse(
-  await readFile(new URL('../data/eval-questions.json', import.meta.url), 'utf8'),
+  await readFile(new URL(`../${file}`, import.meta.url), 'utf8'),
 )
+/** A question can have more than one lesson that genuinely answers it; any of them counts. */
+const targets = (q: Question) => q.expectVideos ?? (q.expectVideo ? [q.expectVideo] : [])
 
 /** A reader looks at the first few results; past that a hit did not really surface. */
 const TOP = 3
@@ -34,22 +46,26 @@ if (process.argv.includes('--ladder')) {
   type Outcome = 'direct' | 'lessons' | 'widened' | 'dead'
   const rows: { q: string; outcome: Outcome; n: number; answered: boolean | null }[] = []
 
-  for (const { q, expect, expectVideo } of questions) {
-    const r = await search(q)
+  for (const question of questions) {
+    const { q, expect, expectArticle } = question
+    const want = targets(question)
+    const r = await search(q, expectArticle ? { tab: 'a' } : {})
     const shown = r.counts.v + r.counts.a
     const outcome: Outcome = r.widened ? 'widened' : shown ? 'direct' : r.lessons.length ? 'lessons' : 'dead'
     // What is actually on screen at the top of the page: the lesson block sits ABOVE the cue
     // list and both render together, so scoring only one of them understates what the reader
     // sees. Union of the lesson cards and the leading cue hits.
-    const seen = [
-      ...r.lessons.slice(0, TOP).map((l) => l.video_id),
-      ...(r.hits as Cue[]).slice(0, TOP).map((h) => h.video_id),
-    ]
+    const seen = expectArticle
+      ? (r.hits as ArticleHit[]).slice(0, TOP).map((h) => h.articleId)
+      : [
+          ...r.lessons.slice(0, TOP).map((l) => l.video_id),
+          ...(r.hits as Cue[]).slice(0, TOP).map((h) => h.video_id),
+        ]
     rows.push({
       q,
       outcome,
       n: r.widened ? shown : shown || r.lessonsTotal,
-      answered: expectVideo ? seen.includes(expectVideo) : null,
+      answered: expectArticle ? seen.includes(expectArticle) : want.length ? want.some((v) => seen.includes(v)) : null,
     })
     void expect
   }
@@ -64,7 +80,7 @@ if (process.argv.includes('--ladder')) {
     console.log(JSON.stringify({ host, mode: 'ladder', rows, scored: scored.length }, null, 2))
   } else {
     const pct = (n: number) => `${Math.round((n / rows.length) * 100)}%`
-    console.log(`\nladder (production search())  host=${host}  ${rows.length} questions\n`)
+    console.log(`\nladder (production search())  host=${host}  ${file}  ${rows.length} questions\n`)
     console.log(`   #   result       hits  answered  question`)
     rows.forEach((r, i) => {
       const a = r.answered === null ? '   -    ' : r.answered ? '   yes  ' : '   NO   '
@@ -106,7 +122,9 @@ const top3: Record<string, (boolean | null)[]> = {}
 for (const { uid, hasVideo } of indexes) {
   hits[uid] = []
   top3[uid] = []
-  for (const { q, expectVideo } of questions) {
+  for (const question of questions) {
+    const { q } = question
+    const want = targets(question)
     const r = await client.index(uid).search(q, {
       locales: ['ara'],
       matchingStrategy: strategy,
@@ -116,7 +134,7 @@ for (const { uid, hasVideo } of indexes) {
     hits[uid].push(r.estimatedTotalHits ?? r.hits.length)
     // articles carry no video_id, so the answer-in-top-3 metric does not apply there
     top3[uid].push(
-      expectVideo && hasVideo ? r.hits.some((h) => h.video_id === expectVideo) : null,
+      want.length && hasVideo ? r.hits.some((h) => want.includes(h.video_id as string)) : null,
     )
   }
 }
@@ -151,7 +169,7 @@ if (asJson) {
     const flooded = indexes.filter(({ uid }) => hits[uid][i] > 0).map((i) => i.uid)
     const target = q.expect === 'none'
       ? flooded.length ? `want:0 MISS:${flooded.join(',')}` : 'want:0'
-      : !q.expectVideo ? '-'
+      : !targets(q).length ? '-'
       : found.length ? `top3:${found.join(',')}` : 'top3:none'
     console.log(`${String(i + 1).padStart(4)}${counts}  ${target.padEnd(18)}  ${q.q}`)
   })

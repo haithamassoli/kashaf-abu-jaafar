@@ -30,5 +30,6 @@
     "minWordSizeForTypos": {
       "oneTypo": 4
     }
-  }
+  },
+  "searchCutoffMs": 5000
 }

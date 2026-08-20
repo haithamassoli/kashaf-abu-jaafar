@@ -65,7 +65,11 @@ const lessons = new Map<string, { text: string; segment_count: number; [k: strin
 const dropped: string[] = []
 const flush = async () => {
   if (!batch.length) return
-  const task = await client.index('cues').addDocuments(batch as Record<string, unknown>[])
+  // updateDocuments, not addDocuments: a replace would drop the `_vectors` these cues already
+  // carry (see scripts/embed.ts) and the search box would then re-embed 62k documents at a
+  // quarter of a document a second. A merge keeps them; genuinely new cues arrive without
+  // vectors and Meilisearch embeds those itself, which is a handful per ingest.
+  const task = await client.index('cues').updateDocuments(batch as Record<string, unknown>[])
   await client.tasks.waitForTask(task.taskUid, { timeout: 300_000 })
   sent += batch.length
   process.stdout.write(`\r${sent} cues indexed`)
@@ -171,7 +175,7 @@ if (wants('articles')) {
   let sentDocs = 0
   const push = async (force = false) => {
     if (!docs.length || (!force && docs.length < BATCH)) return
-    const task = await client.index('articles').addDocuments(docs)
+    const task = await client.index('articles').updateDocuments(docs)
     await client.tasks.waitForTask(task.taskUid, { timeout: 300_000 })
     sentDocs += docs.length
     process.stdout.write(`\r${sentDocs} article chunks indexed`)

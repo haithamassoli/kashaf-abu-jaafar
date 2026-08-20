@@ -14,6 +14,7 @@
     "data": "tsx --env-file-if-exists=.env scripts/build-data.ts",
     "articles": "tsx scripts/articles.ts",
     "index": "tsx --env-file-if-exists=.env scripts/index.ts",
+    "embed": "tsx --env-file-if-exists=.env scripts/embed.ts",
     "ingest": "pnpm data && pnpm articles && pnpm index",
     "deploy": "wrangler pages deploy dist",
     "check": "tsx scripts/selfcheck.ts",

@@ -1,0 +1,16 @@
+{
+  "cues": {
+    "source": "ollama",
+    "url": "http://127.0.0.1:11434/api/embed",
+    "model": "bge-m3",
+    "documentTemplate": "{{doc.text}}",
+    "documentTemplateMaxBytes": 8000
+  },
+  "articles": {
+    "source": "ollama",
+    "url": "http://127.0.0.1:11434/api/embed",
+    "model": "bge-m3",
+    "documentTemplate": "{{doc.title}}\n{{doc.text}}",
+    "documentTemplateMaxBytes": 8000
+  }
+}

@@ -18,6 +18,35 @@ export const client = new Meilisearch({ host: HOST, apiKey: KEY, timeout: 10_000
 export const HITS_PER_PAGE = 20
 export const MAX_PAGES = 50
 
+/**
+ * Semantic search. Cue and article vectors are computed by scripts/embed.ts and stored with
+ * `regenerate: false`; at query time Meilisearch embeds only the question, through the Ollama
+ * that runs beside it. This is what lets a reader ask «هل للصداق حد أعلى» and reach a lesson
+ * that never uses the word حد — the keyword leg alone found 9 of 29 eval answers, the two
+ * together find far more.
+ */
+const EMBEDDER = 'default'
+/**
+ * How much of the ranking the vector gets, 0 = keyword only. Swept on both question sets:
+ * 0.3 buys nothing, 0.6 through 1.0 are identical (24/29 and 15/25 before the floor below).
+ * 0.7 sits in the middle of that plateau and keeps the keyword leg contributing the exactness
+ * and the <mark>s a purely semantic hit has none of.
+ */
+const SEMANTIC_RATIO = 0.7
+/**
+ * Keyword search could not invent a hit: every result contained every word. A vector always
+ * returns its nearest neighbour however far away it is, so without a floor `totalHits` becomes
+ * «the whole corpus» for every query, the counts stop meaning anything, and nonsense gets a
+ * confident page of results. This floor is what keeps «لا نتائج» and the widened fallback real.
+ *
+ * Measured over both question sets: the best hit for the eight nonsense questions tops out at
+ * 0.762, real questions start at 0.758 — the bands touch, so the floor is a choice, not a
+ * separation. 0.765 sends all eight to the labelled «أقرب ما وجدنا» path; 0.75 would buy one
+ * more answer on the tuned set and let one nonsense query through as a confident result, which
+ * is the trade round 1 already refused.
+ */
+const SCORE_FLOOR = 0.765
+
 /** Lessons to offer above the results. Three fit above the fold; more is a second result list. */
 const LESSON_LIMIT = 3
 /**
@@ -123,11 +152,21 @@ const common = {
 
 type Strategy = 'all' | 'frequency'
 
+/**
+ * The relaxed retry stays keyword-only: it runs *because* the hybrid pass found nothing above
+ * the floor, so asking the same vectors again would return the same rejects, and a query worth
+ * widening for is one whose words exist somewhere — that is `frequency`'s job, not the vector's.
+ */
+const semantic = (strategy: Strategy) =>
+  strategy === 'all'
+    ? { hybrid: { embedder: EMBEDDER, semanticRatio: SEMANTIC_RATIO }, rankingScoreThreshold: SCORE_FLOOR }
+    : {}
+
 function pair(q: string, { tab = 'v', page = 1, playlists = [], types = [] }: Options, strategy: Strategy) {
   const ids = playlists.map(safePlaylist).filter(Boolean)
   const kinds = types.filter((t) => ARTICLE_TYPES.has(t))
   const at = Math.min(page, MAX_PAGES)
-  const shared = { ...common, matchingStrategy: strategy }
+  const shared = { ...common, matchingStrategy: strategy, ...semantic(strategy) }
 
   return [
     {
@@ -157,16 +196,32 @@ function pair(q: string, { tab = 'v', page = 1, playlists = [], types = [] }: Op
 
 const EMPTY = { hits: [], totalHits: 0, page: 1, totalPages: 0, processingTimeMs: 0 }
 
-/**
- * One round trip for both tabs: the inactive one asks for 0 hits, just its count. A deployment
- * whose Meilisearch has no `articles` index yet (or a search key still scoped to `cues`) fails
- * the whole multi-search, so fall back to the cue query alone rather than take search down.
- */
+/** Same queries with the vector half removed — what search looks like if the embedder is gone. */
+const keywordOnly = (queries: ReturnType<typeof pair>) =>
+  queries.map(({ hybrid, rankingScoreThreshold, ...rest }) => {
+    void hybrid
+    void rankingScoreThreshold
+    return rest
+  })
+
+/** One round trip for both tabs: the inactive one asks for 0 hits, just its count. */
 async function both(queries: ReturnType<typeof pair>) {
   return client
     .multiSearch({ queries })
     .then((r) => r.results)
-    .catch(async () => [await client.index('cues').search(queries[0].q, queries[0]), EMPTY])
+    // Two ways this fails, and neither should take search down. The embedder can be missing or
+    // its Ollama down — the box runs both on one core — so retry keyword-only, which is worse
+    // but is still the whole corpus. Failing that, a deployment whose Meilisearch has no
+    // `articles` index yet (or a key still scoped to `cues`) fails the multi-search itself, so
+    // fall back to the cue query alone.
+    .catch(() => client.multiSearch({ queries: keywordOnly(queries) }).then((r) => r.results))
+    .catch(async () => {
+      // `indexUid` belongs to multi-search only; passing it to a single-index search is a 400,
+      // which turned this fallback into a second failure instead of a rescue.
+      const { indexUid, q, ...rest } = keywordOnly(queries)[0]
+      void indexUid
+      return [await client.index('cues').search(q, rest), EMPTY]
+    })
 }
 
 /**

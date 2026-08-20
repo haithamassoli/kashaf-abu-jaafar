@@ -1,6 +1,8 @@
 node_modules/
 data/*
 !data/eval-questions.json
+!data/eval-questions-2.json
+!data/eval-articles.json
 !data/domain-synonyms.json
 !data/videos.json
 !data/playlists.json

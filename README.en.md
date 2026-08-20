@@ -8,7 +8,7 @@
 
 Arabic-only, RTL, no login, no database.
 
-[![Site](https://img.shields.io/badge/site-kashaf--alkulify.assoli.site-1f6f4a)](https://kashaf-alkulify.assoli.site)
+[![Site](https://img.shields.io/badge/site-kashaf--alkulify.assoli.site-1f6f4a)](https://alkulify.assoli.site)
 [![Astro](https://img.shields.io/badge/Astro-5-BC52EE?logo=astro&logoColor=white)](https://astro.build)
 [![Meilisearch](https://img.shields.io/badge/Meilisearch-1.53-FF5CAA?logo=meilisearch&logoColor=white)](https://www.meilisearch.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
@@ -85,11 +85,14 @@ Transcription and indexing run on the maintainer's machine, never on a server. T
 pnpm install
 cp .env.example .env                 # RAW_DIR = tafrigh's output dir
 
-brew install meilisearch             # production uses compose.yml on a VPS
-pnpm meili &                         # db in git-ignored ./data/
+brew install meilisearch ollama      # production uses compose.yml on a VPS
+MEILI_EXPERIMENTAL_ALLOWED_IP_NETWORKS=127.0.0.0/8 \
+MEILI_EXPERIMENTAL_EMBEDDING_CACHE_ENTRIES=20000 pnpm meili &   # db in git-ignored ./data/
+ollama serve & ollama pull bge-m3    # the embedding model, local and free
 
 pnpm ingest                          # data/ snapshot + Meilisearch index; prints the search-only key
                                      # paste it into PUBLIC_MEILI_SEARCH_KEY in .env
+pnpm embed cues && pnpm embed articles   # semantic vectors (~1.5 h on an M3)
 pnpm dev                             # http://localhost:4321
 ```
 
@@ -103,7 +106,9 @@ search needs Meilisearch.
 | `pnpm data` | `RAW_DIR/*.transcript.json` → `data/{videos,playlists}.json` + `data/segments/<id>.json` |
 | `pnpm articles` | Blogger Atom feed → `data/articles/<id>.json` |
 | `pnpm index` | cues + articles → Meilisearch, and creates/reuses the browser's search-only key (`pnpm index cues\|articles` does one side) |
+| `pnpm embed` | vectors for one index, uploaded, then the embedder declared (`pnpm embed cues`); `--out=`/`--push=` compute once and upload to both the local index and the search box |
 | `pnpm ingest` | all three, in order |
+| `pnpm eval` | the fixed question sets against the live index; `--ladder` runs the production `search()` |
 | `pnpm check` | self-checks for the text plumbing (highlighting, folding, cleaning, formatting) |
 | `pnpm build` / `preview` | static build of every page / serve `dist/` |
 
@@ -114,20 +119,52 @@ cues whose text cleaned to empty — to drop a lecture from the index, delete by
 
 ## Arabic search
 
-Both parameters are required or the results are wrong:
+Retrieval is two layers in one request (`src/lib/meili.ts`): a strict keyword pass
+(`matchingStrategy: "all"`, `locales: ["ara"]`) and a semantic pass over bge-m3 vectors, merged
+by Meilisearch into one ranked list, then cut by a score floor. Below the floor the query falls
+back once to `frequency`, labelled as a loose match rather than passed off as an exact one.
 
 ```json
-{ "q": "بر الوالدين", "locales": ["ara"], "matchingStrategy": "all" }
+{ "q": "بر الوالدين", "locales": ["ara"], "matchingStrategy": "all",
+  "hybrid": { "embedder": "default", "semanticRatio": 0.5 },
+  "rankingScoreThreshold": 0.5 }
 ```
 
-- `locales` makes charabia fold hamza and ta-marbuta at query time.
-- `matchingStrategy: "all"` stops the split-off definite article `ال` from matching the whole corpus
-  (the default `last` returns ~99% of documents for any query starting with `ال`).
-- `minWordSizeForTypos.oneTypo: 4` in `meilisearch-settings.json` keeps short Arabic roots
-  typo-tolerant (`الطلاك` → `الطلاق`).
+The semantic half is what bridges the reader's words to the sheikh's: someone asking
+«هل للصداق حد أعلى» shares no word with the lesson that answers them, because he discussed it
+inside the chapter on خلع.
 
-The browser only ever holds a search-only key (action `search`, indexes `cues` and `articles`); the
-admin key stays in `.env`.
+- `locales` makes charabia fold hamza and ta-marbuta at query time; without it the same word
+  spelled two ways is two words.
+- `matchingStrategy: "all"` stops the split-off definite article `ال` from matching the whole
+  corpus (the default `last` returns ~99% of documents for any query starting with `ال`).
+- **The score floor is not optional.** A vector always returns its nearest neighbour, so without
+  `rankingScoreThreshold` every query matches the entire corpus: counts stop meaning anything,
+  "no results" becomes unreachable, and the labelled fallback can never fire. `distribution` on
+  the embedder is what makes the floor tunable — raw cosine puts every result inside one
+  0.04-wide band.
+- **Vectors are computed on the maintenance machine, not the server.** One ARM core does ~0.25
+  docs/s; this laptop does ~19. `pnpm embed cues` computes them, PUTs them with
+  `regenerate: false` so Meilisearch keeps them, and only then declares the embedder — which is
+  why that config lives in `meilisearch-embedder.json` and never in the index settings
+  `pnpm index` applies. The server only embeds the query (~0.55 s, 0.25 s cached).
+- **A dead embedder does not take search down**: `both()` retries the same multi-search without
+  the vector half.
+- `minWordSizeForTypos.oneTypo: 4` keeps short Arabic roots typo-tolerant (`الطلاك` →
+  `الطلاق`); typo tolerance is off on `lessons`, where it dragged `محرم` to 94% of the corpus.
+
+Three fixed question sets measure it, the last two held out from any tuning:
+
+```bash
+pnpm eval --ladder                                   # 29 verified questions (round-1 set)
+pnpm eval --ladder --file=data/eval-questions-2.json # 25 held-out + 4 nonsense
+pnpm eval --ladder --file=data/eval-articles.json    # 12 whose answer is an article
+```
+
+`--ladder` calls the production `search()`, so the harness and the site cannot drift.
+
+The browser only ever holds a search-only key (action `search`, indexes `cues`, `articles`,
+`lessons`); the admin key stays in `.env`.
 
 ## Articles
 
@@ -173,10 +210,18 @@ transcript panel and `data/` are built from).
 
 - **Frontend**: Vercel, auto-deploying on every push to `main`. The build is static, so `PUBLIC_*`
   vars are baked at build time — changing one needs a redeploy, not just a settings save.
-- **Search**: self-hosted Meilisearch behind Caddy (automatic TLS) on a small VPS — `compose.yml` is
-  what runs there.
+- **Search**: self-hosted Meilisearch behind Caddy (automatic TLS) on a small VPS, with Ollama
+  beside it holding `bge-m3` to embed the query and nothing else — `compose.yml` describes it.
 - **Indexing**: from the maintainer's machine straight at the remote host; `scripts/index.ts` is
   idempotent.
+- **Two server settings, both mandatory, both failing obscurely without them**:
+  `MEILI_EXPERIMENTAL_ALLOWED_IP_NETWORKS=127.0.0.0/8` — otherwise Meilisearch refuses to call an
+  embedder on loopback with `bad uri: Rejected URI` — and
+  `MEILI_EXPERIMENTAL_EMBEDDING_CACHE_ENTRIES=20000`, which makes a repeated query free and the
+  second query of a multi-search free.
+- **Vectors before the embedder**: `pnpm embed … --push=` first, and it declares the embedder as
+  its last step. Declaring it on an index without vectors starts a backfill one ARM core needs
+  4.5 days to finish.
 
 > `pnpm deploy` is a leftover from the Cloudflare Pages setup that predated Vercel; it is unused.
 
