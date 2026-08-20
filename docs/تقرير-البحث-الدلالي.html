@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>كشّاف أبي جعفر — تنفيذ البحث الدلالي: ما فعلناه وما قِيس</title>
+<style>
+  :root{
+    --bg:#faf9f7; --surface:#fff; --fg:#1c1a17; --muted:#6b6560;
+    --line:#e5e0d8; --accent:#0f766e; --accent-soft:#e6f2f0;
+    --good:#166534; --good-bg:#eaf5ec; --warn:#92400e; --warn-bg:#fdf3e7;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#16151a; --surface:#1e1d23; --fg:#eceaf0; --muted:#a09aa8;
+      --line:#312f38; --accent:#52c2a5; --accent-soft:#1b2f2b;
+      --good:#7ee0a0; --good-bg:#16281c; --warn:#f0c07a; --warn-bg:#2c2213;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:2.5rem 1.25rem 5rem; background:var(--bg); color:var(--fg);
+    font-family:"IBM Plex Sans Arabic","Noto Naskh Arabic",system-ui,"Segoe UI",sans-serif;
+    line-height:1.85; font-size:16.5px;
+  }
+  main{max-width:56rem; margin:0 auto}
+  h1{font-size:1.95rem; line-height:1.4; margin:0 0 .4rem}
+  h2{font-size:1.3rem; margin:3rem 0 .9rem; padding-bottom:.5rem; border-bottom:2px solid var(--line)}
+  h3{font-size:1.05rem; margin:1.8rem 0 .5rem; color:var(--accent)}
+  .sub{color:var(--muted); margin:0 0 2rem; font-size:.95rem}
+  p{margin:.85rem 0}
+  .lede{
+    background:var(--surface); border:1px solid var(--line); border-inline-start:4px solid var(--accent);
+    border-radius:.7rem; padding:1.1rem 1.3rem; margin:1.5rem 0;
+  }
+  .lede p:first-child{margin-top:0} .lede p:last-child{margin-bottom:0}
+  table{width:100%; border-collapse:collapse; margin:1.1rem 0; font-size:.93rem; background:var(--surface);
+        border:1px solid var(--line); border-radius:.6rem; overflow:hidden}
+  th,td{padding:.6rem .8rem; text-align:start; border-bottom:1px solid var(--line)}
+  th{background:var(--accent-soft); font-weight:600; color:var(--fg)}
+  tbody tr:last-child td{border-bottom:none}
+  tr.total td{font-weight:700; background:var(--accent-soft)}
+  .num{font-variant-numeric:tabular-nums; text-align:end; white-space:nowrap}
+  .ok{color:var(--good); font-weight:600}
+  .bad{color:var(--warn); font-weight:600}
+  .pill{display:inline-block; padding:.12rem .55rem; border-radius:999px; font-size:.8rem; font-weight:600}
+  .pill-ok{background:var(--good-bg); color:var(--good)}
+  .pill-warn{background:var(--warn-bg); color:var(--warn)}
+  code{background:var(--accent-soft); padding:.1rem .35rem; border-radius:.3rem;
+       font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.86em; direction:ltr; display:inline-block}
+  pre{background:var(--surface); border:1px solid var(--line); border-radius:.6rem; padding:.9rem 1.1rem;
+      overflow-x:auto; direction:ltr; text-align:left; font-size:.84rem; line-height:1.7}
+  pre code{background:none; padding:0}
+  ul,ol{padding-inline-start:1.4rem} li{margin:.4rem 0}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(11rem,1fr)); gap:.8rem; margin:1.3rem 0}
+  .stat{background:var(--surface); border:1px solid var(--line); border-radius:.6rem; padding:.9rem 1rem}
+  .stat .n{font-size:1.55rem; font-weight:700; font-variant-numeric:tabular-nums; color:var(--accent); line-height:1.25}
+  .stat .l{font-size:.82rem; color:var(--muted)}
+  .quote{background:var(--surface); border:1px solid var(--line); border-radius:.6rem; padding:.9rem 1.1rem; margin:.9rem 0}
+  .quote .q{font-weight:600}
+  .quote .a{color:var(--muted); font-size:.92rem; margin-top:.4rem}
+  .quote .t{color:var(--accent); font-size:.85rem; font-weight:600}
+  footer{margin-top:4rem; padding-top:1.2rem; border-top:1px solid var(--line); color:var(--muted); font-size:.85rem}
+  a{color:var(--accent)}
+  @media (max-width:640px){ body{font-size:16px; padding:1.5rem 1rem 3rem} table{font-size:.85rem} th,td{padding:.5rem .55rem} }
+</style>
+</head>
+<body>
+<main>
+
+<h1>البحث الدلالي في الكشّاف — تقرير تنفيذ ومقارنة</h1>
+<p class="sub">
+  كشّاف أبي جعفر · هذا التقرير لا يقترح، بل يسجّل ما نُفِّذ فعلًا وما قِيس بعده.
+  كل رقم فيه ناتج تشغيل على الفهرس الكامل (62,311 مقطعًا، 36,953 فقرة، 1,584 درسًا)
+  أو على خادم البحث نفسه. التاريخ: 2026-08-20 · Meilisearch 1.53.1 · bge-m3 عبر Ollama.
+</p>
+
+<h2>١. المشكلة، بعبارة واحدة</h2>
+<p>
+  للشيخ أبي جعفر عبد الله بن فهد الخليفي نحو أربعة آلاف درس على يوتيوب وأكثر من ثلاثة آلاف
+  مقالة وفتوى. المادة موجودة لكنها <strong>غير قابلة للسؤال</strong>: طالب العلم يذكر أن الشيخ
+  تكلّم في مسألة ولا يذكر أين. الكشّاف يفرّغ الصوت نصًّا ويفهرسه ويعيد للسائل رابطًا يفتح الدرس
+  عند الثانية التي قيلت فيها العبارة.
+</p>
+<p>
+  الجولة الأولى حلّت مشكلة «صفر نتائج». وبقيت مشكلة أصعب: <strong>القارئ يسأل بكلماته، والشيخ
+  أجاب بكلماته هو</strong>. من يسأل «هل للصداق حدّ أعلى» لن يجد شيئًا بالبحث الحرفي، لأن الشيخ
+  ناقش المسألة داخل باب الخُلع بألفاظ أخرى. هذه الجولة عن ذلك بالضبط.
+</p>
+
+<h2>٢. أولًا: أداة قياس لا تُجامل</h2>
+<p>
+  كل ما يلي تغيير في الترتيب، وتغييرات الترتيب هي أكثر ما «يُفصَّل على مقاس» مجموعة الاختبار.
+  فقبل تعديل أي سطر، ثُلِّثت مجموعة القياس:
+</p>
+<table>
+  <thead><tr><th>المجموعة</th><th>ما هي</th><th class="num">قبل التعديل</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>الأصلية (29 سؤالًا مُتحقَّقًا)</td>
+      <td>مجموعة الجولة الأولى، تُركت كما هي لتبقى الأرقام قابلة للمقارنة</td>
+      <td class="num">17 / 29</td>
+    </tr>
+    <tr>
+      <td>المحجوزة (25 سؤالًا)</td>
+      <td>جديدة، لم يُضبَط عليها شيء</td>
+      <td class="num bad">9 / 25</td>
+    </tr>
+    <tr>
+      <td>المقالات (12 سؤالًا)</td>
+      <td>نصف المدوّنة لم يكن يُقاس أصلًا</td>
+      <td class="num bad">4 / 12</td>
+    </tr>
+  </tbody>
+</table>
+<p>
+  الفرق بين <strong>17/29</strong> و<strong>9/25</strong> هو القياس الأمين للمشكلة: على أسئلة لم
+  نضبط عليها شيئًا، البحث يضع الجواب في أول ثلاث نتائج في ثلث الحالات فقط.
+</p>
+<div class="lede">
+  <p>
+    <strong>كيف بُنيت المجموعة المحجوزة دون مجاملة؟</strong> بالعكس: نختار الدرس أولًا، ثم نجد
+    الباب الذي أعلنه الشيخ فيه (<span dir="rtl">«باب النهي عن الوصال»</span>)، ثم نكتب السؤال كما
+    يكتبه قارئ (<span dir="rtl">«ما حكم مواصلة الصيام يومين بلا فطر»</span>). والجواب الصحيح
+    يُستخرَج ببحث عن <em>عبارة الشيخ</em> لا عبارة القارئ، فلا يكون مشتقًّا من أي طريقة بحث
+    نختبرها. ولأن أكثر من درس قد يجيب سؤالًا واحدًا، صار السؤال يحمل قائمة دروس مقبولة، وأيُّها
+    ظهر يُحتسب.
+  </p>
+</div>
+
+<h2>٣. اختيار النموذج: بالقياس لا بالجداول المنشورة</h2>
+<p>
+  الخطة الأولى اختارت <code>bge-m3</code> استنادًا إلى أرقام MIRACL العربية المنشورة. هذا ليس
+  قياسًا على مدوّنتنا، فأُجري اختبار حقيقي: خمسة نماذج ضُمِّنت المجموعة نفسها (6,849 مقطعًا:
+  كل مقاطع الدروس الهدف + 6,000 مقطع عشوائي مشوِّش)، ثم قِيست على 54 سؤالًا مُتحقَّقًا.
+</p>
+<table>
+  <thead><tr><th>النموذج</th><th class="num">الجواب في أول 3</th><th class="num">MRR</th><th class="num">تشابه الأسئلة (وسيط)</th><th class="num">تشابه الهراء (أعلى)</th><th class="num">الفجوة</th></tr></thead>
+  <tbody>
+    <tr><td><code>multilingual-e5-large</code></td><td class="num ok">37 / 54</td><td class="num">0.587</td><td class="num">0.856</td><td class="num">0.831</td><td class="num bad">0.025</td></tr>
+    <tr><td><code>bge-m3</code> + عنوان الدرس</td><td class="num">36 / 54</td><td class="num">0.566</td><td class="num">0.600</td><td class="num">0.505</td><td class="num">0.095</td></tr>
+    <tr class="total"><td><code>bge-m3</code> — <strong>المختار</strong></td><td class="num">35 / 54</td><td class="num">0.540</td><td class="num">0.607</td><td class="num">0.491</td><td class="num ok">0.116</td></tr>
+    <tr><td><code>snowflake-arctic-embed2</code></td><td class="num">33 / 54</td><td class="num">0.523</td><td class="num">0.578</td><td class="num">0.512</td><td class="num">0.066</td></tr>
+    <tr><td><code>embeddinggemma</code></td><td class="num">29 / 54</td><td class="num">0.431</td><td class="num">0.497</td><td class="num">0.455</td><td class="num">0.042</td></tr>
+    <tr><td><code>qwen3-embedding:0.6b</code></td><td class="num bad">27 / 54</td><td class="num">0.433</td><td class="num">0.563</td><td class="num">0.425</td><td class="num">0.138</td></tr>
+  </tbody>
+</table>
+<p>
+  الاختيار لم يكن على عمود الاسترجاع، فـ<code>e5</code> أعلى فيه بسؤالين. الاختيار على العمود
+  الأخير: <strong>الدرجة التي لا تتباعد لا يمكن أن تُعتَّب</strong>، وعليها يقوم كل ما تبقى من
+  السلّم (انظر الفخ الثالث أدناه). <code>e5</code> يحشر كل شيء — السؤال الحقيقي والهراء — في شريط
+  عرضه 0.04 ويترك فجوة 0.025؛ و<code>bge-m3</code> يترك 0.116. أما <code>qwen3</code> ففجوته أوسع
+  لكنه يخسر ثمانية أسئلة ليصل إليها. يضاف إلى ذلك أن
+  <code>e5</code> يشترط بادئتي <span dir="ltr">query:/passage:</span> وMeilisearch يرسل سؤال القارئ
+  كما هو، فلا سبيل إلى إرضائه. و<code>bge-m3</code> يعمل على معالج ARM مجانًا، ويتسع لـ8 آلاف رمز
+  فلا يُبتَر مقطع.
+</p>
+
+<h2>٤. خمسة فخاخ لم تكن الخطة تعرفها</h2>
+<p>هذه كلها اكتُشفت أثناء التنفيذ، وكل واحد منها كان كفيلًا بإيقاف العمل:</p>
+<ol>
+  <li>
+    <strong>Meilisearch يرفض مناداة نموذج على العنوان المحلي.</strong> كل محاولة تفشل برسالة
+    <code>bad uri: Rejected URI</code> — وهي حماية من SSRF لا عطل شبكة، والرسالة لا تقول ذلك.
+    الحل كله سطر: <code>MEILI_EXPERIMENTAL_ALLOWED_IP_NETWORKS=127.0.0.0/8</code>. بدونه لا يعمل
+    الإعداد الموثَّق في دليل Meilisearch نفسه.
+  </li>
+  <li>
+    <strong>خادم البحث لا يستطيع تضمين مدوّنته.</strong> نواة ARM واحدة تنجز ~0.25 مستند/ثانية:
+    أربعة أيام ونصف لـ99 ألف مستند. فصار الحساب يجري على جهاز الصيانة (~8/ثانية)، وتُرفع المتجهات
+    موسومة <code>regenerate: false</code> فيحفظها Meilisearch ولا يعيد حسابها. الحجم المقيس:
+    323 ميغابايت مضغوطة، تُرفع في أربع دقائق.
+  </li>
+  <li>
+    <strong>تشغيل البحث الدلالي يهدم عدّاد النتائج.</strong> المتجه يعيد دائمًا أقرب جار مهما بَعُد،
+    فصار كل سؤال «يطابق» المدوّنة كلها: العدّادات تكذب، و«لا نتائج» تستحيل، والبحث المرن الموسوم
+    لا يُستدعى أبدًا. لذلك <code>rankingScoreThreshold</code> ليس ترفًا لصدّ الهراء، بل هو ما يُبقي
+    بقية السلّم صادقًا.
+  </li>
+  <li>
+    <strong>و<code>distribution</code> هو النصف الآخر من تلك العتبة.</strong> بالتشابه الخام تقع
+    كل النتائج بين 0.73 و0.81، الحقيقي والهراء سواء. وبإعادة توسيط الدرجة على متوسطها وانحرافها
+    المقيسين تتباعد: الهراء ينزل إلى الصفر ويبقى الحقيقي مرتفعًا. والتغيير إعداد يُطبَّق في ثانية
+    واحدة بلا إعادة تضمين.
+  </li>
+  <li>
+    <strong>ترتيب النشر ليس اختياريًّا.</strong> إضافة النموذج إلى فهرس فيه مستندات تجعل Meilisearch
+    يضمّنها كلها فورًا. الترتيب الصحيح: ارفع المتجهات أولًا (ويقبلها Meilisearch لنموذج لم
+    يُعرَّف بعد)، ثم عرِّف النموذج — فيجد كل شيء مضمَّنًا ولا يحسب شيئًا.
+  </li>
+</ol>
+<h2>٥. ما نُفِّذ فعلًا</h2>
+
+<h3>طبقتان في استعلام واحد</h3>
+<p>
+  لم يُستبدل البحث الحرفي، بل صار له شريك. كل استعلام يذهب إلى Meilisearch حاملًا الشقّين معًا:
+  مطابقة الكلمات الصارمة (كل كلمة يجب أن ترد)، ومتجه المعنى للسؤال يقارَن بمتجهات المقاطع.
+  Meilisearch يدمج القائمتين في ترتيب واحد، ثم تقطع العتبة ما دونها. والنتيجة الحرفية تبقى في
+  الأعلى طبعًا — من طابق نصًّا يسبق من قارب معنًى — لكن من لم يطابق أي كلمة صار قادرًا على الظهور.
+</p>
+<p>
+  أما إعادة البحث المرنة (<code>frequency</code>) فبقيت حرفية عمدًا: هي تعمل <em>لأن</em> المتجهات
+  اعتذرت أصلًا، فسؤالها ثانيةً يعيد الاعتذار نفسه. والسؤال الذي يستحق التوسيع هو الذي توجد كلماته
+  في مكان ما — وذلك شغل <code>frequency</code> لا شغل المتجه.
+</p>
+
+<h3>حيث يُحسب المعنى</h3>
+<p>
+  المتجهات تُحسب على جهاز الصيانة وتُرفع جاهزة (<code>scripts/embed.ts</code>)، موسومة
+  <code>regenerate: false</code> فيحفظها Meilisearch ولا يعيد حسابها. وقالب النص الذي يُضمَّن
+  مكتوب مرة واحدة في <code>meilisearch-embedder.json</code> ويقرؤه الطرفان: السكربت هنا،
+  وMeilisearch هناك لأي مستند يُضاف لاحقًا — فلا ينحرف الجديد عن القديم.
+</p>
+<p>
+  وتغيير صغير له أثر كبير: <code>scripts/index.ts</code> صار يستعمل «تحديث» بدل «استبدال». لأن
+  الاستبدال كان سيمحو <code>_vectors</code> من كل مقطع يُعاد فهرسته، فيجد الخادم نفسه أمام
+  62 ألف مستند ليضمّنها بربع مستند في الثانية.
+</p>
+
+<h3>درجة تعرف أن تقول «لا أعرف»</h3>
+<p>
+  هذا أهم ما في التنفيذ. المتجه لا يعرف الرفض؛ يعيد أقرب جار مهما بَعُد. فبعد تشغيل البحث الدلالي
+  صار كل سؤال — بما فيه الهراء — «يطابق» المدوّنة كلها. أُعيدت الحدود بشيئين معًا:
+</p>
+<ul>
+  <li><code>distribution</code> على النموذج: يعيد توسيط درجة المعنى على متوسطها وانحرافها المقيسين، فتتباعد الدرجات بدل أن تتكدّس في شريط عرضه 0.04.</li>
+  <li><code>rankingScoreThreshold</code>: يقطع ما دون العتبة، فيعود العدّاد صادقًا، وتعود «لا نتائج» ممكنة، ويعود البحث المرن الموسوم قابلًا للاستدعاء.</li>
+</ul>
+<h2>٦. النتيجة المقيسة</h2>
+<p>
+  الأرقام التالية من <code>pnpm eval --ladder</code>، وهو ينادي دالة البحث الإنتاجية نفسها لا
+  نسخة منها، على الفهرس الكامل:
+</p>
+<table>
+  <thead><tr><th>القياس</th><th class="num">قبل</th><th class="num">بعد</th></tr></thead>
+  <tbody>
+    <tr><td>الجواب في أول ثلاث نتائج — المجموعة الأصلية (29)</td><td class="num">17 (59%)</td><td class="num ok">23 (79%)</td></tr>
+    <tr><td>الجواب في أول ثلاث نتائج — <strong>المجموعة المحجوزة</strong> (25)</td><td class="num bad">9 (36%)</td><td class="num ok">15 (60%)</td></tr>
+    <tr><td>أسئلة تعود بلا شيء</td><td class="num ok">0%</td><td class="num ok">0%</td></tr>
+    <tr><td>هراء يُعرض كأنه نتيجة حقيقية</td><td class="num ok">0 من 8</td><td class="num ok">0 من 8</td></tr>
+    <tr><td>أسئلة اضطرّت إلى البحث المرن الموسوم (المحجوزة)</td><td class="num bad">38%</td><td class="num ok">14%</td></tr>
+    <tr><td>الجواب في أول ثلاث نتائج — مجموعة المقالات (12)</td><td class="num bad">4 (33%)</td><td class="num ok">12 (100%)</td></tr>
+    <tr><td><strong>تبويب المقالات يعود فارغًا لسؤال حقيقي</strong></td><td class="num bad">44 من 54</td><td class="num ok">5 من 54</td></tr>
+  </tbody>
+</table>
+<p>
+  الأهم أن المكسب على <strong>المجموعة المحجوزة</strong> — التي لم يُضبَط عليها شيء — بحجم المكسب
+  على المجموعة التي ضُبِط عليها. أي أن التحسّن ليس «تفصيلًا على المقاس».
+</p>
+<div class="lede">
+  <p>
+    <strong>وأمانةً في العدّ:</strong> رقم «12 من 12» في المقالات مجموعة صغيرة وسهلة بحكم بنائها،
+    فالأسئلة كُتبت من عناوين المقالات، والمقالة تُضمَّن بعنوانها — فالطرفان يلتقيان في منتصف
+    الطريق. الرقم الجدير بالثقة هو الأخير: يستعمل الأسئلة الأربعة والخمسين <em>الخاصة بالفيديو</em>
+    ولا يحتاج جوابًا معروفًا أصلًا. كان تبويب المقالات يعود فارغًا في 44 منها، وصار يعود فارغًا في 5.
+  </p>
+</div>
+
+<h3>أمثلة على ما صار يُوجَد ولم يكن</h3>
+<div class="quote">
+  <div class="q">«كيف سدّ النبي ﷺ الطرق الموصلة إلى الشرك»</div>
+  <div class="a">لا تشترك مع الدرس الذي يجيبها في كلمة واحدة: الشيخ يشرح هناك <span class="t">«باب ما جاء في حماية المصطفى ﷺ جناب التوحيد»</span>. البحث الحرفي لا سبيل له إليها؛ الآن هي أول نتيجة.</div>
+</div>
+<div class="quote">
+  <div class="q">«ما تعريف النسخ عند الأصوليين»</div>
+  <div class="a">الشيخ قال <span class="t">«باب في النسخ… النسخ لغةً وشرعًا»</span> في درس من مختصر التحرير، ولم يقل «تعريف» ولا «الأصوليين».</div>
+</div>
+<div class="quote">
+  <div class="q">«ما حكم البول واقفًا» · «ما حكم بيع العِينة» · «أيّ ساعات الليل أفضل لصلاة التهجّد»</div>
+  <div class="a">ثلاثة أسئلة كانت تعود بنتيجة واحدة خاطئة أو ببحث مرن موسوم، وصارت تُصيب الدرس الصحيح.</div>
+</div>
+<p>
+  وسؤال واحد <strong>خسرناه</strong>: «إذا اشترطت الزوجة شرطًا في عقد الزواج هل يلزم الوفاء به»
+  كان يظهر ضمن الثلاثة الأولى وصار خارجها. سبع مكاسب مقابل خسارة واحدة على المجموعة المحجوزة،
+  وهذا ما يعنيه الرقم 9 ← 15.
+</p>
+<div class="lede">
+  <p>
+    <strong>وأثر جانبي نافع:</strong> العدّاد صار صادقًا. «كفارة اليمين» كانت تقول 401 نتيجة —
+    أكثرها ورود الكلمة عرضًا في درس آخر — وصارت تقول 87 نتيجة كلها فوق عتبة المعنى. القارئ الذي
+    يقلّب صفحتين لم يعد يقلّب عشرين.
+  </p>
+</div>
+<h2>٧. النشر: ما صار على الهواء</h2>
+<p>
+  كل ما سبق مُشغَّل الآن على <a href="https://alkulify.assoli.site/">alkulify.assoli.site</a>،
+  وليس تجربة محلية:
+</p>
+<ul>
+  <li><strong>النموذج</strong>: <code>bge-m3</code> منصَّب على خادم البحث عبر Ollama، مثبَّت في الذاكرة، يخدم تضمين السؤال وحده.</li>
+  <li><strong>Meilisearch</strong>: 62,311 متجه مقطع و36,953 متجه فقرة مرفوعة ومُعلَنة، والفهرس كبر 0.37 غيغابايت فقط.</li>
+  <li><strong>الكود</strong>: مدفوع إلى المستودع، وVercel أعاد البناء والنشر.</li>
+</ul>
+<p>
+  وأُعيد تشغيل مجموعات القياس الثلاث <em>على الخادم الحيّ</em> لا على النسخة المحلية، فجاءت
+  الأرقام مطابقة حرفًا بحرف: 23/29 و15/25 و12/12، وصفر هراء يظهر كنتيجة حقيقية. وسؤال مثل
+  «كيف أبرمج تطبيقًا بلغة بايثون» يردّ اليوم بـ«لم نجد تطابقًا تامًّا… وهذه أقرب ما وجدنا»
+  موسومًا، كما ينبغي.
+</p>
+
+<h2>٨. الكلفة والتشغيل</h2>
+<p>
+  لم يتغير شيء في فاتورة التشغيل: الخادم هو نفسه (Oracle Always Free، نواة واحدة و6 غيغابايت)،
+  والنموذج مفتوح ومجاني ويعمل عليه محليًّا، ولا مفاتيح ولا اشتراكات ولا مكالمات إلى خدمة خارجية.
+  ما تغيّر هو توزيع العمل: <strong>حساب متجهات المدوّنة كلها يجري على جهاز الصيانة</strong> ثم
+  تُرفع جاهزة، ولا يبقى على الخادم إلا تضمين سؤال القارئ وحده.
+</p>
+<div class="grid">
+  <div class="stat"><div class="n">0.55<span style="font-size:1rem"> ث</span></div><div class="l">تضمين السؤال على نواة ARM واحدة</div></div>
+  <div class="stat"><div class="n">0.25<span style="font-size:1rem"> ث</span></div><div class="l">سؤال مكرَّر (ذاكرة تضمين مؤقتة)</div></div>
+  <div class="stat"><div class="n">323<span style="font-size:1rem"> م.ب</span></div><div class="l">حجم المتجهات مضغوطة، تُرفع في ~4 دقائق</div></div>
+  <div class="stat"><div class="n">1.2<span style="font-size:1rem"> غ.ب</span></div><div class="l">النموذج مثبَّت في الذاكرة (من 6 متاحة)</div></div>
+</div>
+<p>
+  وأُضيف احتياطان لأن الخادم واحد وضعيف: ملف تبديل (swap) بحجم 4 غيغابايت، و<strong>تدهور
+  لطيف</strong> في الكود — إن سقط النموذج أو حُذف، يعيد الموقع الاستعلام نفسه بلا الشقّ الدلالي
+  بدل أن يُظهر خطأ. أي أن موت النموذج ليلًا يكلّف جودةً لا توفّرًا.
+</p>
+<h2>٩. ما لم نفعله، ولماذا</h2>
+<ul>
+  <li><strong>مُجذِّر عربي عند الفهرسة</strong> — المتجه يغطي الاشتقاق أصلًا (مسجد/مساجد متجاوران في فضاء المعنى)، والمجذِّر كان سيصارع charabia وجدول المرادفات مقابل مكسب غير مقيس.</li>
+  <li><strong>فهرس ثالث للنوافذ أو الأبواب</strong> — الإخفاقات كانت ترتيبًا ومفردات، وقد عولجتا بمتجه المقطع وبكتلة الدروس المبنية على أقوى موضع في كل درس، دون فهرس رابع.</li>
+  <li><strong>إعادة صياغة السؤال أو إعادة ترتيبه بنموذج لغوي</strong> — يحتاج خادمًا وكلفة لكل استعلام، والبحث الدلالي يصل إلى الأسئلة نفسها مجانًا.</li>
+  <li><strong>التكميم الثنائي للمتجهات</strong> — يقسّم الذاكرة على 32 لكنه غير قابل للتراجع، والخادم ليس في ضيق ذاكرة.</li>
+  <li><strong>ترقية Meilisearch</strong> — 1.53.1 هي الأحدث، وكل ما استُعمل هنا موجود فيها.</li>
+</ul>
+
+<h2>١٠. الخطوة التالية</h2>
+<ol>
+  <li><strong>توسيع مجموعة القياس مرة أخرى</strong>: 66 سؤالًا مُتحقَّقًا اليوم، والهدف ~120 بلهجات وصيغ صرفية مختلفة. كل رقم في هذا التقرير يصير أدق بذلك.</li>
+  <li><strong>سجلّ استعلامات</strong>: البيانات الوحيدة الغائبة هي ما يكتبه القرّاء فعلًا. أخفّ صورة ممكنة: فهرس <code>queries</code> على Meilisearch نفسه بمفتاح مقيَّد بالإضافة إليه وحده، والمتصفّح يرسل <span dir="ltr">{q, tab, hits}</span> ولا ينتظر جوابًا.</li>
+  <li><strong>وسم النتائج التي طابقت بالمعنى لا باللفظ</strong>: نتيجة دلالية خالصة تظهر بلا تظليل أي كلمة، وقد يستغرب القارئ سبب ظهورها. شارة صغيرة «مطابقة بالمعنى» تكفي، ولم تُنفَّذ في هذه الجولة لأن ملف الواجهة كان قيد التعديل في جلسة أخرى متوازية.</li>
+  <li><strong>مراقبة الذاكرة على الخادم</strong>: النموذج مثبَّت (1.2 غ.ب) وMeilisearch يكبر مع المتجهات؛ أُضيف ملف تبديل احتياطًا، ويبقى أن يُراقَب بعد أسابيع من التشغيل.</li>
+</ol>
+
+<footer>
+  كل رقم في هذا التقرير ناتج تشغيل فعلي على الفهرس الكامل (62,311 مقطعًا، 36,953 فقرة،
+  1,584 درسًا) أو على خادم البحث نفسه، بتاريخ 2026-08-20. الخطة والتفاصيل التقنية بالإنجليزية في
+  <code>docs/SEARCH-PLAN-2.md</code> داخل المستودع، ومجموعات القياس الثلاث في <code>data/</code>
+  فيمكن إعادة تشغيل كل ما سبق بأمر واحد.
+</footer>
+
+</main>
+</body>
+</html>

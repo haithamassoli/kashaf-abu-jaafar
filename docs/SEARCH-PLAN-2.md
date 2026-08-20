@@ -6,6 +6,10 @@ Written 2026-08-20 against a local Meilisearch 1.53.1 holding the production cor
 (62,311 cues, 36,953 article paragraphs, 1,584 lessons / 1,136 h), then implemented and
 re-measured on the same instance.
 
+Arabic report of what was built and measured, for the owner:
+<https://upmad7xzxkqw0n9zej0rsvdoi83x9pf2.pastehtml.dev/> (a copy lives at
+[تقرير-البحث-الدلالي.html](تقرير-البحث-الدلالي.html)).
+
 Owner constraints: search latency is explicitly deprioritized; the site is pre-launch, so index
 shapes, ladder, and settings may all change if they buy quality.
 
@@ -74,22 +78,26 @@ the production `search()`, so the harness and the site cannot drift.
 
 ## Choosing the model
 
-Three candidates, screened on the same 6,849-cue pool (every cue of every target lesson plus
+Five candidates, screened on the same 6,849-cue pool (every cue of every target lesson plus
 6,000 random distractors), scored by whether the answering lesson makes the top 3 and by MRR,
 over all 54 scored questions from both video sets.
 
-| model | served by | answer-in-top-3 | MRR | top cosine, real (median / min) | top cosine, nonsense (max) |
-|---|---|---:|---:|---:|---:|
-| `intfloat/multilingual-e5-large` | sentence-transformers | **37/54** | **0.587** | 0.856 / 0.818 | 0.831 |
-| `BAAI/bge-m3` | Ollama | 35/54 | 0.540 | 0.607 / 0.464 | **0.491** |
-| `qwen3-embedding:0.6b` | Ollama | 27/54 | 0.433 | 0.563 / 0.454 | 0.425 |
+| model | answer-in-top-3 | MRR | top cosine, real (median) | top cosine, nonsense (max) | gap |
+|---|---:|---:|---:|---:|---:|
+| `intfloat/multilingual-e5-large` | **37/54** | **0.587** | 0.856 | 0.831 | 0.025 |
+| `BAAI/bge-m3`, cue text + lesson title | 36/54 | 0.566 | 0.600 | 0.505 | 0.095 |
+| **`BAAI/bge-m3`, cue text** | 35/54 | 0.540 | 0.607 | 0.491 | **0.116** |
+| `snowflake-arctic-embed2` | 33/54 | 0.523 | 0.578 | 0.512 | 0.066 |
+| `embeddinggemma` | 29/54 | 0.431 | 0.497 | 0.455 | 0.042 |
+| `qwen3-embedding:0.6b` | 27/54 | 0.433 | 0.563 | 0.425 | 0.138 |
 
-(`snowflake-arctic-embed2` and `embeddinggemma` were pulled and queued but cut from the bake-off
-to keep the corpus run on schedule; neither has an Arabic result that would displace bge-m3.)
+All but the first ran through Ollama, which is how they would be served.
 
-The decision is not the recall column. It is the last two: bge-m3's similarities spread across
-a wide band while e5's crowd into a 0.04-wide sliver, and **a score that does not spread cannot
-be thresholded** — which, per trap 3 above, is what the whole ladder now rests on. bge-m3 also
+The decision is not the recall column, where e5 wins by two questions. It is the last one:
+**a score that does not spread cannot be thresholded**, and per trap 3 the whole ladder now
+rests on that threshold. e5 puts every result — real question and nonsense alike — inside a
+0.04-wide band and leaves a 0.025 gap; bge-m3 leaves 0.116. qwen3's gap is wider still but it
+loses eight questions to get there. bge-m3 also
 needs no `query:`/`passage:` prefixes (e5 does, and Meilisearch sends the query verbatim), runs
 on linux/arm64 through `ollama pull bge-m3`, takes 8k tokens so no cue is truncated, and costs
 nothing.
@@ -219,6 +227,8 @@ rather than showing an error, so an Ollama that dies at 3am costs quality, not a
 |---|---:|---:|---:|
 | answer in top-3, original 29 | 17 (59%) | **23 (79%)** | ≥ 22 |
 | answer in top-3, held-out 25 | 9 (36%) | **15 (60%)** | — (new) |
+| answer in top-3, articles 12 | 4 (33%) | **12 (100%)** | — (new) |
+| real questions with an empty articles tab | 44/54 | **5/54** | — (new) |
 | questions shown nothing | 0% | 0% | 0% |
 | nonsense shown as a direct hit | 0/8 | 0/8 | 0/8 |
 | questions pushed to the labelled fallback (held-out) | 38% | 14% | must not grow |
@@ -226,3 +236,11 @@ rather than showing an error, so an Ollama that dies at 3am costs quality, not a
 
 The gate that matters is the held-out column: it moved as much as the tuned one, which is what
 says the gain is retrieval and not curve-fitting.
+
+Two honest caveats on the article numbers. 12/12 is a small set, and it is an easy one by
+construction: the questions were written from article titles, and articles embed their title, so
+the two meet halfway. The number to trust there is the last row, which uses the 54 *video*
+questions and needs no ground truth at all — the articles tab used to come back empty for 44 of
+them and now comes back empty for 5. A separate, lower floor for `articles` (their scores run
+~0.03 below cues') would double the number of article results shown without letting nonsense
+through, and buys nothing measurable, so there is still one floor.
