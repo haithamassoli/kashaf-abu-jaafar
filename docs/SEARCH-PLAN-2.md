@@ -40,8 +40,8 @@ have stopped the work:
    `could not reach embedding server: bad uri: Rejected URI` — an SSRF guard, not a network
    fault, and the message never says so. `MEILI_EXPERIMENTAL_ALLOWED_IP_NETWORKS=127.0.0.0/8`
    is the whole fix, and without it the documented Ollama setup cannot work at all.
-2. **The search box cannot embed its own corpus.** One ARM core does ~0.25 docs/s with bge-m3:
-   4.5 days for 99k documents. Vectors have to be computed on the maintenance machine and
+2. **The search box cannot embed its own corpus.** Measured on the box: ~1.07 docs/s, so a full
+   day for 99k documents. Vectors have to be computed on the maintenance machine and
    shipped. That is `scripts/embed.ts`, and it turns the plan's biggest unknown into an upload:
    62,311 cue vectors are 209 MB gzipped and went up in 9.9 minutes.
 3. **Turning on hybrid destroys `totalHits`.** A vector always returns its nearest neighbour,

@@ -143,5 +143,19 @@ check(6, `playlist_ids — every cue of all ${videos.length} videos checked agai
   [staleP.length && `${staleP.length} playlist(s) with cues that do not claim them — ${few(staleP, 2)} (run \`pnpm index cues\`)`],
   'cue membership matches playlists.json')
 
+// 7 — every searchable document carries a vector. A cue with none is invisible to the semantic
+// half and nothing says so: the ladder just quietly answers that query on keywords alone. It
+// happens when a batch lands while the box's Ollama is down, or when a settings change resets
+// the embedder. `pnpm embed <index>` recomputes and re-ships them.
+const missing = (['cues', 'articles'] as const)
+  .map((uid) => {
+    const i = stats.indexes?.[uid]
+    return { uid, docs: i?.numberOfDocuments ?? -1, embedded: i?.numberOfEmbeddedDocuments ?? -1 }
+  })
+  .filter((x) => x.docs !== x.embedded)
+check(7, `vectors — every cue and article paragraph carries one`,
+  [missing.length && missing.map((m) => `${m.uid}: ${m.docs - m.embedded} of ${m.docs} unembedded (run \`pnpm embed ${m.uid}\`)`).join('; ')],
+  'all documents embedded')
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed')
 process.exit(failed ? 1 : 0)

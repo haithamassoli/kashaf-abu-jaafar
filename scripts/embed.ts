@@ -2,8 +2,9 @@
  * `pnpm embed cues|articles` — compute the semantic vectors for an index here and PUT them in,
  * instead of letting Meilisearch call the embedder itself.
  *
- * Why: the search box is one ARM core, where bge-m3 embeds ~0.25 docs/s — 4.5 days for the 99k
- * documents. This machine does 10–19/s. So the backfill runs here and ships the vectors, marked
+ * Why: the search box is one ARM core, where Meilisearch embeds ~1 doc/s through its Ollama —
+ * measured, and a full day for the 99k documents. This machine does 10–19/s. So the backfill
+ * runs here and ships the vectors, marked
  * `regenerate: false` so Meilisearch keeps them instead of recomputing. The box still embeds the
  * *query* at search time, and any documents added later — a handful per ingest — on its own.
  *

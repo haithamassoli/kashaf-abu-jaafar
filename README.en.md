@@ -109,6 +109,7 @@ search needs Meilisearch.
 | `pnpm embed` | vectors for one index, uploaded, then the embedder declared (`pnpm embed cues`); `--out=`/`--push=` compute once and upload to both the local index and the search box |
 | `pnpm ingest` | all three, in order |
 | `pnpm eval` | the fixed question sets against the live index; `--ladder` runs the production `search()` |
+| `pnpm verify` | seven checks across `RAW_DIR`, `data/` and Meilisearch — including whether every document carries a vector |
 | `pnpm check` | self-checks for the text plumbing (highlighting, folding, cleaning, formatting) |
 | `pnpm build` / `preview` | static build of every page / serve `dist/` |
 
@@ -116,6 +117,38 @@ All steps are safe to re-run. `pnpm data` rebuilds `data/` from scratch, so a le
 `RAW_DIR` also disappears from the next build. `pnpm index` overwrites cues by `id` and only deletes
 cues whose text cleaned to empty — to drop a lecture from the index, delete by filter
 (`videoId = "<id>"`).
+
+### Adding a newly transcribed lecture
+
+```bash
+pnpm data                                   # rebuild data/ from RAW_DIR
+pnpm index                                  # local index
+MEILI_HOST=https://search.assoli.site \
+MEILI_ADMIN_KEY=<from /etc/meilisearch.env> pnpm index    # production index
+pnpm verify                                 # seven checks; run it against production too
+git add data && git commit && git push      # the new lecture pages build from data/
+```
+
+**No vector step.** New cues arrive without one and Meilisearch embeds them itself: one lecture
+(~40 cues) in **37 seconds** measured on the box, a hundred lectures in about an hour, unattended.
+`pnpm embed` is only for a very large batch (500+ lectures) or when check 7 complains.
+
+Three things that fail silently if forgotten:
+
+- **Pushing to `main` does not update search.** Vercel rebuilds the pages; the index only changes
+  when `pnpm index` runs against the production `MEILI_HOST`. Production once sat at 15,402 cues
+  against a 46,613-cue corpus.
+- **Fixing the text of an old cue does not refresh its vector.** Backfilled cues are frozen with
+  `regenerate: false`, so an edit leaves the old vector in place without complaining. Hand the cue
+  back to Meilisearch:
+
+  ```bash
+  echo '{"id":"<cueId>","_vectors":{"default":{"regenerate":true}}}' | \
+    curl -s -X PUT "$MEILI_HOST/indexes/cues/documents" -H "Authorization: Bearer $MEILI_ADMIN_KEY" \
+         -H 'Content-Type: application/x-ndjson' --data-binary @-
+  ```
+
+- **Do not trust a script's own summary line** — trust `pnpm verify` and `/stats` on production.
 
 ## Arabic search
 
@@ -143,8 +176,8 @@ inside the chapter on خلع.
   "no results" becomes unreachable, and the labelled fallback can never fire. `distribution` on
   the embedder is what makes the floor tunable — raw cosine puts every result inside one
   0.04-wide band.
-- **Vectors are computed on the maintenance machine, not the server.** One ARM core does ~0.25
-  docs/s; this laptop does ~19. `pnpm embed cues` computes them, PUTs them with
+- **Vectors are computed on the maintenance machine, not the server.** The box embeds ~1 doc/s
+  (measured); this laptop does ~19. `pnpm embed cues` computes them, PUTs them with
   `regenerate: false` so Meilisearch keeps them, and only then declares the embedder — which is
   why that config lives in `meilisearch-embedder.json` and never in the index settings
   `pnpm index` applies. The server only embeds the query (~0.55 s, 0.25 s cached).
@@ -220,8 +253,8 @@ transcript panel and `data/` are built from).
   `MEILI_EXPERIMENTAL_EMBEDDING_CACHE_ENTRIES=20000`, which makes a repeated query free and the
   second query of a multi-search free.
 - **Vectors before the embedder**: `pnpm embed … --push=` first, and it declares the embedder as
-  its last step. Declaring it on an index without vectors starts a backfill one ARM core needs
-  4.5 days to finish.
+  its last step. Declaring it on an index without vectors starts a backfill the box needs a full
+  day to finish.
 
 > `pnpm deploy` is a leftover from the Cloudflare Pages setup that predated Vercel; it is unused.
 
