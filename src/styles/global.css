@@ -249,3 +249,71 @@
 @utility cue-copy {
   @apply mt-1 grid size-11 shrink-0 place-items-center rounded-md text-muted opacity-0 transition-opacity hover:text-fg no-hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100;
 }
+
+/* "Save as PDF" is the browser's own print pipeline, so the paper layout lives here.
+   Drop the chrome, unroll the transcript scroller, and force ink-on-paper colours —
+   the dark theme is a class on <html>, and it survives into print otherwise. */
+@media print {
+  :root,
+  .dark {
+    color-scheme: light;
+    --bg: #fff;
+    --surface: #fff;
+    --surface-2: #fff;
+    --border: #ddd;
+    --border-strong: #999;
+    --fg: #000;
+    --muted: #444;
+    --accent: #000;
+    --accent-soft: transparent;
+    --mark-bg: transparent;
+    --mark-fg: #000;
+  }
+
+  header,
+  footer,
+  #install-prompt,
+  astro-island, /* the YouTube player: an empty box on paper */
+  .cue-copy {
+    display: none !important;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  /* Side-by-side player/transcript is a screen layout; paper is one column. */
+  .grid {
+    display: block !important;
+  }
+
+  /* On screen the transcript is a fixed-height scroller. On paper it is the document —
+     including rows the in-page filter is hiding, to match what the .txt download gives. */
+  #cues {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  /* Layered on purpose: preflight's `[hidden] { display: none !important }` sits in
+     @layer base, and an important declaration inside a layer outranks an unlayered one
+     however specific — unlayered here loses to it and the filtered rows stay hidden. */
+  @layer base {
+    #cues > li[hidden] {
+      display: flex !important;
+    }
+  }
+  .cue {
+    break-inside: avoid;
+  }
+  /* Which cue was playing is a screen state; on paper it is a stray tick in the margin. */
+  .cue-on {
+    border-color: transparent !important;
+  }
+  .cue-ts {
+    min-height: 0 !important;
+  }
+  .cue-txt {
+    padding-block: 0 !important;
+    line-height: 1.7;
+  }
+}

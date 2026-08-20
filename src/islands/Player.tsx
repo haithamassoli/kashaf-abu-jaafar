@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { youtubeUrl } from '../lib/format'
+import { flash } from '../lib/toast'
 import { normalize } from '../lib/normalize'
 import { markMatches } from '../lib/mark'
 
@@ -91,23 +92,12 @@ export default function Player({ videoId, title }: Props) {
     const folded = texts.map(normalize)
     const marked = rows.map(() => false)
 
-    const toast = document.querySelector<HTMLElement>('#toast > span')
-
     let active = -1
-    let toastTimer: ReturnType<typeof setTimeout> | undefined
     let savedScroll = 0
     let filtering = false
     let cancelled = false
     let poll: ReturnType<typeof setInterval> | undefined
     let announce: ReturnType<typeof setTimeout> | undefined
-
-    const flash = (message: string) => {
-      if (!toast) return
-      toast.textContent = message
-      toast.hidden = false
-      clearTimeout(toastTimer)
-      toastTimer = setTimeout(() => (toast.hidden = true), 2000)
-    }
 
     const setActive = (i: number) => {
       if (i === active) return
@@ -263,7 +253,6 @@ export default function Player({ videoId, title }: Props) {
       cancelled = true
       clearInterval(poll)
       clearTimeout(announce)
-      clearTimeout(toastTimer)
       clearTimeout(filterTimer)
       list.removeEventListener('click', onClick)
       search?.removeEventListener('input', onInput)

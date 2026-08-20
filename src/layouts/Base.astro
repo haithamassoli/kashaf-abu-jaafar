@@ -235,6 +235,20 @@ const ogSize = image === '/og.png' ? { w: '1200', h: '630' } : { w: '480', h: '3
       </button>
     </div>
 
+    <!--
+      Body level on purpose: the lesson page's player column is `position: sticky` and so
+      makes a stacking context of its own — a toast inside it can never paint over the
+      install banner above (z-40), whatever z-index it carries. lib/toast.ts fills it in.
+    -->
+    <div
+      id="toast"
+      role="status"
+      aria-live="polite"
+      class="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center print:hidden"
+    >
+      <span class="card px-4 py-2 text-sm shadow-lg" hidden></span>
+    </div>
+
     <script is:inline>
       const toggle = document.getElementById('theme-toggle')
       const syncToggle = () =>

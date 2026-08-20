@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro'
+import Actions from '../../components/Actions.astro'
 import { allArticles, type Article } from '../../lib/data'
 import { arabicDate } from '../../lib/format'
 import { SITE_URL, person, breadcrumb } from '../../lib/seo'
@@ -79,6 +80,8 @@ const crumbs = breadcrumb([[article.title, `/a/${article.id}/`]])
         )
       }
     </div>
+
+    <Actions title={article.title} />
 
     <div class="prose-naskh mt-6 max-w-none space-y-4 text-fg">
       {article.paragraphs.map((p, n) => <p id={`p${n}`} class="scroll-mt-20">{p}</p>)}
