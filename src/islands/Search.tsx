@@ -6,10 +6,11 @@ import {
   search,
   type ArticleHit,
   type Cue,
+  type LessonHit,
   type SearchResult,
   type Tab,
 } from '../lib/meili'
-import { arabicDate, timestamp } from '../lib/format'
+import { arabicDate, duration, lessons as countLessons, timestamp } from '../lib/format'
 import { normalize } from '../lib/normalize'
 import { DirectionProvider } from '@base-ui/react/direction-provider'
 import { Combobox } from '@base-ui/react/combobox'
@@ -19,22 +20,24 @@ import { Input } from '@/components/ui/input'
 type PlaylistOption = { id: string; title: string; count: number }
 type Status = 'idle' | 'loading' | 'done' | 'error'
 
-/** The URL is the state: ?q=<query>&t=v|a&pl=<playlistId>&pl=<…>&p=<page>. */
+/** The URL is the state: ?q=<query>&t=v|a&pl=<playlistId>&pl=<…>&ty=<kind>&p=<page>. */
 function readUrl() {
   const p = new URLSearchParams(location.search)
   return {
     q: p.get('q') ?? '',
     pl: p.getAll('pl'),
+    ty: p.getAll('ty'),
     tab: (p.get('t') === 'a' ? 'a' : 'v') as Tab,
     page: Math.min(Math.max(Number(p.get('p')) || 1, 1), MAX_PAGES),
   }
 }
 
-function pushUrl(q: string, pl: string[], page: number, tab: Tab) {
+function pushUrl(q: string, pl: string[], ty: string[], page: number, tab: Tab) {
   const p = new URLSearchParams()
   if (q) p.set('q', q)
   if (tab === 'a') p.set('t', 'a')
   for (const id of pl) p.append('pl', id)
+  for (const t of ty) p.append('ty', t)
   if (page > 1) p.set('p', String(page))
   const qs = p.toString()
   const url = location.pathname + (qs ? `?${qs}` : '')
@@ -50,10 +53,25 @@ function playlistLabel(ids: string[], playlists: PlaylistOption[]) {
 }
 
 const KIND: Record<string, string> = { post: 'مقالة', fatwa: 'فتوى', book: 'كتاب' }
+/** Three kinds, so chips rather than a dropdown: one tap to narrow, one to undo. */
+const KINDS: [string, string][] = [
+  ['post', 'مقالات'],
+  ['fatwa', 'فتاوى'],
+  ['book', 'كتب'],
+]
+
+/** Result links carry the query so the lesson page can pinpoint the phrase, not just the cue. */
+function lessonHref(videoId: string, query: string, t?: number) {
+  const p = new URLSearchParams()
+  if (t !== undefined) p.set('t', String(Math.floor(t)))
+  if (query) p.set('q', query)
+  return `/v/${videoId}/?${p}`
+}
 
 export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
   const [q, setQ] = useState('')
   const [pl, setPl] = useState<string[]>([])
+  const [ty, setTy] = useState<string[]>([])
   const [tab, setTab] = useState<Tab>('v')
   const [asked, setAsked] = useState('')
   const [status, setStatus] = useState<Status>('idle')
@@ -66,10 +84,11 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
   const ids = useMemo(() => [...byId.keys()], [byId])
 
   // Only the newest request may set state; older responses are ignored.
-  const run = async (query: string, playlist: string[], page: number, next: Tab) => {
+  const run = async (query: string, playlist: string[], kinds: string[], page: number, next: Tab) => {
     const id = ++seq.current
     const text = query.trim()
     setPl(playlist)
+    setTy(kinds)
     setTab(next)
     setAsked(text)
     if (!text) {
@@ -79,10 +98,10 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
     }
     setStatus('loading')
     try {
-      const res = await search(text, { tab: next, page, playlists: playlist })
+      const res = await search(text, { tab: next, page, playlists: playlist, types: kinds })
       if (id !== seq.current) return
       if (res.hits.length === 0 && res.totalPages >= 1 && page > res.totalPages) {
-        go(text, playlist, res.totalPages, next)
+        go(text, playlist, kinds, res.totalPages, next)
         return
       }
       setResult(res)
@@ -96,39 +115,47 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
 
   useEffect(() => {
     const known = new Set(playlists.map((p) => p.id))
+    const kinds = new Set(KINDS.map(([k]) => k))
     const sync = () => {
       const u = readUrl()
       // a stale or hand-edited pl= would filter everything away while the select still
       // showed "كل القوائم" — drop it instead
       const pl = u.pl.filter((id) => known.has(id))
+      const ty = u.ty.filter((t) => kinds.has(t))
       setQ(u.q)
-      run(u.q, pl, u.page, u.tab)
+      run(u.q, pl, ty, u.page, u.tab)
     }
     sync()
     addEventListener('popstate', sync)
     return () => removeEventListener('popstate', sync)
   }, [])
 
-  const go = (query: string, playlist: string[], page: number, next: Tab = tab) => {
-    pushUrl(query.trim(), playlist, page, next)
-    run(query, playlist, page, next)
+  const go = (query: string, playlist: string[], kinds: string[], page: number, next: Tab = tab) => {
+    pushUrl(query.trim(), playlist, kinds, page, next)
+    run(query, playlist, kinds, page, next)
   }
 
   const goPage = (page: number) => {
-    go(asked, pl, page)
+    go(asked, pl, ty, page)
     top.current?.focus({ preventScroll: true })
     top.current?.scrollIntoView()
   }
 
   const changePlaylist = (value: string[]) => {
     setPl(value)
-    if (q.trim()) go(q, value, 1)
+    if (q.trim()) go(q, value, ty, 1)
+  }
+
+  const toggleKind = (kind: string) => {
+    const next = ty.includes(kind) ? ty.filter((t) => t !== kind) : [...ty, kind]
+    setTy(next)
+    if (q.trim()) go(q, pl, next, 1)
   }
 
   const changeTab = (next: Tab) => {
     if (next === tab) return
     setTab(next)
-    if (asked) go(asked, pl, 1, next)
+    if (asked) go(asked, pl, ty, 1, next)
   }
 
   const from = result ? (result.page - 1) * HITS_PER_PAGE + 1 : 0
@@ -140,7 +167,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
         role="search"
         onSubmit={(e) => {
           e.preventDefault()
-          go(q, pl, 1)
+          go(q, pl, ty, 1)
         }}
       >
         <label htmlFor="search-q" className="sr-only">
@@ -241,6 +268,29 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
           </div>
         )}
 
+        {tab === 'a' && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {KINDS.map(([kind, label]) => {
+              const on = ty.includes(kind)
+              return (
+                <button
+                  key={kind}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => toggleKind(kind)}
+                  className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm transition-colors ${
+                    on
+                      ? 'border-accent bg-accent-soft font-medium text-accent'
+                      : 'border-border-strong text-muted hover:bg-surface-2 hover:text-fg'
+                  }`}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
       </form>
 
       {result && (
@@ -280,8 +330,34 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
         {status === 'error' && <p className="text-fg">تعذّر الاتصال بالبحث، حاول لاحقًا</p>}
         {status === 'done' &&
           result &&
-          (result.total === 0 ? (
-            <p className="text-fg">{`لا نتائج لـ "${asked}"`}</p>
+          (result.total === 0 && result.lessons.length === 0 ? (
+            <div className="text-fg">
+              <p>{`لا نتائج لـ "${asked}"`}</p>
+              <ul className="mt-3 space-y-1 text-sm text-muted">
+                <li>جرّب كلمات أقل، أو الكلمات الأساسية وحدها دون أدوات الاستفهام.</li>
+                {(pl.length > 0 || ty.length > 0) && <li>أو أزل التصفية، فقد تكون النتيجة خارجها.</li>}
+                {/* A zero here often means «not transcribed yet», not «he never said it». Saying
+                    so is the difference between a dead end and a reason to come back. */}
+                <li>
+                  التفريغ ما زال جاريًا: فُرّغ حتى الآن نحو <span className="digits">1600</span> درس
+                  من نحو <span className="digits">4000</span> على القناة.
+                </li>
+              </ul>
+            </div>
+          ) : result.widened ? (
+            // ponytail: no heuristic separates a near-miss from nonsense here — measured, a real
+            // question matched 1/3 of its words while gibberish matched 3/3 — so we label the
+            // results loosely and hand over the same advice the empty state gives.
+            <div>
+              <p className="text-sm text-fg">
+                {`لم نجد تطابقًا تامًّا لـ "${asked}"، وهذه أقرب ما وجدنا`}
+              </p>
+              <p className="mt-1 text-sm text-muted">
+                للنتائج الدقيقة جرّب الكلمات الأساسية وحدها، دون أدوات الاستفهام.
+              </p>
+            </div>
+          ) : result.total === 0 ? (
+            <p className="text-sm text-muted">{`لا مقاطع تطابق "${asked}" حرفيًّا، لكن هذه الدروس تتناوله`}</p>
           ) : (
             <p className="text-sm text-muted">
               النتائج من <span className="digits">{from}</span> إلى{' '}
@@ -301,6 +377,40 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
             </li>
           ))}
         </ul>
+      )}
+
+      {status === 'done' && result && result.lessons.length > 0 && (tab === 'v' || result.total === 0) && (
+        <section aria-labelledby="lessons-heading" className="mt-4">
+          <h2 id="lessons-heading" className="text-sm font-medium text-fg">
+            دروس تتناول سؤالك
+          </h2>
+          <p className="mt-1 text-xs text-muted">
+            كل كلمات سؤالك وردت في هذه الدروس، وإن تفرّقت في مواضع منها
+          </p>
+          <ul className="mt-3 space-y-2">
+            {result.lessons.map((l: LessonHit) => (
+              <li key={l.id}>
+                <a
+                  href={lessonHref(l.video_id, asked)}
+                  className="card block border-accent/30 bg-accent-soft/40 p-4 transition-colors hover:bg-accent-soft"
+                >
+                  <h3
+                    className="text-base font-medium text-fg"
+                    dangerouslySetInnerHTML={{ __html: highlight(l._formatted?.title, l.title) }}
+                  ></h3>
+                  <p className="mt-2 flex flex-wrap items-center gap-x-2 text-xs text-muted">
+                    {l.duration && <span className="digits">{duration(l.duration)}</span>}
+                    {l.duration && l.upload_date && <span aria-hidden="true">·</span>}
+                    {l.upload_date && <span>{arabicDate(l.upload_date)}</span>}
+                  </p>
+                </a>
+              </li>
+            ))}
+          </ul>
+          {result.lessonsTotal > result.lessons.length && (
+            <p className="mt-2 text-xs text-muted">من أصل {countLessons(result.lessonsTotal)}</p>
+          )}
+        </section>
       )}
 
       {status === 'done' && result && result.hits.length > 0 && (
@@ -344,7 +454,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
                 return (
                   <li key={cue.id}>
                     <a
-                      href={`/v/${cue.video_id}/?t=${Math.floor(cue.start)}`}
+                      href={lessonHref(cue.video_id, asked, cue.start)}
                       className="card block p-4 transition-colors hover:bg-surface-2"
                     >
                       <h2 className="text-base font-medium text-fg">{cue.title}</h2>

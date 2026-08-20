@@ -124,11 +124,17 @@ export default function Player({ videoId, title }: Props) {
       setActive(i)
       playerRef.current?.seekTo(s, true)
       playerRef.current?.playVideo()
-      history.replaceState(null, '', `?t=${Math.floor(s)}`)
+      // Rewrite only `t`: a bare `?t=` would drop the `?q=` a search result arrived with,
+      // so a reload or a share of this line would lose the filter and the highlighting.
+      const url = new URL(location.href)
+      url.searchParams.set('t', String(Math.floor(s)))
+      history.replaceState(null, '', url)
     }
 
     const copy = async (i: number) => {
       // trailingSlash is 'always', so the slash before the query keeps this off a 301.
+      // No `q`: this link points at a moment, not at a search — and arriving filtered
+      // would hide the surrounding transcript the link is pointing the reader into.
       const url = `${location.origin}/v/${videoId}/?t=${Math.floor(starts[i])}`
       try {
         await navigator.clipboard.writeText(url)
@@ -202,13 +208,32 @@ export default function Player({ videoId, title }: Props) {
 
     list.addEventListener('click', onClick)
     search?.addEventListener('input', onInput)
+
+    // Search results link here as ?t=<cue start>&q=<query>. Assigning .value fires no
+    // input event, so the pre-fill skips the debounce and filters on this same tick.
+    // ponytail: filtering before the first scroll leaves onFilter's savedScroll at 0, so
+    // emptying a pre-filled box drops the reader at the top of the transcript. Auto-follow
+    // puts them back at the next segment boundary; measuring the unfiltered offset of a row
+    // the filter has already collapsed costs more than the second-order case is worth.
+    const params = new URLSearchParams(location.search)
+    const query = params.get('q') ?? ''
+    if (query && search) search.value = query
     // The box is uncontrolled server-rendered HTML: browsers restore its value on reload,
     // and the reader can type into it before this island hydrates. Sync once either way.
     if (search?.value) onFilter()
 
-    const start = Math.max(0, Math.floor(Number(new URLSearchParams(location.search).get('t')) || 0))
+    const t = Math.max(0, Math.floor(Number(params.get('t')) || 0))
+    const from = indexAt(starts, t)
+    // `t` is only the start of an 83 s cue; onFilter has left exactly the matching segments
+    // (~7 s each) visible, so land on the first one at or after `t`. Fall back to the first
+    // match anywhere — Meilisearch splits a leading `ال`, so the cue that scored can hold a
+    // word this literal filter does not, and a hidden row would scroll nowhere. With no
+    // match at all (or no `q`) `at` is -1 and `t` is honoured exactly as before.
+    const matches = normalize(query) ? rows.flatMap((r, i) => (r.hidden ? [] : [i])) : []
+    const at = matches.find((i) => i >= from) ?? matches[0] ?? -1
+    const start = at < 0 ? t : Math.floor(starts[at])
     timeRef.current = start
-    setActive(indexAt(starts, start))
+    setActive(at < 0 ? from : at)
 
     loadApi().then((YT) => {
       if (cancelled || !hostRef.current) return

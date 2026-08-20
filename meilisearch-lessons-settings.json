@@ -1,29 +1,26 @@
 {
   "searchableAttributes": [
+    "title",
     "text"
   ],
   "filterableAttributes": [
     "video_id",
     "playlist_ids",
-    "channel",
     "upload_date"
   ],
   "sortableAttributes": [
-    "start",
-    "upload_date"
+    "upload_date",
+    "duration"
   ],
   "displayedAttributes": [
     "id",
     "video_id",
     "title",
-    "url",
-    "start",
-    "end",
-    "text",
     "playlist_ids",
     "upload_date",
     "duration",
-    "channel"
+    "channel",
+    "segment_count"
   ],
   "localizedAttributes": [
     {
@@ -39,9 +36,7 @@
     "maxTotalHits": 1000
   },
   "typoTolerance": {
-    "minWordSizeForTypos": {
-      "oneTypo": 4
-    }
+    "enabled": false
   },
   "stopWords": [
     "ما",

@@ -1,7 +1,8 @@
 /**
- * RAW_DIR/*.chunks.ndjson -> `cues`, data/articles/*.json -> `articles`, plus the browser's
- * search-only key. Same ids overwrite, so re-running after new videos/articles is incremental.
- * `pnpm index cues` / `pnpm index articles` does one side only — the cue pass is the slow one.
+ * RAW_DIR/*.chunks.ndjson -> `cues` (one doc per chunk) and `lessons` (one doc per video,
+ * the whole transcript), data/articles/*.json -> `articles`, plus the browser's search-only
+ * key. Same ids overwrite, so re-running after new videos/articles is incremental.
+ * `pnpm index cues|lessons|articles` runs one pass only — the cue pass is the slow one.
  */
 import { readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -14,26 +15,33 @@ const RAW_DIR = (process.env.RAW_DIR ?? '').replace(/^~/, homedir())
 const host = process.env.MEILI_HOST ?? 'http://127.0.0.1:7700'
 const apiKey = process.env.MEILI_ADMIN_KEY
 const ONLY = process.argv[2]
+const wants = (pass: string) => !ONLY || ONLY === pass
+// `cues` and `lessons` are two shapes of the same transcripts, so they share one read of RAW_DIR
+const readsRaw = wants('cues') || wants('lessons')
 if (!apiKey) throw new Error('MEILI_ADMIN_KEY must be set (see .env.example)')
 // The article pass reads data/, so it runs fine on a box that has no tafrigh output.
-if (!RAW_DIR && ONLY !== 'articles') throw new Error('RAW_DIR must be set (see .env.example)')
+if (!RAW_DIR && readsRaw) throw new Error('RAW_DIR must be set (see .env.example)')
 const client = new Meilisearch({ host, apiKey })
 const settings = JSON.parse(
   await readFile(new URL('../meilisearch-settings.json', import.meta.url), 'utf8'),
 )
+const lessonSettings = JSON.parse(
+  await readFile(new URL('../meilisearch-lessons-settings.json', import.meta.url), 'utf8'),
+)
 
-// Not on an articles-only run: the cue settings would go up without the synonyms this run
-// never computes, and there is no reason to touch a live `cues` index to index articles.
-if (ONLY !== 'articles') {
-  await client.createIndex('cues', { primaryKey: 'id' }).catch(() => {})
-  await client
-    .index('cues')
-    .updateSettings(settings)
-    // a settings change that forces a re-index takes minutes; the client default is 5s
-    .then((t) => client.tasks.waitForTask(t.taskUid, { timeout: 300_000 }))
+const setup = async (uid: string, s: Record<string, unknown>) => {
+  await client.createIndex(uid, { primaryKey: 'id' }).catch(() => {})
+  const t = await client.index(uid).updateSettings(s)
+  // a settings change that forces a re-index takes minutes; the client default is 5s
+  await client.tasks.waitForTask(t.taskUid, { timeout: 300_000 })
 }
 
-const files = ONLY === 'articles' ? [] : (await readdir(RAW_DIR)).filter((f) => f.endsWith('.chunks.ndjson'))
+// Only for the pass that is running: settings would otherwise go up without the synonyms this
+// run never computes, and there is no reason to touch a live index to build a different one.
+if (wants('cues')) await setup('cues', settings)
+if (wants('lessons')) await setup('lessons', lessonSettings)
+
+const files = readsRaw ? (await readdir(RAW_DIR)).filter((f) => f.endsWith('.chunks.ndjson')) : []
 // A video that shows up in a second playlist gets its transcript.json merged but its ndjson left
 // alone, so playlist_ids there goes stale. data/videos.json is built from the transcripts, so it
 // is the one that knows the full membership.
@@ -47,8 +55,12 @@ let sent = 0
 const BATCH = 20_000
 
 let batch: unknown[] = []
-// every cue text, kept for the synonym pass below
-const texts: string[] = []
+// One doc per video, `text` = the whole transcript. `matchingStrategy: "all"` needs every query
+// token inside ONE document and a 148-word cue rarely holds a whole question, so 10 of 25 real
+// questions returned nothing (docs/SEARCH-PLAN.md). Accumulated in the cue pass so the corpus is
+// read once; it also feeds the synonym scan below, which only cares about the set of words and
+// joining cues with a space introduces none.
+const lessons = new Map<string, { text: string; segment_count: number; [k: string]: unknown }>()
 // chunks that were nothing but sound tags: drop them, and delete any already indexed
 const dropped: string[] = []
 const flush = async () => {
@@ -68,41 +80,92 @@ for (const file of files) {
     cue.playlist_ids = playlistsOf.get(cue.video_id) ?? cue.playlist_ids
     // Not searchable, not displayed, nothing reads it — but ~30% of the index on disk.
     delete cue.search_text
-    if (cue.text) {
-      batch.push(cue)
-      texts.push(cue.text)
-    } else dropped.push(cue.id)
+    if (!cue.text) {
+      dropped.push(cue.id)
+      continue
+    }
+    if (wants('cues')) batch.push(cue)
+    const lesson = lessons.get(cue.video_id)
+    if (lesson) {
+      lesson.text += ` ${cue.text}`
+      lesson.segment_count++
+    } else {
+      const { video_id, title, playlist_ids, upload_date, duration, channel } = cue
+      lessons.set(video_id, {
+        id: video_id,
+        video_id,
+        title,
+        text: cue.text,
+        playlist_ids,
+        upload_date,
+        duration,
+        channel,
+        segment_count: 1,
+      })
+    }
   }
   if (batch.length >= BATCH) await flush()
 }
 await flush()
 
-// charabia splits `ال` off but leaves `وال/بال/فال/كال/لل` whole — teach Meilisearch the
-// equivalence. Settings-only, so it applies in well under a second with no re-index.
-if (texts.length) {
-  const synonyms = articleSynonyms(texts)
-  const syn = await client.index('cues').updateSettings({ synonyms })
-  await client.tasks.waitForTask(syn.taskUid, { timeout: 300_000 })
-  console.log(`\n${Object.keys(synonyms).length} article synonyms`)
+// ~9,000 words a document, so 1,584 at once would be an ~80 MB body against a 100 MB default
+// payload limit. Chunk it.
+if (wants('lessons') && lessons.size) {
+  const docs = [...lessons.values()]
+  for (let i = 0; i < docs.length; i += 200) {
+    const task = await client.index('lessons').addDocuments(docs.slice(i, i + 200))
+    await client.tasks.waitForTask(task.taskUid, { timeout: 300_000 })
+  }
+  console.log(`\n${docs.length} lessons indexed`)
 }
 
-if (dropped.length) {
+// charabia splits `ال` off but leaves `وال/بال/فال/كال/لل` whole — teach Meilisearch the
+// equivalence. Settings-only, so it applies in well under a second with no re-index.
+if (lessons.size) {
+  const synonyms = articleSynonyms([...lessons.values()].map((l) => l.text))
+  // data/domain-synonyms.json maps what a user asks to what the sheikh says (الاغاني -> الغناء).
+  // Built separately and optional: an absent file is not an error.
+  const domain: Record<string, string[]> = await readFile(
+    new URL('../data/domain-synonyms.json', import.meta.url),
+    'utf8',
+  )
+    .then(JSON.parse)
+    .catch((e: NodeJS.ErrnoException) => {
+      if (e.code !== 'ENOENT') console.warn(`\ndomain-synonyms.json ignored: ${e.message}`)
+      return {}
+    })
+  const link = (a: string, b: string) => {
+    const list = (synonyms[a] ??= [])
+    if (!list.includes(b)) list.push(b)
+  }
+  // Meilisearch synonyms are one-way, so register the reverse too.
+  for (const [word, alts] of Object.entries(domain))
+    for (const alt of alts) {
+      link(word, alt)
+      link(alt, word)
+    }
+  for (const uid of ['cues', 'lessons'].filter(wants)) {
+    const syn = await client.index(uid).updateSettings({ synonyms })
+    await client.tasks.waitForTask(syn.taskUid, { timeout: 300_000 })
+  }
+  console.log(`${Object.keys(synonyms).length} synonyms`)
+}
+
+if (dropped.length && wants('cues')) {
   const task = await client.index('cues').deleteDocuments(dropped)
   await client.tasks.waitForTask(task.taskUid, { timeout: 300_000 })
   console.log(`dropped ${dropped.length} empty cues`)
 }
 
 // data/articles/<id>.json -> one doc per paragraph, so a hit points at `#p<n>`.
-if (ONLY !== 'cues') {
+if (wants('articles')) {
   const ART = new URL('../data/articles/', import.meta.url).pathname
-  const artSettings = JSON.parse(
-    await readFile(new URL('../meilisearch-articles-settings.json', import.meta.url), 'utf8'),
+  await setup(
+    'articles',
+    JSON.parse(
+      await readFile(new URL('../meilisearch-articles-settings.json', import.meta.url), 'utf8'),
+    ),
   )
-  await client.createIndex('articles', { primaryKey: 'id' }).catch(() => {})
-  await client
-    .index('articles')
-    .updateSettings(artSettings)
-    .then((t) => client.tasks.waitForTask(t.taskUid, { timeout: 300_000 }))
 
   let docs: Record<string, unknown>[] = []
   let sentDocs = 0
@@ -138,7 +201,7 @@ if (ONLY !== 'cues') {
 
 // Search-only key for the browser. Reuse the existing one so redeploys keep working.
 const name = 'kashaf-search-only'
-const SCOPE = ['cues', 'articles']
+const SCOPE = ['cues', 'articles', 'lessons']
 const keys = await client.getKeys({ limit: 100 })
 const found = keys.results.find((k) => k.name === name)
 // Meilisearch only lets you rename a key, so widening its index scope means recreating it.
@@ -160,8 +223,13 @@ const key =
     expiresAt: null,
   }))
 
-const stats = await client.index('cues').getStats()
-const artStats = await client.index('articles').getStats().catch(() => ({ numberOfDocuments: 0 }))
-console.log(`\ndone: ${stats.numberOfDocuments} cues, ${artStats.numberOfDocuments} article chunks`)
+const none = { numberOfDocuments: 0 }
+const stats = await client.index('cues').getStats().catch(() => none)
+const lessonStats = await client.index('lessons').getStats().catch(() => none)
+const artStats = await client.index('articles').getStats().catch(() => none)
+console.log(
+  `\ndone: ${stats.numberOfDocuments} cues, ${lessonStats.numberOfDocuments} lessons, ` +
+    `${artStats.numberOfDocuments} article chunks`,
+)
 console.log(`PUBLIC_MEILI_HOST=${host}`)
 console.log(`PUBLIC_MEILI_SEARCH_KEY=${key.key}`)

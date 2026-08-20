@@ -34,16 +34,25 @@ export function articleStem(word: string): string | null {
   return m ? (m[1] ?? m[2]) : null
 }
 
-/** stem -> every prefixed spelling of it that occurs in the corpus. */
+/**
+ * stem -> every prefixed spelling of it that occurs in the corpus, AND each prefixed spelling
+ * back to its stem. Meilisearch synonyms are one-way, so the reverse is not free: without it a
+ * reader who writes «الاستماع للأغاني» or «الاحتفال بالمولد» — the natural phrasings — queries a
+ * token with no key at all, and `للاغاني` matches 0 cues while `اغاني` matches 1,158.
+ */
 export function articleSynonyms(texts: Iterable<string>): Record<string, string[]> {
   const map = new Map<string, Set<string>>()
+  const add = (key: string, value: string) => {
+    let set = map.get(key)
+    if (!set) map.set(key, (set = new Set()))
+    set.add(value)
+  }
   for (const t of texts)
     for (const w of normalize(t).match(ARABIC) ?? []) {
       const stem = articleStem(w)
       if (!stem) continue
-      let set = map.get(stem)
-      if (!set) map.set(stem, (set = new Set()))
-      set.add(w)
+      add(stem, w)
+      add(w, stem)
     }
   return Object.fromEntries([...map].map(([k, v]) => [k, [...v]]))
 }

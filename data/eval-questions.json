@@ -1,0 +1,239 @@
+[
+  {
+    "q": "ما حكم الاحتفال بالمولد النبوي",
+    "note": "known-zero baseline. `المولد النبوي` alone returns 527 cues, so the topic is in the corpus; the question form kills it. Diffuse across lessons, no single one owns it."
+  },
+  {
+    "q": "هل يجوز الاستماع للأغاني",
+    "note": "known-zero baseline. `الغناء` alone returns 537 cues."
+  },
+  {
+    "q": "حكم لبس الذهب للرجال",
+    "expectVideo": "5842tVbKCeQ",
+    "note": "known-zero baseline. عمدة الفقه [15] reads the متن on it: «الذهب والحرير مباح للنساء ... هذان حرام على ذكور أمتي»."
+  },
+  {
+    "q": "ما الفرق بين الفرض والسنة",
+    "note": "known-zero baseline. أصول الفقه bread and butter (مختصر التحرير الأحكام التكليفية) but no phrasing of it survives `all`."
+  },
+  {
+    "q": "كيف أصلي صلاة الاستخارة",
+    "note": "known-zero baseline. `الاستخارة` alone returns 71 cues, spread thin — no single lesson owns it, so no expectVideo."
+  },
+  {
+    "q": "هل يجوز الدعاء بعد الصلاة جماعة",
+    "note": "known-zero baseline. `الدعاء الجماعي بعد الصلاة` returns 19, all one-offs."
+  },
+  {
+    "q": "حكم التصوير الفوتوغرافي",
+    "note": "known-zero baseline. `التصوير` returns 1648 but nearly all of it is التصوير in the Quranic/creation sense, not photography — genuinely diffuse."
+  },
+  {
+    "q": "هل تجب الزكاة في الراتب",
+    "note": "known-zero baseline. Covered as المال المستفاد in زاد المسافر كتاب الزكاة, but never in these words."
+  },
+  {
+    "q": "حكم قراءة الفاتحة خلف الإمام",
+    "expectVideo": "SMzlmbaW570",
+    "note": "known-zero baseline AND the third of the collapse triple. كتاب السنة لعبد الله بن أحمد [27] answers this exact question from a listener: «قراءة الفاتحة خلف الإمام هل هي واجبة أم لا»."
+  },
+  {
+    "q": "هل يجوز السفر بلا محرم",
+    "note": "known-zero baseline. `سفر المرأة بغير محرم` returns 3."
+  },
+
+  {
+    "q": "الفاتحة خلف الإمام",
+    "expectVideo": "SMzlmbaW570",
+    "note": "collapse triple, 1 of 3: 41 hits today."
+  },
+  {
+    "q": "قراءة الفاتحة خلف الإمام",
+    "expectVideo": "SMzlmbaW570",
+    "note": "collapse triple, 2 of 3: 27 hits today. One more word and it is 0."
+  },
+
+  {
+    "q": "مسجد",
+    "note": "morphology probe: singular. Currently an unrelated token to مساجد (3445 vs 1671)."
+  },
+  {
+    "q": "مساجد",
+    "note": "morphology probe: plural of the above."
+  },
+  {
+    "q": "صام",
+    "note": "morphology probe: past verb. 345 vs الصيام 1728 vs صائم 1643 — three unrelated tokens for one root."
+  },
+  {
+    "q": "الصيام",
+    "note": "morphology probe: masdar."
+  },
+  {
+    "q": "صائم",
+    "note": "morphology probe: active participle."
+  },
+
+  {
+    "q": "قزحبرم فطسلخ ضويعن",
+    "expect": "none",
+    "note": "not words. Anything above 0 here means typo tolerance or a fallback went feral."
+  },
+  {
+    "q": "تربية أسماك الزينة في الحوض",
+    "expect": "none",
+    "note": "real Arabic, genuinely outside a فقه/أصول/عقيدة corpus."
+  },
+  {
+    "q": "برمجة تطبيقات الجوال بلغة بايثون",
+    "expect": "none",
+    "note": "real Arabic, outside the corpus."
+  },
+  {
+    "q": "قواعد كرة القدم وعدد اللاعبين",
+    "expect": "none",
+    "note": "real Arabic, outside the corpus."
+  },
+
+  {
+    "q": "ما حكم المسح على الخفين وكم مدته",
+    "expectVideo": "alNrFSLg-t0",
+    "note": "المغني لابن قدامة - الطهارة - (17) carries 26 of the top 200 hits for `المسح على الخفين`, more than any other lesson."
+  },
+  {
+    "q": "متى يجوز التيمم بدلا من الوضوء",
+    "expectVideo": "awMuy7ePRxw",
+    "note": "المغني - الطهارة - (15), 35 of the top 200 hits for `التيمم`."
+  },
+  {
+    "q": "كيف تصلى صلاة الجنازة",
+    "expectVideo": "VolMr4xba5U",
+    "note": "زاد المسافر [19] كتاب الجنائز — title names the باب, 15 of the top 200 hits for `صلاة الجنازة`."
+  },
+  {
+    "q": "على من تجب زكاة الفطر ومتى تخرج",
+    "expectVideo": "euKNiIYVzJ0",
+    "note": "زاد المسافر [27] «تابع كتاب الخراج وزكاة الفطر» — title names it, 12 of the top hits."
+  },
+  {
+    "q": "هل يشترط الصوم في الاعتكاف",
+    "expectVideo": "RX1GpnxgkXI",
+    "note": "زاد المسافر [22] «الصيام والاعتكاف وبداية الزكاة», 18 of the top hits for `الاعتكاف`."
+  },
+  {
+    "q": "ما شروط الأضحية وما السن المجزئة فيها",
+    "expectVideo": "wSR4n9-QVT4",
+    "note": "مسند الدارمي (191) كتاب الأضاحي — title names the كتاب, 14 of the top hits."
+  },
+  {
+    "q": "مواقيت الإحرام",
+    "expectVideo": "euFwDXFxBqI",
+    "note": "عمدة الفقه [43], 9 of the top hits for `المواقيت` and the only lesson that recites the مواقيت verse."
+  },
+  {
+    "q": "عرق العراق يلملم اليمني",
+    "expectVideo": "euFwDXFxBqI",
+    "note": "verbatim: the مواقيت verse, spoken only in عمدة الفقه [43]. A recall test — if this misses, verbatim phrase search is broken."
+  },
+  {
+    "q": "ما حكم الخلع وهل هو فسخ أم طلاق",
+    "expectVideo": "YAnQUZIUP1c",
+    "note": "شرح عمدة الفقه (115) باب الخُلع — 20 of the top hits, and the cue at 70s opens the باب."
+  },
+  {
+    "q": "أحق الناس بالطفل أمه",
+    "expectVideo": "_97dXiDsAU4",
+    "note": "verbatim: the opening line of شرح عمدة الفقه (130) باب الحضانة. Exactly one cue in the corpus."
+  },
+  {
+    "q": "كم عدة المرأة المتوفى عنها زوجها",
+    "expectVideo": "67VKojuYZKg",
+    "note": "شرح عمدة الفقه (123) باب العدّة."
+  },
+  {
+    "q": "هل للصداق حد أعلى",
+    "expectVideo": "D9IEaMfOshM",
+    "note": "شرح عمدة الفقه (108) كتاب الصداق — top lesson for `الصداق`."
+  },
+  {
+    "q": "كم رضعة يثبت بها التحريم",
+    "expectVideo": "ptmAp6DwqzM",
+    "note": "شرح عمدة الفقه (100) كتاب الرضاع — top عمدة lesson for `الرضاع`."
+  },
+  {
+    "q": "ما كفارة اليمين إذا حنث الإنسان",
+    "expectVideo": "EsZkVjpIjNY",
+    "note": "شرح عمدة الفقه (143) [كفارة اليمين] — the title is the topic verbatim, though the neighbouring كتاب الأيمان lesson currently outranks it."
+  },
+  {
+    "q": "ما حكم النذر وهل يلزم الوفاء به",
+    "expectVideo": "D1u69_T8orU",
+    "note": "شرح عمدة الفقه (140) باب النذر — 13 of the top hits for `النذر`."
+  },
+  {
+    "q": "ما شروط القسامة في الدماء",
+    "expectVideo": "IahYbwvdYDs",
+    "note": "شرح عمدة الفقه (156) [القسامة] — 10 of the top hits, cue at 1s opens the باب."
+  },
+  {
+    "q": "كم نصاب السرقة الذي تقطع فيه اليد",
+    "expectVideo": "BUJ-WYwaKGc",
+    "note": "شرح عمدة الفقه (161) «التعزير وحد السرقة»."
+  },
+  {
+    "q": "على من تجب الجزية",
+    "expectVideo": "HZHdKvRIcnY",
+    "note": "شرح عمدة الفقه (168) [فصل - الجزية]. زاد المسافر's الخراج lesson currently outranks it."
+  },
+  {
+    "q": "ما شروط الوقف الصحيح",
+    "expectVideo": "FaC5gzJCW9s",
+    "note": "شرح عمدة الفقه (66) كتاب الوقف — 12 of the top hits for `الوقف`."
+  },
+  {
+    "q": "هل تصح الوكالة في البيع والشراء",
+    "expectVideo": "c1PGE_NzG0g",
+    "note": "شرح عمدة الفقه (58) باب الوكالة — top lesson for `الوكالة`."
+  },
+  {
+    "q": "لا يجب الحد إلا على مكلف عالم بالتحريم",
+    "expectVideo": "-MgYS4iXsRg",
+    "note": "verbatim: the opening متن line of شرح عمدة الفقه (157) كتاب الحدود."
+  },
+  {
+    "q": "بيع الغرر",
+    "note": "bare topic. 17 cues, concentrated in عمدة الفقه البيوع (50-54) — spread over four lessons, so no honest single answer."
+  },
+  {
+    "q": "الربا في الذهب والفضة",
+    "note": "bare topic. `الربا` returns 872; the علة discussion sits in عمدة الفقه [52]-[53] but spans both."
+  },
+  {
+    "q": "الإجماع السكوتي",
+    "note": "bare topic from أصول الفقه. 38 cues, split between مختصر التحرير [43] and [88] — genuinely two lessons, so no expectVideo."
+  },
+  {
+    "q": "هل يحتج بخبر الآحاد في العقيدة",
+    "note": "أصول/عقيدة crossover he returns to often (مختصر التحرير 46-47, الحموية, الجامع). Too spread to name one lesson."
+  },
+  {
+    "q": "الفرق بين المصلحة المرسلة والبدعة",
+    "expectVideo": "6lbdfeHQWpY",
+    "note": "شرح مختصر التحرير (76) — 10 of the top hits for `المصلحة المرسلة`."
+  },
+  {
+    "q": "الصفات الاختيارية",
+    "expectVideo": "D_QXDRA6GoE",
+    "note": "«قراءة وتعليق على رسالة شيخ الإسلام ابن تيمية في الصفات الاختيارية (1)» — 13 of the top hits, title is the topic."
+  },
+  {
+    "q": "هل يجوز عمل المرأة خارج البيت",
+    "expectVideo": "eGm7aE7F-dU",
+    "note": "«مصارحة أخوية حول موضوع عمل المرأة» — a whole lesson on exactly this, 12 of the top hits."
+  },
+  {
+    "q": "النسوية الإسلامية",
+    "expectVideo": "xLB99zBn9dc",
+    "note": "الأنثى وأحوالها بين الوحي والإنسان [6] — the cue at 3110s defines النسوية الإسلامية; 10 of the top hits."
+  }
+]
