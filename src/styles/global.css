@@ -145,8 +145,10 @@
     background-color: var(--bg);
     color: var(--fg);
     font-family: var(--font-sans);
-    -webkit-text-size-adjust: 100%;
+    scrollbar-color: var(--accent) transparent;
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
   }
 
   body {
