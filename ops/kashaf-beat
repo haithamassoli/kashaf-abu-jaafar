@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Heartbeat for كشّاف, run by cron on the Meilisearch box. It beats only if search answers,
+# the disk has room, and the embedder still embeds. Silence is the alert.
+#
+# Install (see docs/PRODUCTION.md §3):
+#   sudo install -m 755 kashaf-beat /usr/local/bin/kashaf-beat
+#   printf 'HEARTBEAT_URL=%s\nSEARCH_KEY=%s\n' "$url" "$key" | sudo tee /etc/kashaf-beat.env
+#   sudo chmod 600 /etc/kashaf-beat.env
+#   echo '*/10 * * * * root /usr/local/bin/kashaf-beat' | sudo tee /etc/cron.d/kashaf-heartbeat
+set -euo pipefail
+. /etc/kashaf-beat.env
+
+curl -fsS -m 10 http://127.0.0.1:7700/health | grep -q available
+
+# A full disk is what actually kills Meilisearch: it goes read-only rather than down, so
+# /health keeps answering "available" while every index task fails.
+[ "$(df --output=pcent / | tr -dc 0-9)" -lt 85 ]
+
+# semanticRatio 1 makes the answer come from the vector leg alone, so this line fails when
+# Ollama is gone. The timestamp is not decoration — Meilisearch caches 20k query embeddings,
+# so a fixed question would keep passing for days after the embedder died.
+curl -fsS -m 30 -X POST http://127.0.0.1:7700/indexes/cues/search \
+  -H "Authorization: Bearer $SEARCH_KEY" -H 'Content-Type: application/json' \
+  -d "{\"q\":\"كفارة اليمين $(date +%s)\",\"hitsPerPage\":1,\"hybrid\":{\"embedder\":\"default\",\"semanticRatio\":1}}" \
+  | grep -q '"semanticHitCount":1'
+
+curl -fsS -m 10 "$HEARTBEAT_URL" >/dev/null
