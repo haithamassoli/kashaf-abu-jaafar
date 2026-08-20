@@ -117,16 +117,24 @@ const ogSize = image === '/og.png' ? { w: '1200', h: '630' } : { w: '480', h: '3
           wide ? 'max-w-6xl' : 'max-w-3xl',
         ]}
       >
-        <a href="/" class="-ms-2 flex h-11 items-center gap-2 rounded-lg px-2 text-base font-semibold tracking-tight">
-          <img src="/favicon.png" width="32" height="32" alt="" class="size-8 rounded-full" />
-          <span>{SITE}</span>
+        <a
+          href="/"
+          class="-ms-2 flex h-11 min-w-0 items-center gap-2 rounded-lg px-2 text-base font-semibold tracking-tight"
+        >
+          <img src="/favicon.png" width="32" height="32" alt="" class="size-8 shrink-0 rounded-full" />
+          <span class="truncate">{SITE}</span>
         </a>
 
         <nav class="flex items-center gap-1 text-sm" aria-label="روابط رئيسية">
           <a
             href="/p/"
-            class="inline-flex h-11 items-center rounded-lg px-3 text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+            class="inline-flex h-11 items-center rounded-lg px-2 text-muted transition-colors hover:bg-surface-2 hover:text-fg"
             >القوائم</a
+          >
+          <a
+            href="/contact/"
+            class="inline-flex h-11 items-center rounded-lg px-2 text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+            >تواصل</a
           >
           <button
             type="button"
