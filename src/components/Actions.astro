@@ -8,9 +8,14 @@
  * a transcript is ~1,400 rows already in the HTML, and repeating it in a data
  * attribute would double the page for a button most readers never press.
  */
+import { SITE } from '../lib/seo'
+
 const btn =
   'inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-sm text-muted transition-colors hover:text-fg'
 const { title } = Astro.props as { title: string }
+
+/** Paper drops the chrome, so the way back to the page has to be printed on it. */
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href
 ---
 
 <div data-actions data-title={title} class="mt-4 flex flex-wrap items-center gap-2 print:hidden">
@@ -37,6 +42,10 @@ const { title } = Astro.props as { title: string }
     TXT
   </button>
 </div>
+
+<p class="mt-4 hidden text-sm print:block">
+  مشاهدة الأصل في {SITE}: <a href={canonical} dir="ltr">{canonical}</a>
+</p>
 
 <script>
   import { flash } from '../lib/toast'

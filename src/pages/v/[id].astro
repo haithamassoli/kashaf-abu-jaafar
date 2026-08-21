@@ -148,7 +148,7 @@ const crumbs = breadcrumb([['القوائم', '/p/'], [video.title, `/v/${video.
 
   {
     (prev || next) && (
-      <nav aria-label="التنقّل بين الدروس" class="mt-10 border-t border-border pt-6">
+      <nav aria-label="التنقّل بين الدروس" class="mt-10 border-t border-border pt-6 print:hidden">
         {series && (
           <p class="text-sm text-muted">
             من قائمة{' '}
