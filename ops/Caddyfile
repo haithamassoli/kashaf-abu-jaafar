@@ -14,8 +14,14 @@ search.assoli.site {
 			# Preflights are cached for 24 h and never reach the index; the POST behind them is
 			# what this zone is for. ponytail: OPTIONS is left unlimited, which is fine while it
 			# stays a CORS reply Meilisearch answers without searching anything.
+			#
+			# Search paths only. Everything else on this port — /tasks, /indexes/*/documents,
+			# /settings, /stats — is master-key-only, so throttling it protects nothing and
+			# does break the one thing that uses it: `scripts/index.ts` run from the laptop,
+			# whose waitForTask poll spends the whole budget in under two seconds.
 			match {
 				not method OPTIONS
+				path /multi-search /indexes/*/search /indexes/*/facet-search /indexes/*/similar
 			}
 			key {remote_host}
 			events 30

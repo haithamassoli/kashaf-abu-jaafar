@@ -23,14 +23,24 @@ const check = (n: number, head: string, notes: unknown[], ok: string) => {
 const few = (ids: string[], n = 5) =>
   ids.slice(0, n).join(', ') + (ids.length > n ? ` +${ids.length - n} more` : '')
 const json = (f: string) => readFile(join(DATA, f), 'utf8').then(JSON.parse)
-const meili = (path: string, body?: unknown) =>
-  fetch(HOST + path, {
-    method: body ? 'POST' : 'GET',
-    headers: { Authorization: `Bearer ${process.env.MEILI_ADMIN_KEY ?? ''}`, 'content-type': 'application/json' },
-    body: body ? JSON.stringify(body) : undefined,
-  })
-    .then((r) => r.json())
-    .catch((e: Error) => ({ error: e.message }))
+/**
+ * Caddy refuses more than 30 searches per 10 s from one IP (ops/Caddyfile) and checks 4 and 6
+ * issue ~90 of them. A refusal arrives as valid JSON carrying no `totalHits`, which every check
+ * below reads as «nothing wrong» — so it has to be waited out here, not swallowed as an answer.
+ */
+const meili = async (path: string, body?: unknown): Promise<Record<string, any>> => {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(HOST + path, {
+      method: body ? 'POST' : 'GET',
+      headers: { Authorization: `Bearer ${process.env.MEILI_ADMIN_KEY ?? ''}`, 'content-type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    }).catch((e: Error) => e)
+    if (res instanceof Error) return { error: res.message }
+    if (res.status !== 429) return res.json().catch((e: Error) => ({ error: e.message }))
+    if (attempt === 9) return { error: `rate limited on ${path} after ${attempt + 1} tries` }
+    await new Promise((r) => setTimeout(r, 2000))
+  }
+}
 
 type Video = { id: string; duration: number; segmentCount: number; playlists: { id: string }[] }
 type Seg = { s: number; e: number; t: string }
@@ -108,6 +118,7 @@ const orphans = await meili('/indexes/cues/search', {
 })
 check(4, `cues — meili ${cues} docs vs ${ndjson} ndjson lines in ${chunkFiles.length} files, all ${cues} docs checked for a dangling video_id`, [
   stats.error && `meili unreachable: ${stats.error}`,
+  orphans.error && `orphan scan never ran: ${orphans.error}`,
   cues !== ndjson && `${cues < ndjson ? 'RAW' : 'meili'} ahead by ${Math.abs(ndjson - cues)} (run \`pnpm index cues\`)`,
   orphans.totalHits && `${orphans.totalHits} cues cite an unknown videoId: ${few(orphans.hits.map((h: { id: string }) => h.id))}`,
 ], 'counts match, no dangling video_id')
@@ -131,12 +142,14 @@ for (const p of playlists) {
     hitsPerPage: 1,
     filter: `video_id IN [${p.videoIds.map((i) => JSON.stringify(i)).join(',')}] AND NOT playlist_ids = ${JSON.stringify(p.id)}`,
   })
+  if (r.error) staleP.push(`${p.title ?? p.id}: never checked — ${r.error}`)
   if (r.totalHits) staleP.push(`${p.title ?? p.id}: ${r.totalHits} cues from ${r.hits?.[0]?.video_id} and others omit it`)
   const extra = await meili('/indexes/cues/search', {
     q: '',
     hitsPerPage: 1,
     filter: `playlist_ids = ${JSON.stringify(p.id)} AND NOT video_id IN [${p.videoIds.map((i) => JSON.stringify(i)).join(',')}]`,
   })
+  if (extra.error) staleP.push(`${p.title ?? p.id}: never checked — ${extra.error}`)
   if (extra.totalHits) staleP.push(`${p.title ?? p.id}: ${extra.totalHits} cues claim it but their video left`)
 }
 check(6, `playlist_ids — every cue of all ${videos.length} videos checked against its ${playlists.length} playlists`,
