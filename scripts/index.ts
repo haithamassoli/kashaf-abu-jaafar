@@ -29,11 +29,22 @@ const lessonSettings = JSON.parse(
   await readFile(new URL('../meilisearch-lessons-settings.json', import.meta.url), 'utf8'),
 )
 
+// The box indexes a 20k-cue batch in about five minutes and a 37k-article one in nine, so the
+// client's 5s default — and even a 5-minute one — gives up on a task that then succeeds
+// server-side, which reads as a failed publish. Wait it out instead.
+const TASK_TIMEOUT = 1_800_000
+
+// waitForTask resolves on *any* terminal status, so a batch the box refused — 40k cues died on an
+// embedder timeout once — came back looking indexed and the run printed a total it never wrote.
+const waitFor = async (taskUid: number) => {
+  const t = await client.tasks.waitForTask(taskUid, { timeout: TASK_TIMEOUT })
+  if (t.status !== 'succeeded') throw new Error(`task ${taskUid} ${t.status}: ${t.error?.message ?? ''}`)
+}
+
 const setup = async (uid: string, s: Record<string, unknown>) => {
   await client.createIndex(uid, { primaryKey: 'id' }).catch(() => {})
   const t = await client.index(uid).updateSettings(s)
-  // a settings change that forces a re-index takes minutes; the client default is 5s
-  await client.tasks.waitForTask(t.taskUid, { timeout: 300_000 })
+  await waitFor(t.taskUid)
 }
 
 // Only for the pass that is running: settings would otherwise go up without the synonyms this
@@ -70,7 +81,7 @@ const flush = async () => {
   // quarter of a document a second. A merge keeps them; genuinely new cues arrive without
   // vectors and Meilisearch embeds those itself, which is a handful per ingest.
   const task = await client.index('cues').updateDocuments(batch as Record<string, unknown>[])
-  await client.tasks.waitForTask(task.taskUid, { timeout: 300_000 })
+  await waitFor(task.taskUid)
   sent += batch.length
   process.stdout.write(`\r${sent} cues indexed`)
   batch = []
@@ -118,7 +129,7 @@ if (wants('lessons') && lessons.size) {
   const docs = [...lessons.values()]
   for (let i = 0; i < docs.length; i += 200) {
     const task = await client.index('lessons').addDocuments(docs.slice(i, i + 200))
-    await client.tasks.waitForTask(task.taskUid, { timeout: 300_000 })
+    await waitFor(task.taskUid)
   }
   console.log(`\n${docs.length} lessons indexed`)
 }
@@ -150,14 +161,14 @@ if (lessons.size) {
     }
   for (const uid of ['cues', 'lessons'].filter(wants)) {
     const syn = await client.index(uid).updateSettings({ synonyms })
-    await client.tasks.waitForTask(syn.taskUid, { timeout: 300_000 })
+    await waitFor(syn.taskUid)
   }
   console.log(`${Object.keys(synonyms).length} synonyms`)
 }
 
 if (dropped.length && wants('cues')) {
   const task = await client.index('cues').deleteDocuments(dropped)
-  await client.tasks.waitForTask(task.taskUid, { timeout: 300_000 })
+  await waitFor(task.taskUid)
   console.log(`dropped ${dropped.length} empty cues`)
 }
 
@@ -176,7 +187,7 @@ if (wants('articles')) {
   const push = async (force = false) => {
     if (!docs.length || (!force && docs.length < BATCH)) return
     const task = await client.index('articles').updateDocuments(docs)
-    await client.tasks.waitForTask(task.taskUid, { timeout: 300_000 })
+    await waitFor(task.taskUid)
     sentDocs += docs.length
     process.stdout.write(`\r${sentDocs} article chunks indexed`)
     docs = []
