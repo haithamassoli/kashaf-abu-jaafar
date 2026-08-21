@@ -1,0 +1,280 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro'
+import Base from '../../layouts/Base.astro'
+import { arabicDate, articles as counted, withDigits } from '../../lib/format'
+import { SITE_URL, SHEIKH, breadcrumb } from '../../lib/seo'
+import { rows } from './index.json.ts'
+
+// One document for all 3,333 articles was 1.3 MB of HTML. `[...page]` keeps page 1 at /a/.
+export const getStaticPaths = (({ paginate }) =>
+  paginate(rows, { pageSize: 50 })) satisfies GetStaticPaths
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>
+
+const { page } = Astro.props
+const { currentPage: cur, lastPage: last } = page
+const href = (n: number) => (n === 1 ? '/a/' : `/a/${n}/`)
+
+// first, …, current ±2, …, last — 67 numbers don't fit on a phone. 0 marks a gap.
+const keep = [...new Set([1, cur - 2, cur - 1, cur, cur + 1, cur + 2, last])]
+  .filter((n) => n >= 1 && n <= last)
+  .sort((a, b) => a - b)
+const nums = keep.flatMap((n, i) => (i && n - keep[i - 1] > 1 ? [0, n] : [n]))
+
+// Repeated verbatim in the script below. `aria-current` carries the active state so the
+// server's <a>s and the client's <button>s can share one string.
+const pageBtn =
+  'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface px-3 text-sm text-muted transition-colors hover:text-fg aria-[current=page]:border-border-strong aria-[current=page]:bg-accent aria-[current=page]:text-accent-fg'
+
+const indexSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  '@id': `${SITE_URL}${page.url.current}#collection`,
+  name: 'المقالات',
+  inLanguage: 'ar',
+  // The full 3,333 would be a megabyte of JSON-LD nobody reads; the pages are the list.
+  mainEntity: { '@type': 'ItemList', numberOfItems: page.total },
+}
+---
+
+<Base
+  title={cur === 1 ? 'المقالات' : `المقالات — صفحة ${cur}`}
+  description={`مقالات وفتاوى ${SHEIKH}`}
+  schema={[indexSchema, breadcrumb([['المقالات', '/a/']])]}
+>
+  <h1 class="mt-10 text-2xl font-semibold tracking-tight sm:text-3xl">المقالات</h1>
+  <p class="mt-3 text-muted">
+    فلترة فورية على العنوان والتصنيف والتاريخ؛ للبحث داخل نصوص المقالات استخدم
+    <a href="/" class="text-accent underline underline-offset-4">البحث الرئيسي</a>.
+  </p>
+
+  <label for="article-filter" class="sr-only">ابحث في المقالات</label>
+  <input
+    id="article-filter"
+    type="search"
+    data-search-input
+    autocomplete="off"
+    placeholder="ابحث في المقالات"
+    class="mt-6 w-full rounded-xl border border-border-strong bg-surface px-4 py-3 text-base placeholder:text-muted"
+  />
+
+  <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+    <p id="article-count" class="text-sm text-muted" aria-live="polite" aria-atomic="true">
+      <span id="article-shown" class="digits">{page.total.toLocaleString('en-US')}</span> من <span
+        set:html={withDigits(counted(page.total))}
+      />
+    </p>
+
+    <button
+      id="article-sort"
+      type="button"
+      class="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-sm text-muted transition-colors hover:text-fg"
+    >
+      <svg
+        class="size-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M7 4v16m0 0l-3-3m3 3l3-3M17 20V4m0 0l-3 3m3-3l3 3"></path>
+      </svg>
+      <span class="sr-only">الترتيب: </span>
+      <span id="article-sort-label" aria-live="polite">الأحدث أولاً</span>
+    </button>
+  </div>
+
+  <p id="article-empty" class="mt-3 text-sm text-muted" aria-live="polite" hidden>لا نتائج</p>
+
+  <!-- tabindex=-1: after a client-side page change, focus lands here — the reader arrives at
+       the new rows instead of on a pagination button that has just been replaced. -->
+  <ul id="article-list" tabindex="-1" class="mt-4 space-y-2 outline-none">
+    {
+      page.data.map((a) => (
+        <li>
+          <a href={`/a/${a.id}/`} class="card block px-4 py-3 transition-colors hover:bg-surface-2">
+            <span class="block font-medium leading-relaxed">{a.title}</span>
+            <span class="mt-1 block text-sm text-muted">
+              {a.date && <bdi>{arabicDate(a.date)}</bdi>}
+              {a.date && a.tag && ' · '}
+              {a.tag}
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+
+  <nav id="article-pages" aria-label="ترقيم الصفحات" class="mt-8">
+    <div class="flex flex-wrap items-center justify-center gap-2">
+      {
+        page.url.prev ? (
+          <a href={page.url.prev} rel="prev" class={pageBtn}>
+            السابق
+          </a>
+        ) : (
+          <span class={`${pageBtn} opacity-40`}>السابق</span>
+        )
+      }
+      {
+        nums.map((n) =>
+          n === 0 ? (
+            <span class="px-1 text-muted">…</span>
+          ) : (
+            <a
+              href={href(n)}
+              class={`${pageBtn} digits`}
+              aria-current={n === cur ? 'page' : undefined}
+            >
+              {n}
+            </a>
+          ),
+        )
+      }
+      {
+        page.url.next ? (
+          <a href={page.url.next} rel="next" class={pageBtn}>
+            التالي
+          </a>
+        ) : (
+          <span class={`${pageBtn} opacity-40`}>التالي</span>
+        )
+      }
+    </div>
+    <p
+      class="mt-3 text-center text-sm text-muted"
+      set:html={withDigits(`صفحة ${cur} من ${last}`)}
+    />
+  </nav>
+</Base>
+
+<script>
+  import { arabicDate } from '../../lib/format'
+  import { normalize } from '../../lib/normalize'
+
+  /** [id, title, isoDate, tag] — the shape /a/index.json emits. */
+  type Row = [string, string, string, string]
+
+  const SIZE = 50
+  // Must match `pageBtn` in the frontmatter above.
+  const BTN =
+    'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface px-3 text-sm text-muted transition-colors hover:text-fg aria-[current=page]:border-border-strong aria-[current=page]:bg-accent aria-[current=page]:text-accent-fg'
+
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
+  const input = $<HTMLInputElement>('article-filter')
+  const sortLabel = $('article-sort-label')
+  const list = $('article-list')
+  const nav = $('article-pages')
+  const shownEl = $('article-shown')
+  const count = $('article-count')
+  const empty = $('article-empty')
+
+  let all: Row[] | null = null
+  let folded: string[] = []
+  let oldest = false
+  let cur = 1
+
+  /**
+   * The server-rendered 50 rows are the no-JS view; searching or sorting has to cover all
+   * 3,333, which is ~111 KB gzipped — worth one fetch, not worth inlining into 67 pages.
+   * A failed fetch just leaves the server rows in place.
+   */
+  let ready: Promise<unknown> | null = null
+  const load = () =>
+    (ready ??= fetch('/a/index.json')
+      .then((r) => r.json())
+      .then((data: Row[]) => {
+        all = data
+        // Folded here rather than shipped as data-title attributes: that duplication was
+        // ~300 KB of HTML, against one ~5 ms pass on the first keystroke.
+        folded = data.map(([, t, d, g]) => normalize(`${t} ${d} ${arabicDate(d)} ${g}`))
+      })
+      .catch(() => {}))
+
+  const row = ([id, title, date, tag]: Row) => {
+    const li = document.createElement('li')
+    const a = li.appendChild(document.createElement('a'))
+    a.href = `/a/${id}/`
+    a.className = 'card block px-4 py-3 transition-colors hover:bg-surface-2'
+    const t = a.appendChild(document.createElement('span'))
+    t.className = 'block font-medium leading-relaxed'
+    t.textContent = title // textContent, so no title can ever be markup
+    const meta = a.appendChild(document.createElement('span'))
+    meta.className = 'mt-1 block text-sm text-muted'
+    const d = arabicDate(date)
+    if (d) meta.appendChild(document.createElement('bdi')).textContent = d
+    meta.append(d && tag ? ' · ' : '', tag)
+    return li
+  }
+
+  /** Same shape as the nav above, but buttons: a filtered list has no URL to link to. */
+  const drawNav = (lastPage: number) => {
+    nav.hidden = lastPage < 2
+    if (nav.hidden) return
+    const keep = [...new Set([1, cur - 2, cur - 1, cur, cur + 1, cur + 2, lastPage])]
+      .filter((n) => n >= 1 && n <= lastPage)
+      .sort((a, b) => a - b)
+    const end = (n: number, label: string, live: boolean) =>
+      live
+        ? `<button type="button" data-page="${n}" class="${BTN}">${label}</button>`
+        : `<span class="${BTN} opacity-40">${label}</span>`
+    nav.innerHTML =
+      '<div class="flex flex-wrap items-center justify-center gap-2">' +
+      end(cur - 1, 'السابق', cur > 1) +
+      keep
+        .flatMap((n, i) => (i && n - keep[i - 1] > 1 ? [0, n] : [n]))
+        .map((n) =>
+          n === 0
+            ? '<span class="px-1 text-muted">…</span>'
+            : `<button type="button" data-page="${n}" class="${BTN} digits"${n === cur ? ' aria-current="page"' : ''}>${n}</button>`,
+        )
+        .join('') +
+      end(cur + 1, 'التالي', cur < lastPage) +
+      '</div><p class="mt-3 text-center text-sm text-muted">صفحة ' +
+      `<span class="digits">${cur}</span> من <span class="digits">${lastPage}</span></p>`
+  }
+
+  const draw = () => {
+    if (!all) return
+    const q = normalize(input.value)
+    const hits = q ? all.filter((_, i) => folded[i].includes(q)) : all.slice()
+    if (oldest) hits.reverse()
+    const lastPage = Math.max(1, Math.ceil(hits.length / SIZE))
+    if (cur > lastPage) cur = lastPage
+    list.replaceChildren(...hits.slice((cur - 1) * SIZE, cur * SIZE).map(row))
+    shownEl.textContent = hits.length.toLocaleString('en-US')
+    count.hidden = hits.length === 0
+    empty.hidden = hits.length !== 0
+    drawNav(lastPage)
+  }
+
+  const reset = async () => {
+    cur = 1
+    await load()
+    draw()
+  }
+
+  input.addEventListener('input', reset)
+
+  $('article-sort').addEventListener('click', () => {
+    oldest = !oldest
+    sortLabel.textContent = oldest ? 'الأقدم أولاً' : 'الأحدث أولاً'
+    reset()
+  })
+
+  nav.addEventListener('click', (e) => {
+    // The server-rendered <a>s carry no data-page, so they keep navigating for real.
+    const n = (e.target as HTMLElement).closest<HTMLElement>('[data-page]')?.dataset.page
+    if (!n) return
+    cur = Number(n)
+    draw()
+    // Back to the top of the results, then park focus on the list itself. Focusing the new
+    // page button instead left the caret a screenful below the fold; focusing the list
+    // without the scroll moves nothing, since a 50-row list is already «in view».
+    scrollTo({ top: 0, behavior: 'instant' })
+    list.focus({ preventScroll: true })
+  })
+</script>
