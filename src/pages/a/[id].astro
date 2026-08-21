@@ -34,6 +34,9 @@ const articleSchema = {
   datePublished: article.date ?? undefined,
   dateModified: article.modified ?? undefined,
   articleSection: article.categories.length ? article.categories : undefined,
+  image: article.images?.length
+    ? article.images.map((i) => new URL(i.src, SITE_URL).href)
+    : undefined,
   url: new URL(`/a/${article.id}/`, SITE_URL).href,
   mainEntityOfPage: new URL(`/a/${article.id}/`, SITE_URL).href,
   isBasedOn: article.url,
@@ -84,6 +87,21 @@ const crumbs = breadcrumb([[article.title, `/a/${article.id}/`]])
     <Actions title={article.title} />
 
     <div class="prose-naskh mt-6 max-w-none space-y-4 text-fg">
+      {
+        /* Telegram posts are written *about* the screenshot above them — «الصورة في الأعلى» —
+           so it leads the body, and it is not decorative. There is no caption to use as alt. */
+        article.images?.map((img) => (
+          <img
+            src={img.src}
+            width={img.w}
+            height={img.h}
+            alt="صورة مرفقة بالمنشور"
+            loading="lazy"
+            decoding="async"
+            class="mx-auto max-w-full rounded-xl border border-border"
+          />
+        ))
+      }
       {article.paragraphs.map((p, n) => <p id={`p${n}`} class="scroll-mt-20">{p}</p>)}
     </div>
   </article>

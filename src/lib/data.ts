@@ -37,6 +37,8 @@ export type Article = {
   categories: string[]
   url: string
   paragraphs: string[]
+  /** Telegram posts only; `w`/`h` are the intrinsic pixels, so the box is reserved before load. */
+  images?: { src: string; w: number; h: number }[]
 }
 
 const articleDir = `${dir}articles/`

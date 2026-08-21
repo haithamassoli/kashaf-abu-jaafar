@@ -12,8 +12,10 @@ export const rows = allArticles()
     id: a.id,
     title: a.title,
     date: a.date,
-    // The type is only worth showing when it isn't the default; otherwise the topic is.
-    tag: a.type === 'post' ? (a.categories[0] ?? '') : (LABEL[a.type] ?? ''),
+    // The type is only worth showing when it isn't the default; otherwise the topic is —
+    // except for the Telegram posts, which arrive with no categories at all, so the channel
+    // they came from is the only thing left to tell one row from the next.
+    tag: a.source === 'telegram' ? 'تيليجرام' : a.type === 'post' ? (a.categories[0] ?? '') : (LABEL[a.type] ?? ''),
   }))
   .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '') || a.title.localeCompare(b.title, 'ar'))
 

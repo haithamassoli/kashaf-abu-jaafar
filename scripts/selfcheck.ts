@@ -1,13 +1,14 @@
 /** `pnpm check` — the smallest thing that fails if the text plumbing breaks. */
 import assert from 'node:assert/strict'
+import { existsSync } from 'node:fs'
 import { client, highlight, peek, rateLimited, search } from '../src/lib/meili.ts'
 import { normalize } from '../src/lib/normalize.ts'
 import { clean } from '../src/lib/clean.ts'
-import { decode, paragraphs, titleKey } from '../src/lib/html.ts'
+import { chunk, decode, paragraphs, titleKey } from '../src/lib/html.ts'
 import { markMatches } from '../src/lib/mark.ts'
 import { timestamp, duration, arabicDate, lessons, hours, lists, articles, withDigits } from '../src/lib/format.ts'
 import { breadcrumb, mailto, CONTACT_EMAIL, SITE, SITE_URL } from '../src/lib/seo.ts'
-import { playlists, playlistVideos } from '../src/lib/data.ts'
+import { allArticles, playlists, playlistVideos } from '../src/lib/data.ts'
 
 // highlight: escapes everything except <mark>, so a hostile transcript cannot inject HTML
 assert.equal(
@@ -40,6 +41,10 @@ assert.equal(clean('باب الطلاق'), 'باب الطلاق')
 assert.deepEqual(paragraphs('<div>سطر أول</div><div>سطر ثانٍ</div>'), ['سطر أول سطر ثانٍ'])
 assert.deepEqual(paragraphs('<!--[if gte mso 9]><xml>junk</xml><![endif]--><p>نص</p>'), ['نص'])
 assert.equal(decode('&#1575;&amp;&nbsp;ب'), 'ا& ب')
+// the Telegram body is full of these; undecoded they survive into the text as literal `&rlm;`
+assert.equal(decode('&rlm;نص'), '\u200fنص')
+// chunk: the same gluing, but over lines the caller already split (Telegram keeps its blanks)
+assert.deepEqual(chunk(['سطر أول', 'سطر ثانٍ']), ['سطر أول سطر ثانٍ'])
 // a line that is already long enough closes its chunk instead of swallowing the next one
 const long = 'ك'.repeat(600)
 assert.deepEqual(paragraphs(`<p>${long}</p><p>ذيل</p>`), [long, 'ذيل'])
@@ -169,6 +174,18 @@ for (const p of playlists) {
     dates.every((d, i) => i === 0 || dates[i - 1] <= d),
     `${p.title} is not oldest-first`,
   )
+}
+
+// Telegram articles: their photos live in public/, which nothing else in the build validates —
+// a missed download or a renamed file is a 404 on a live page and silent everywhere else.
+const pub = new URL('../public/', import.meta.url).pathname
+for (const a of allArticles().filter((a) => a.source === 'telegram')) {
+  assert.ok(a.title && a.paragraphs.length && a.date, `${a.id} came out of Telegram empty`)
+  assert.ok(a.url.startsWith('https://t.me/'), `${a.id} has no source message`)
+  for (const img of a.images ?? []) {
+    assert.ok(existsSync(pub + img.src.replace(/^\//, '')), `${a.id}: ${img.src} is not in public/`)
+    assert.ok(img.w > 0 && img.h > 0, `${a.id}: ${img.src} has no dimensions`)
+  }
 }
 
 console.log('selfcheck ok')

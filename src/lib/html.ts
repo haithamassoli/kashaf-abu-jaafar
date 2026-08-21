@@ -1,6 +1,6 @@
 /**
- * HTML -> paragraphs, shared by the two article ingests (Blogger feed, Wayback WP pages).
- * Both sources are the same Word-pasted markup: MSO conditional comments, <o:p>, nested divs.
+ * HTML -> paragraphs, shared by the article ingests (Blogger feed, Wayback WP pages, Telegram).
+ * The first two are the same Word-pasted markup: MSO conditional comments, <o:p>, nested divs.
  */
 const ENTITY: Record<string, string> = {
   amp: '&',
@@ -14,6 +14,8 @@ const ENTITY: Record<string, string> = {
   hellip: '…',
   mdash: '—',
   ndash: '–',
+  rlm: '\u200f',
+  lrm: '\u200e',
 }
 
 export const decode = (s: string): string =>
@@ -38,10 +40,10 @@ export const lines = (html: string): string[] =>
 // split phrases across documents and kill recall. Glue them back into ~paragraph-sized chunks.
 const CHUNK = 500
 
-export function paragraphs(html: string): string[] {
+export function chunk(lines: string[]): string[] {
   const out: string[] = []
   let buf = ''
-  for (const line of lines(html)) {
+  for (const line of lines) {
     buf = buf ? `${buf} ${line}` : line
     if (buf.length >= CHUNK) {
       out.push(buf)
@@ -51,6 +53,8 @@ export function paragraphs(html: string): string[] {
   if (buf) out.push(buf)
   return out
 }
+
+export const paragraphs = (html: string): string[] => chunk(lines(html))
 
 /** Match titles across the two sources: same post, different diacritics/punctuation/spacing. */
 export const titleKey = (t: string): string =>
