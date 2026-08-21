@@ -41,9 +41,3 @@ export function update(
   save(items)
   return items[path]
 }
-
-export function remove(path: string): void {
-  const items = all()
-  delete items[path]
-  save(items)
-}

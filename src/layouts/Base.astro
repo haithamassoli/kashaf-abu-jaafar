@@ -53,6 +53,10 @@ const social = [
     d: 'M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z',
   },
 ]
+// Square 44×44 targets in the header: the saved-pages link and the theme toggle.
+const icon =
+  'grid size-11 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-fg'
+
 const fullTitle = title ? `${title} — ${SITE}` : HOME_TITLE
 const base = Astro.site ?? Astro.url.origin
 const canonical = new URL(Astro.url.pathname, base).href
@@ -145,7 +149,7 @@ const ogSize = image === '/og.png' ? { w: '1200', h: '630' } : { w: '480', h: '3
             href="/saved/"
             aria-label="المحفوظات"
             title="المحفوظات"
-            class="grid size-11 place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+            class={icon}
           >
             <svg
               class="size-5"
@@ -163,7 +167,7 @@ const ogSize = image === '/og.png' ? { w: '1200', h: '630' } : { w: '480', h: '3
           <button
             type="button"
             id="theme-toggle"
-            class="grid size-11 place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+            class={icon}
             aria-pressed="false"
             aria-label="الوضع الداكن"
           >

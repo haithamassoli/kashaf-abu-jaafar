@@ -9,7 +9,7 @@ import { markMatches } from '../src/lib/mark.ts'
 import { timestamp, duration, arabicDate, lessons, hours, lists, articles, withDigits } from '../src/lib/format.ts'
 import { breadcrumb, mailto, CONTACT_EMAIL, SITE, SITE_URL } from '../src/lib/seo.ts'
 import { allArticles, playlists, playlistVideos } from '../src/lib/data.ts'
-import { all, update, remove } from '../src/lib/store.ts'
+import { all, update } from '../src/lib/store.ts'
 
 // highlight: escapes everything except <mark>, so a hostile transcript cannot inject HTML
 assert.equal(
@@ -204,9 +204,6 @@ update('/v/x/', page, { mark: undefined })
 assert.equal(all()['/v/x/'].note, 'ملاحظة') // the note alone keeps the entry alive
 update('/v/x/', page, { note: undefined })
 assert.deepEqual(all(), {}) // nothing left to remember
-update('/a/y/', page, { mark: true })
-remove('/a/y/')
-assert.deepEqual(all(), {})
 mem.set('kashaf:saved', '[1,2]') // a hand-mangled blob reads as empty, never as a crash
 assert.deepEqual(all(), {})
 

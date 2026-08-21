@@ -2,9 +2,15 @@
 /**
  * Everything the reader bookmarked or annotated, read out of localStorage in the
  * browser. Nothing is server-rendered here — the whole page is a static shell, and
- * there is no account behind it, so this list exists only on this device.
+ * there is no account behind it, so these lists exist only on this device.
+ *
+ * Bookmarks and notes get a section each; a page that is both bookmarked and
+ * annotated appears in both, and its × clears only the field it sits under.
  */
 import Base from '../layouts/Base.astro'
+
+const section = 'mt-8 scroll-mt-20'
+const heading = 'text-lg font-semibold'
 ---
 
 <Base title="المحفوظات" description="إشاراتك المرجعية وملاحظاتك" noindex>
@@ -13,51 +19,95 @@ import Base from '../layouts/Base.astro'
   <p id="saved-empty" class="mt-8 text-muted" hidden>
     لا شيء محفوظ بعد. افتح درسًا أو مقالة واضغط زر الإشارة المرجعية.
   </p>
-  <ul id="saved-list" class="mt-6 space-y-3"></ul>
+
+  <label for="saved-sort" class="sr-only">ترتيب المحفوظات</label>
+  <select
+    id="saved-sort"
+    hidden
+    class="mt-4 h-11 rounded-lg border border-border-strong bg-surface px-3 text-sm text-muted"
+  >
+    <option value="new">الأحدث أولاً</option>
+    <option value="old">الأقدم أولاً</option>
+    <option value="title">حسب العنوان</option>
+  </select>
+
+  <section id="marks" hidden class={section}>
+    <h2 class={heading}>الإشارات المرجعية</h2>
+    <ul data-list class="mt-3 space-y-3"></ul>
+  </section>
+
+  <section id="notes" hidden class={section}>
+    <h2 class={heading}>الملاحظات</h2>
+    <ul data-list class="mt-3 space-y-3"></ul>
+  </section>
 </Base>
 
 <script>
-  import { all, remove, type Item } from '../lib/store'
+  import { all, update, type Item } from '../lib/store'
 
   const LABEL: Record<Item['kind'], string> = { v: 'درس', a: 'مقالة', p: 'قائمة' }
+  const DROP = { mark: 'أزل الإشارة المرجعية', note: 'احذف الملاحظة' }
 
-  const list = document.getElementById('saved-list')!
-  const empty = document.getElementById('saved-empty')!
-
-  function render() {
-    const items = Object.entries(all()).sort((a, b) => b[1].at - a[1].at)
-    list.replaceChildren()
-    empty.hidden = items.length > 0
-
-    for (const [path, item] of items) {
-      const li = document.createElement('li')
-      li.className = 'card p-4'
-      li.innerHTML = `<div class="flex items-start gap-3">
-        <span class="shrink-0 rounded-full bg-surface-2 px-3 py-1 text-xs text-muted"></span>
-        <a class="min-w-0 flex-1 font-medium leading-relaxed underline-offset-4 hover:underline"></a>
-        <button type="button" data-del aria-label="احذف من المحفوظات" class="grid size-11 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:text-fg">
-          <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
-        </button>
-      </div>
-      <p class="prose-naskh mt-2 whitespace-pre-wrap text-sm text-muted"></p>`
-
-      li.querySelector('span')!.textContent = LABEL[item.kind] ?? 'صفحة'
-      const link = li.querySelector('a')!
-      link.textContent = item.title
-      // Keys are written as location.pathname and nothing else; the guard is only here
-      // so a hand-edited localStorage can't turn this into a javascript: link.
-      link.href = path.startsWith('/') ? path : '/'
-      const note = li.querySelector('p')!
-      note.textContent = item.note ?? ''
-      note.hidden = !item.note
-
-      li.querySelector('[data-del]')!.addEventListener('click', () => {
-        remove(path)
-        render()
-      })
-      list.append(li)
-    }
+  // `at` is the last time either field on the entry was touched, which is what
+  // «الأحدث» means here — not when the page was first saved.
+  const SORTS: Record<string, (a: [string, Item], b: [string, Item]) => number> = {
+    new: (a, b) => b[1].at - a[1].at,
+    old: (a, b) => a[1].at - b[1].at,
+    title: (a, b) => a[1].title.localeCompare(b[1].title, 'ar'),
   }
 
+  const empty = document.getElementById('saved-empty')!
+  const sort = document.getElementById('saved-sort') as HTMLSelectElement
+  const sections = { mark: document.getElementById('marks')!, note: document.getElementById('notes')! }
+
+  function row(path: string, item: Item, field: 'mark' | 'note'): HTMLLIElement {
+    const li = document.createElement('li')
+    li.className = 'card p-4'
+    li.innerHTML = `<div class="flex items-start gap-3">
+      <span class="shrink-0 rounded-full bg-surface-2 px-3 py-1 text-xs text-muted"></span>
+      <a class="min-w-0 flex-1 font-medium leading-relaxed underline-offset-4 hover:underline"></a>
+      <button type="button" data-del class="grid size-11 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:text-fg">
+        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <p class="prose-naskh mt-2 whitespace-pre-wrap text-sm text-muted"></p>`
+
+    li.querySelector('span')!.textContent = LABEL[item.kind] ?? 'صفحة'
+    const link = li.querySelector('a')!
+    link.textContent = item.title
+    // Keys are written as location.pathname and nothing else; the guard is only here
+    // so a hand-edited localStorage can't turn this into a javascript: link.
+    link.href = path.startsWith('/') ? path : '/'
+    const note = li.querySelector('p')!
+    note.textContent = field === 'note' ? (item.note ?? '') : ''
+    note.hidden = !note.textContent
+
+    const del = li.querySelector('[data-del]')!
+    del.setAttribute('aria-label', DROP[field])
+    del.addEventListener('click', () => {
+      // Clears one field, not the row: unstarring a page must not take its note with it.
+      update(path, { title: item.title, kind: item.kind }, { [field]: undefined })
+      render()
+    })
+    return li
+  }
+
+  function render() {
+    const items = Object.entries(all()).sort(SORTS[sort.value] ?? SORTS.new)
+    let total = 0
+    for (const field of ['mark', 'note'] as const) {
+      const mine = items.filter(([, item]) => item[field])
+      total += mine.length
+      sections[field].hidden = !mine.length
+      sections[field]
+        .querySelector('[data-list]')!
+        .replaceChildren(...mine.map(([path, item]) => row(path, item, field)))
+    }
+    empty.hidden = total > 0
+    // Nothing to order when nothing is listed.
+    sort.hidden = total === 0
+  }
+
+  sort.addEventListener('change', render)
   render()
 </script>

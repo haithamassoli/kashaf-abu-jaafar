@@ -30,12 +30,15 @@ const { title, kind } = Astro.props as { title: string; kind: Kind }
   </summary>
 
   <label for="note-input" class="sr-only">ملاحظاتي على هذه الصفحة</label>
+  {/* field-sizing lets the box track what is typed, so a one-line note is not a
+      five-line hole in the page. `rows` is the fallback where it isn't supported,
+      and the cap keeps a long note from pushing the footer off the screen. */}
   <textarea
     id="note-input"
     data-note-input
-    rows="5"
-    placeholder="اكتب ملاحظتك… تُحفظ في هذا المتصفح وحده."
-    class="prose-naskh mt-2 w-full resize-y rounded-lg border border-border-strong bg-surface p-3 text-base leading-loose placeholder:text-muted"
+    rows="3"
+    placeholder="اكتب ملاحظتك هنا…"
+    class="prose-naskh mt-2 max-h-[50dvh] min-h-20 w-full resize-y rounded-lg border border-border-strong bg-surface p-3 text-base leading-loose field-sizing-content placeholder:text-muted"
   ></textarea>
   <p data-note-state aria-live="polite" class="min-h-5 text-xs text-muted"></p>
 </details>
