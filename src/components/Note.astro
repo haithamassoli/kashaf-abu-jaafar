@@ -30,15 +30,17 @@ const { title, kind } = Astro.props as { title: string; kind: Kind }
   </summary>
 
   <label for="note-input" class="sr-only">ملاحظاتي على هذه الصفحة</label>
-  {/* field-sizing lets the box track what is typed, so a one-line note is not a
-      five-line hole in the page. `rows` is the fallback where it isn't supported,
-      and the cap keeps a long note from pushing the footer off the screen. */}
+  {/* No `text-base`/`leading-loose`: those override prose-naskh and the reader ends up
+      writing at 16/32 next to an article set in 17/34. Left alone, the note is the same
+      type as the page it sits under, in a panel the same shape as .card.
+      field-sizing keeps the box growing past `min-h` as the note gets longer; `rows` is
+      the fallback where it isn't supported, and the cap keeps it on screen. */}
   <textarea
     id="note-input"
     data-note-input
-    rows="3"
+    rows="7"
     placeholder="اكتب ملاحظتك هنا…"
-    class="prose-naskh mt-2 max-h-[50dvh] min-h-20 w-full resize-y rounded-lg border border-border-strong bg-surface p-3 text-base leading-loose field-sizing-content placeholder:text-muted"
+    class="prose-naskh mt-2 max-h-[60dvh] min-h-64 w-full resize-y rounded-xl border border-border-strong bg-surface p-4 field-sizing-content placeholder:text-muted"
   ></textarea>
   <p data-note-state aria-live="polite" class="min-h-5 text-xs text-muted"></p>
 </details>
