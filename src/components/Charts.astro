@@ -9,9 +9,6 @@ const all = playlists
   .map((p) => ({ title: p.title, hours: round1(playlistDuration(p) / H) }))
   .sort((a, b) => b.hours - a.hours)
 
-const loose = videos.filter((v) => v.playlists.length === 0).reduce((n, v) => n + v.duration, 0) / H
-if (loose >= 1) all.push({ title: 'خارج القوائم', hours: round1(loose) })
-
 // The full list lives on /p — this card is a glance, so it stays as tall as the cumulative chart
 // next to it instead of growing a row per playlist. One line per label, tooltip carries the rest.
 const TOP = 8

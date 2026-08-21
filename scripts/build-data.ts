@@ -48,6 +48,11 @@ const round = (n: number) => Math.round(n * 100) / 100
 // re-crawl cannot bring it back. ponytail: a Set beats a rule until there is a second reason.
 const SKIP_PLAYLISTS = new Set(['PLkLIIYo0Lm4vw09hsdQuT3BWDdUmEGBtJ'])
 
+// ~2,000 of the channel's videos sit in no playlist at all. Without a home they are unreachable
+// from /p and unfilterable in search, so they get a synthetic one. `other` is not a YouTube id,
+// which is fine: nothing links a playlist out to YouTube, and it passes meili.ts's safePlaylist.
+const OTHER = { id: 'other', title: 'أخرى', index: 0 }
+
 async function main() {
   const files = (await readdir(RAW_DIR)).filter((f) => f.endsWith('.transcript.json'))
   if (files.length === 0) throw new Error(`no *.transcript.json in ${RAW_DIR}`)
@@ -67,7 +72,8 @@ async function main() {
       .filter((s) => s.text)
     if (segments.length === 0) continue
 
-    const inPlaylists = (v.playlists ?? []).filter((p) => !SKIP_PLAYLISTS.has(p.id))
+    const kept = (v.playlists ?? []).filter((p) => !SKIP_PLAYLISTS.has(p.id))
+    const inPlaylists = kept.length ? kept : [OTHER]
 
     videos.push({
       id: v.id,
@@ -101,8 +107,14 @@ async function main() {
       videoIds: entries.sort((a, b) => a.index - b.index).map((e) => e.id),
     }))
     // ties are common and readdir order is not stable, so name breaks them or the combobox,
-    // the /p list and the JSON-LD positions all reshuffle between rebuilds
-    .sort((a, b) => b.videoIds.length - a.videoIds.length || a.title.localeCompare(b.title, 'ar'))
+    // the /p list and the JSON-LD positions all reshuffle between rebuilds.
+    // `other` is the biggest by a wide margin but it is a leftovers bin, so it sorts last.
+    .sort(
+      (a, b) =>
+        Number(a.id === OTHER.id) - Number(b.id === OTHER.id) ||
+        b.videoIds.length - a.videoIds.length ||
+        a.title.localeCompare(b.title, 'ar'),
+    )
 
   await writeFile(join(DATA, 'videos.json'), JSON.stringify(videos, null, 0))
   await writeFile(join(DATA, 'playlists.json'), JSON.stringify(playlistList, null, 0))

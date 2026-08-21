@@ -133,11 +133,25 @@ if (push) {
 }
 
 const fields = uid === 'cues' ? 'id,text' : 'id,title,text'
-const docs: Record<string, string>[] = []
+let docs: Record<string, string>[] = []
 for (let offset = 0; ; offset += 10_000) {
   const r = await meili(`/indexes/${uid}/documents?limit=10000&offset=${offset}&fields=${fields}`).then((x) => x.json())
   docs.push(...r.results)
   if (r.results.length < 10_000) break
+}
+
+/**
+ * `--skip=<file>`: the ids an earlier `--out` run already wrote. An ingest that doubles the
+ * corpus otherwise re-embeds everything that was already frozen — an hour of GPU for vectors
+ * that exist. `cat` the two output files before `--push`; the merge is by id either way.
+ */
+if (arg('skip')) {
+  const done = new Set<string>()
+  for await (const line of createInterface({ input: createReadStream(arg('skip') as string), crlfDelay: Infinity }))
+    if (line) done.add(JSON.parse(line).id)
+  const before = docs.length
+  docs = docs.filter((d) => !done.has(d.id))
+  console.log(`--skip: ${before - docs.length} of ${before} already embedded`)
 }
 console.log(`${docs.length} documents in ${uid}${from ? `, resuming at ${from}` : ''}`)
 
