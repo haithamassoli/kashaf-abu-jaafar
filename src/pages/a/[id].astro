@@ -54,13 +54,19 @@ const crumbs = breadcrumb([[article.title, `/a/${article.id}/`]])
   schema={[articleSchema, crumbs]}
 >
   <article class="pt-8">
-    <div class="flex flex-wrap items-center gap-2">
-      <span class="rounded-full bg-surface-2 px-3 py-1 text-xs text-muted">{kind}</span>
-      {
-        article.categories.map((c) => (
-          <span class="rounded-full bg-surface-2 px-3 py-1 text-xs text-muted">{c}</span>
-        ))
-      }
+    {/* Same row as a lesson: tags lead, the actions sit at the far end. items-center,
+        not items-start — these pills are half the height of the buttons beside them. */}
+    <div class="flex items-center gap-3">
+      <div class="flex min-w-0 flex-wrap items-center gap-2">
+        <span class="rounded-full bg-surface-2 px-3 py-1 text-xs text-muted">{kind}</span>
+        {
+          article.categories.map((c) => (
+            <span class="rounded-full bg-surface-2 px-3 py-1 text-xs text-muted">{c}</span>
+          ))
+        }
+      </div>
+
+      <Actions title={article.title} kind="a" class="ms-auto shrink-0" />
     </div>
 
     <h1 class="mt-4 text-xl font-semibold leading-relaxed sm:text-2xl">{article.title}</h1>
@@ -90,8 +96,6 @@ const crumbs = breadcrumb([[article.title, `/a/${article.id}/`]])
         >افتح في {SITE}</a
       >
     </div>
-
-    <Actions title={article.title} kind="a" class="mt-4" />
 
     <svg hidden aria-hidden="true">
       <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
