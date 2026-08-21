@@ -7,6 +7,7 @@ import { decode, paragraphs, titleKey } from '../src/lib/html.ts'
 import { markMatches } from '../src/lib/mark.ts'
 import { timestamp, duration, arabicDate, lessons, hours, lists, articles, withDigits } from '../src/lib/format.ts'
 import { breadcrumb, mailto, CONTACT_EMAIL, SITE, SITE_URL } from '../src/lib/seo.ts'
+import { playlists, playlistVideos } from '../src/lib/data.ts'
 
 // highlight: escapes everything except <mark>, so a hostile transcript cannot inject HTML
 assert.equal(
@@ -140,5 +141,17 @@ client.multiSearch = (async () => {
 await assert.rejects(search('سؤال لم يسبق أن سئل', { tab: 'v' }))
 assert.equal(refused, 1)
 assert.ok(!rateLimited(new Error('the box is simply down')))
+
+// playlistVideos: /p/ and the lesson prev/next both walk this, and 9 of 43 playlists arrive
+// from YouTube out of chronological order — an unsorted return reads as «الدرس التالي» going back.
+for (const p of playlists) {
+  const walked = playlistVideos(p)
+  assert.equal(walked.length, p.videoIds.length, `${p.title} lost a lesson`)
+  const dates = walked.map((v) => v.uploadDate ?? '')
+  assert.ok(
+    dates.every((d, i) => i === 0 || dates[i - 1] <= d),
+    `${p.title} is not oldest-first`,
+  )
+}
 
 console.log('selfcheck ok')

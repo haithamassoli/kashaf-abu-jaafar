@@ -50,6 +50,19 @@ export const articleCount = articleFiles.length
 export const allArticles = (): Article[] =>
   articleFiles.map((f) => JSON.parse(readFileSync(articleDir + f, 'utf8')) as Article)
 
+/**
+ * The order /p/[id] and the lesson prev/next both use: oldest first.
+ * YouTube's own playlist index is only the tie-break — 9 of 43 playlists are not
+ * chronological in it, and one 173-lesson series was uploaded on a single day.
+ */
+export const playlistVideos = (p: Playlist): Video[] => {
+  const index = (v: Video) => v.playlists.find((x) => x.id === p.id)?.index ?? 0
+  return p.videoIds
+    .map((id) => videoById.get(id))
+    .filter((v) => v !== undefined)
+    .sort((a, b) => (a.uploadDate ?? '').localeCompare(b.uploadDate ?? '') || index(a) - index(b))
+}
+
 export const playlistDuration = (p: Playlist): number =>
   p.videoIds.reduce((n, id) => n + (videoById.get(id)?.duration ?? 0), 0)
 
