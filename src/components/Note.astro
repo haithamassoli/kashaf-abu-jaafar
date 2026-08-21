@@ -38,9 +38,9 @@ const { title, kind } = Astro.props as { title: string; kind: Kind }
   <textarea
     id="note-input"
     data-note-input
-    rows="7"
+    rows="5"
     placeholder="اكتب ملاحظتك هنا…"
-    class="prose-naskh mt-2 max-h-[60dvh] min-h-64 w-full resize-y rounded-xl border border-border-strong bg-surface p-4 field-sizing-content placeholder:text-muted"
+    class="prose-naskh mt-2 max-h-[60dvh] min-h-52 w-full resize-y rounded-xl border border-border-strong bg-surface p-4 field-sizing-content placeholder:text-muted"
   ></textarea>
   <p data-note-state aria-live="polite" class="min-h-5 text-xs text-muted"></p>
 </details>

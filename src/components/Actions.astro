@@ -27,6 +27,11 @@ const ACTS = [
     icon: `<circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"></path>`,
   },
   {
+    act: 'copy',
+    label: 'نسخ الكل',
+    icon: `<rect x="8" y="8" width="14" height="14" rx="2"></rect><path d="M4 16a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2"></path>`,
+  },
+  {
     act: 'pdf',
     label: 'PDF',
     icon: `<path d="M6 9V3h12v6M6 18H4v-6h16v6h-2"></path><rect x="8" y="15" width="8" height="6" rx="1"></rect>`,
@@ -38,9 +43,9 @@ const ACTS = [
   },
 ]
 
-// A playlist page has no prose: its .txt would be empty and its print is just the
-// lesson list, so those two are dropped and the single button needs no menu.
-const acts = kind === 'p' ? ACTS.slice(0, 1) : ACTS
+// A playlist page has no prose: there is nothing to copy or download, and its print is
+// just the lesson list. Only sharing survives, and one button needs no menu.
+const acts = kind === 'p' ? ACTS.filter((a) => a.act === 'share') : ACTS
 const menu = acts.length > 1
 
 const svg = 'size-4 shrink-0'
@@ -175,11 +180,23 @@ const item =
       ).join('\n\n')
     }
 
-    // Deliberately ignores the in-page filter: both here and in print, "download this
-    // page" means the whole text, not whatever happens to be typed in the search box.
+    // Deliberately ignores the in-page filter: here, on the clipboard and in print,
+    // "the whole page" means the whole text, not whatever is typed in the search box.
+    // The title and the link lead it so a pasted lesson says where it came from.
+    const doc = () => `${title}\n${location.origin}${location.pathname}\n\n${body()}\n`
+
+    const copy = async () => {
+      try {
+        await navigator.clipboard.writeText(doc())
+        flash('تم نسخ النص')
+      } catch {
+        flash('تعذّر النسخ')
+      }
+    }
+
     const txt = () => {
       const url = URL.createObjectURL(
-        new Blob([`${title}\n${location.origin}${location.pathname}\n\n${body()}\n`], {
+        new Blob([doc()], {
           type: 'text/plain;charset=utf-8',
         }),
       )
@@ -224,6 +241,7 @@ const item =
       if (!act) return
       if (menu) menu.open = false
       if (act === 'share') share()
+      else if (act === 'copy') copy()
       else if (act === 'pdf') print()
       else if (act === 'txt') txt()
     })
