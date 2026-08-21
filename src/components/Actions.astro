@@ -8,34 +8,104 @@
  * a transcript is ~1,400 rows already in the HTML, and repeating it in a data
  * attribute would double the page for a button most readers never press.
  */
+const { title, class: cls } = Astro.props as { title: string; class?: string }
+
+// One list rendered twice: a row of buttons from sm up, a single menu below it. The
+// icons are raw <svg> bodies so both renderings share them instead of duplicating 3 KB.
+const ACTS = [
+  {
+    act: 'share',
+    label: 'مشاركة',
+    icon: `<circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"></path>`,
+  },
+  {
+    act: 'pdf',
+    label: 'PDF',
+    icon: `<path d="M6 9V3h12v6M6 18H4v-6h16v6h-2"></path><rect x="8" y="15" width="8" height="6" rx="1"></rect>`,
+  },
+  {
+    act: 'txt',
+    label: 'TXT',
+    icon: `<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path>`,
+  },
+]
+
+const svg = 'size-4 shrink-0'
 const btn =
   'inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-sm text-muted transition-colors hover:text-fg'
-const { title } = Astro.props as { title: string }
+const item =
+  'flex min-h-11 w-full items-center gap-2 px-3 text-start text-sm text-muted transition-colors hover:bg-surface-2 hover:text-fg'
 ---
 
-<div data-actions data-title={title} class="mt-4 flex flex-wrap items-center gap-2 print:hidden">
-  <button type="button" data-act="share" class={btn}>
-    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle>
-      <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"></path>
-    </svg>
-    مشاركة
-  </button>
+<div data-actions data-title={title} class:list={['print:hidden', cls]}>
+  <div class="hidden flex-wrap items-center gap-2 sm:flex">
+    {
+      ACTS.map((a) => (
+        <button type="button" data-act={a.act} class={btn}>
+          <svg
+            class={svg}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            set:html={a.icon}
+          />
+          {a.label}
+        </button>
+      ))
+    }
+  </div>
 
-  <button type="button" data-act="pdf" class={btn}>
-    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M6 9V3h12v6M6 18H4v-6h16v6h-2"></path><rect x="8" y="15" width="8" height="6" rx="1"></rect>
-    </svg>
-    PDF
-  </button>
+  {/* ponytail: <details> is the whole mobile menu — native disclosure, no island, no
+      dependency. The two lines of JS below are the only things it lacks: click-outside
+      and Escape. Swap for a Base UI Menu only if it ever needs arrow-key roving. */}
+  <details data-menu class="relative sm:hidden">
+    <summary
+      class:list={[btn, 'cursor-pointer list-none [&::-webkit-details-marker]:hidden']}
+    >
+      <svg
+        class={svg}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="5" cy="12" r="1.4" fill="currentColor"></circle>
+        <circle cx="12" cy="12" r="1.4" fill="currentColor"></circle>
+        <circle cx="19" cy="12" r="1.4" fill="currentColor"></circle>
+      </svg>
+      خيارات
+    </summary>
 
-  <button type="button" data-act="txt" class={btn}>
-    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path>
-      <path d="M14 3v5h5M9 13h6M9 17h6"></path>
-    </svg>
-    TXT
-  </button>
+    <div
+      class="absolute end-0 z-30 mt-2 w-44 overflow-hidden rounded-lg border border-border bg-surface py-1 shadow-lg"
+    >
+      {
+        ACTS.map((a) => (
+          <button type="button" data-act={a.act} class={item}>
+            <svg
+              class={svg}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              set:html={a.icon}
+            />
+            {a.label}
+          </button>
+        ))
+      }
+    </div>
+  </details>
 </div>
 
 <script>
@@ -44,6 +114,7 @@ const { title } = Astro.props as { title: string }
   const bar = document.querySelector<HTMLElement>('[data-actions]')
   if (bar) {
     const title = bar.dataset.title || document.title
+    const menu = bar.querySelector<HTMLDetailsElement>('[data-menu]')
 
     /** Transcript cues on a lesson page, article paragraphs everywhere else. */
     const body = () => {
@@ -88,9 +159,20 @@ const { title } = Astro.props as { title: string }
 
     bar.addEventListener('click', (e) => {
       const act = (e.target as HTMLElement).closest<HTMLElement>('[data-act]')?.dataset.act
+      if (!act) return
+      if (menu) menu.open = false
       if (act === 'share') share()
       else if (act === 'pdf') print()
       else if (act === 'txt') txt()
     })
+
+    if (menu) {
+      document.addEventListener('click', (e) => {
+        if (!(e.target as HTMLElement).closest('[data-menu]')) menu.open = false
+      })
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') menu.open = false
+      })
+    }
   }
 </script>

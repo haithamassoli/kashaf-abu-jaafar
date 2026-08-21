@@ -73,9 +73,11 @@ const crumbs = breadcrumb([['القوائم', '/p/'], [video.title, `/v/${video.
   schema={[videoSchema, crumbs]}
 >
   <div class="pt-8">
-    {
-      video.playlists.length > 0 && (
-        <nav aria-label="قوائم التشغيل" class="flex flex-wrap items-center gap-2">
+    {/* Series chips lead the row, share/download sit at the far end of the same line —
+        and `ms-auto` keeps them there for the one video that belongs to no playlist. */}
+    <div class="flex items-start gap-3">
+      {video.playlists.length > 0 && (
+        <nav aria-label="قوائم التشغيل" class="flex min-w-0 flex-wrap items-center gap-2">
           {video.playlists.map((p) => (
             <a
               href={`/p/${p.id}/`}
@@ -85,8 +87,10 @@ const crumbs = breadcrumb([['القوائم', '/p/'], [video.title, `/v/${video.
             </a>
           ))}
         </nav>
-      )
-    }
+      )}
+
+      <Actions title={video.title} class="ms-auto shrink-0" />
+    </div>
 
     <h1 class="mt-4 text-xl font-semibold leading-relaxed sm:text-2xl">{video.title}</h1>
 
@@ -106,8 +110,6 @@ const crumbs = breadcrumb([['القوائم', '/p/'], [video.title, `/v/${video.
         >افتح في {SITE}</a
       >
     </div>
-
-    <Actions title={video.title} />
   </div>
 
   <div class="mt-6 grid items-start gap-6 lg:grid-cols-2 lg:gap-8">
