@@ -43,6 +43,11 @@ export type Playlist = { id: string; title: string; videoIds: string[] }
 
 const round = (n: number) => Math.round(n * 100) / 100
 
+// A channel playlist whose lessons already sit, whole, in a bigger playlist of the same name:
+// two identical labels in the filter, one of them a two-lesson stub. Dropped on read so a
+// re-crawl cannot bring it back. ponytail: a Set beats a rule until there is a second reason.
+const SKIP_PLAYLISTS = new Set(['PLkLIIYo0Lm4vw09hsdQuT3BWDdUmEGBtJ'])
+
 async function main() {
   const files = (await readdir(RAW_DIR)).filter((f) => f.endsWith('.transcript.json'))
   if (files.length === 0) throw new Error(`no *.transcript.json in ${RAW_DIR}`)
@@ -62,18 +67,20 @@ async function main() {
       .filter((s) => s.text)
     if (segments.length === 0) continue
 
+    const inPlaylists = (v.playlists ?? []).filter((p) => !SKIP_PLAYLISTS.has(p.id))
+
     videos.push({
       id: v.id,
       title: v.title,
       duration: v.duration,
       uploadDate: v.upload_date,
       channel: v.channel,
-      playlists: v.playlists ?? [],
+      playlists: inPlaylists,
       source: t.transcription?.source ?? 'unknown',
       segmentCount: segments.length,
     })
 
-    for (const p of v.playlists ?? []) {
+    for (const p of inPlaylists) {
       const bucket = playlists.get(p.id) ?? { title: p.title, entries: [] }
       bucket.entries.push({ id: v.id, index: p.index })
       playlists.set(p.id, bucket)
