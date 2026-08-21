@@ -3,7 +3,7 @@ import Base from '../../layouts/Base.astro'
 import Actions from '../../components/Actions.astro'
 import { allArticles, type Article } from '../../lib/data'
 import { arabicDate } from '../../lib/format'
-import { SITE_URL, person, breadcrumb } from '../../lib/seo'
+import { SITE, SITE_URL, person, breadcrumb } from '../../lib/seo'
 
 export function getStaticPaths() {
   return allArticles().map((article) => ({ params: { id: article.id }, props: { article } }))
@@ -82,6 +82,12 @@ const crumbs = breadcrumb([[article.title, `/a/${article.id}/`]])
           </a>
         )
       }
+      {/* Print drops the chrome, so paper needs the way back to the page it came from. */}
+      <a
+        href={`${SITE_URL}/a/${article.id}/`}
+        class="hidden min-h-11 items-center text-accent underline underline-offset-4 print:inline-flex"
+        >افتح في {SITE}</a
+      >
     </div>
 
     <Actions title={article.title} />

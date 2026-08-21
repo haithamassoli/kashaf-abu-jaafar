@@ -5,7 +5,7 @@ import Cues from '../../components/Cues.astro'
 import Actions from '../../components/Actions.astro'
 import { videos, segmentsOf, playlistById, playlistVideos, type Video } from '../../lib/data'
 import { arabicDate, duration, youtubeUrl } from '../../lib/format'
-import { SITE_URL, person, breadcrumb } from '../../lib/seo'
+import { SITE, SITE_URL, person, breadcrumb } from '../../lib/seo'
 
 export function getStaticPaths() {
   return videos.map((video) => ({ params: { id: video.id }, props: { video } }))
@@ -99,6 +99,12 @@ const crumbs = breadcrumb([['القوائم', '/p/'], [video.title, `/v/${video.
         class="inline-flex min-h-11 items-center text-accent underline underline-offset-4"
         >افتح في يوتيوب</a
       >
+      {/* Print drops the chrome, so paper needs the way back to the page it came from. */}
+      <a
+        href={`${SITE_URL}/v/${video.id}/`}
+        class="hidden min-h-11 items-center text-accent underline underline-offset-4 print:inline-flex"
+        >افتح في {SITE}</a
+      >
     </div>
 
     <Actions title={video.title} />
@@ -148,7 +154,7 @@ const crumbs = breadcrumb([['القوائم', '/p/'], [video.title, `/v/${video.
 
   {
     (prev || next) && (
-      <nav aria-label="التنقّل بين الدروس" class="mt-10 border-t border-border pt-6">
+      <nav aria-label="التنقّل بين الدروس" class="mt-10 border-t border-border pt-6 print:hidden">
         {series && (
           <p class="text-sm text-muted">
             من قائمة{' '}
