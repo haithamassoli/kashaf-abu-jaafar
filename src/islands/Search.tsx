@@ -55,6 +55,9 @@ function playlistLabel(ids: string[], playlists: PlaylistOption[]) {
   return `${ids.length} ${ids.length <= 10 ? 'قوائم' : 'قائمة'}`
 }
 
+/** Where the reader was on a given search URL, so the back button lands there. */
+const SPOT = 'kaj:y:'
+
 const KIND: Record<string, string> = { post: 'مقالة', fatwa: 'فتوى', book: 'كتاب' }
 /** Three kinds, so chips rather than a dropdown: one tap to narrow, one to undo. */
 const KINDS: [string, string][] = [
@@ -143,6 +146,27 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
     sync()
     addEventListener('popstate', sync)
     return () => removeEventListener('popstate', sync)
+  }, [])
+
+  // Restoring the results is only half of «رجوع». The browser gives up on its own scroll
+  // restoration long before an island has rendered anything to scroll through, so the reader
+  // lands at the top of a page they had already read down — which reads as a reload. Remember
+  // the spot per URL, per tab, and only put them back when they actually came back.
+  useEffect(() => {
+    const remember = () => {
+      try {
+        sessionStorage.setItem(SPOT + location.href, String(scrollY))
+      } catch {}
+    }
+    addEventListener('pagehide', remember)
+    try {
+      const entry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined
+      const y = entry?.type === 'back_forward' ? Number(sessionStorage.getItem(SPOT + location.href)) : 0
+      // One frame on, the cached results exist to scroll through; instantly, because <html>
+      // scrolls smoothly and a 1,400px animation is not what «back» looks like.
+      if (y) requestAnimationFrame(() => scrollTo({ top: y, behavior: 'instant' }))
+    } catch {}
+    return () => removeEventListener('pagehide', remember)
   }, [])
 
   const go = (query: string, playlist: string[], kinds: string[], page: number, next: Tab = tab) => {

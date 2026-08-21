@@ -130,6 +130,23 @@ await search('كفارة اليمين', { tab: 'v', playlists: [] })
 assert.equal(calls, 3)
 assert.equal(peek('كفارة اليمين', { tab: 'v', page: 2 }), undefined)
 
+// The bfcache is not a guarantee: a back button that misses it lands on a fresh document with
+// an empty Map and only sessionStorage to answer from. Plant an answer the way search() stores
+// one — under a question the Map has never held — and peek must still find it.
+const store = new Map<string, string>()
+Object.assign(globalThis, {
+  sessionStorage: {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+  },
+})
+await search('كفارة اليمين', { tab: 'v', page: 3 })
+const [stored] = [...store.keys()]
+assert.ok(stored, 'an answer must outlive the document that asked for it')
+store.set(stored.replace('كفارة اليمين', 'سؤال آخر'), JSON.stringify({ ...stub, total: 42 }))
+assert.equal(peek('سؤال آخر', { tab: 'v', page: 3 })?.total, 42)
+
 // A refusal must not become three requests. Caddy answers 429 at 30 per 10 s per IP, and the
 // fallbacks in `both` are there for a missing embedder, not for a closed door — `client.index`
 // is still stubbed to succeed above, so a missing guard shows up here as a resolved search.

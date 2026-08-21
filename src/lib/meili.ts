@@ -259,7 +259,8 @@ async function lessonsFor(q: string, playlists: string[], strategy: Strategy) {
 /**
  * A tab switch and a back button re-ask a question already answered — same words, same filters,
  * two more round trips to a box that embeds the query on one shared core. Keyed on everything
- * that changes the answer; a reload empties it, which is as fresh as a session needs to be.
+ * that changes the answer; closing the tab empties it, which is as fresh as a session needs
+ * to be (`save` below is what stretches it from the document to the tab).
  * ponytail: bounded FIFO, no TTL — add one if the index starts changing under a live reader.
  */
 const CACHE_MAX = 50
@@ -270,17 +271,51 @@ const cacheKey = (q: string, { tab = 'v', page = 1, playlists = [], types = [] }
   JSON.stringify([q.trim(), tab, Math.min(page, MAX_PAGES), [...playlists].sort(), [...types].sort()])
 
 /**
+ * The Map dies with the document, and a back button that misses the bfcache *is* a new
+ * document — which is the whole «I pressed back and it searched again» complaint. sessionStorage
+ * is per-tab and dies with the tab, the same lifetime the Map was already scoped to.
+ * The try/catch is also the environment guard: under tsx there is no sessionStorage at all.
+ */
+const SAVED = 'kaj:q:'
+
+const save = (key: string, result: SearchResult) => {
+  const json = JSON.stringify(result)
+  try {
+    sessionStorage.setItem(SAVED + key, json)
+  } catch {
+    // Full (or unavailable). Ours is the only thing here worth dropping, and the newest answer
+    // is the one a back button is about to ask for.
+    try {
+      for (const k of Object.keys(sessionStorage)) if (k.startsWith(SAVED)) sessionStorage.removeItem(k)
+      sessionStorage.setItem(SAVED + key, json)
+    } catch {}
+  }
+}
+
+/**
  * The cached answer, or undefined. Synchronous on purpose: awaiting a resolved promise still
  * costs a render, and that render is the «جارٍ البحث…» flash that makes a cached tab look
  * like it went back to the server.
  */
-export const peek = (q: string, options: Options = {}): SearchResult | undefined =>
-  cache.get(cacheKey(q, options))
+export const peek = (q: string, options: Options = {}): SearchResult | undefined => {
+  const key = cacheKey(q, options)
+  const hit = cache.get(key)
+  if (hit) return hit
+  try {
+    const json = sessionStorage.getItem(SAVED + key)
+    if (!json) return undefined
+    const result = JSON.parse(json) as SearchResult
+    cache.set(key, result)
+    return result
+  } catch {
+    return undefined
+  }
+}
 
 export async function search(q: string, options: Options = {}): Promise<SearchResult> {
   const { tab = 'v', playlists = [] } = options
   const key = cacheKey(q, options)
-  const hit = cache.get(key)
+  const hit = peek(q, options)
   if (hit) return hit
 
   const [strict, lessonRes] = await Promise.all([
@@ -326,6 +361,7 @@ export async function search(q: string, options: Options = {}): Promise<SearchRe
 
   cache.set(key, result)
   if (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value!)
+  save(key, result)
   return result
 }
 
