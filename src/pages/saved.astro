@@ -1,0 +1,64 @@
+---
+/**
+ * Everything the reader bookmarked or annotated, read out of localStorage in the
+ * browser. Nothing is server-rendered here — the whole page is a static shell, and
+ * there is no account behind it, so this list exists only on this device.
+ */
+import Base from '../layouts/Base.astro'
+---
+
+<Base title="المحفوظات" description="إشاراتك المرجعية وملاحظاتك" noindex>
+  <h1 class="mt-10 text-2xl font-semibold tracking-tight sm:text-3xl">المحفوظات</h1>
+  <p class="mt-2 text-sm text-muted">محفوظة في هذا المتصفح وحده — لا حساب ولا خادم.</p>
+
+  <p id="saved-empty" class="mt-8 text-muted" hidden>
+    لا شيء محفوظ بعد. افتح درسًا أو مقالة واضغط زر الإشارة المرجعية.
+  </p>
+  <ul id="saved-list" class="mt-6 space-y-3"></ul>
+</Base>
+
+<script>
+  import { all, remove, type Item } from '../lib/store'
+
+  const LABEL: Record<Item['kind'], string> = { v: 'درس', a: 'مقالة', p: 'قائمة' }
+
+  const list = document.getElementById('saved-list')!
+  const empty = document.getElementById('saved-empty')!
+
+  function render() {
+    const items = Object.entries(all()).sort((a, b) => b[1].at - a[1].at)
+    list.replaceChildren()
+    empty.hidden = items.length > 0
+
+    for (const [path, item] of items) {
+      const li = document.createElement('li')
+      li.className = 'card p-4'
+      li.innerHTML = `<div class="flex items-start gap-3">
+        <span class="shrink-0 rounded-full bg-surface-2 px-3 py-1 text-xs text-muted"></span>
+        <a class="min-w-0 flex-1 font-medium leading-relaxed underline-offset-4 hover:underline"></a>
+        <button type="button" data-del aria-label="احذف من المحفوظات" class="grid size-11 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:text-fg">
+          <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <p class="prose-naskh mt-2 whitespace-pre-wrap text-sm text-muted"></p>`
+
+      li.querySelector('span')!.textContent = LABEL[item.kind] ?? 'صفحة'
+      const link = li.querySelector('a')!
+      link.textContent = item.title
+      // Keys are written as location.pathname and nothing else; the guard is only here
+      // so a hand-edited localStorage can't turn this into a javascript: link.
+      link.href = path.startsWith('/') ? path : '/'
+      const note = li.querySelector('p')!
+      note.textContent = item.note ?? ''
+      note.hidden = !item.note
+
+      li.querySelector('[data-del]')!.addEventListener('click', () => {
+        remove(path)
+        render()
+      })
+      list.append(li)
+    }
+  }
+
+  render()
+</script>

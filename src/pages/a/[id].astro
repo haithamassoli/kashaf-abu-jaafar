@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro'
 import Actions from '../../components/Actions.astro'
+import Note from '../../components/Note.astro'
 import { allArticles, type Article } from '../../lib/data'
 import { arabicDate } from '../../lib/format'
 import { SITE, SITE_URL, person, breadcrumb } from '../../lib/seo'
@@ -90,7 +91,14 @@ const crumbs = breadcrumb([[article.title, `/a/${article.id}/`]])
       >
     </div>
 
-    <Actions title={article.title} class="mt-4" />
+    <Actions title={article.title} kind="a" class="mt-4" />
+
+    <svg hidden aria-hidden="true">
+      <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="8" y="8" width="14" height="14" rx="2"></rect>
+        <path d="M4 16a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2"></path>
+      </symbol>
+    </svg>
 
     <div class="prose-naskh mt-6 max-w-none space-y-4 text-fg">
       {
@@ -108,7 +116,41 @@ const crumbs = breadcrumb([[article.title, `/a/${article.id}/`]])
           />
         ))
       }
-      {article.paragraphs.map((p, n) => <p id={`p${n}`} class="scroll-mt-20">{p}</p>)}
+      {
+        /* The paragraph keeps its own id so /a/<id>#p<n> and `p:target` still land on it;
+           the wrapper only exists to hang the hover-revealed copy button off. */
+        article.paragraphs.map((p, n) => (
+          <div class="group flex items-start gap-2">
+            <p id={`p${n}`} class="min-w-0 flex-1 scroll-mt-20">
+              {p}
+            </p>
+            <button type="button" data-copy class="cue-copy" aria-label={`انسخ نص الفقرة ${n + 1}`}>
+              <svg class="size-4" aria-hidden="true">
+                <use href="#i-copy" />
+              </svg>
+            </button>
+          </div>
+        ))
+      }
     </div>
+
+    <Note title={article.title} kind="a" />
   </article>
 </Base>
+
+<script>
+  import { flash } from '../../lib/toast'
+
+  document.addEventListener('click', async (e) => {
+    const btn = (e.target as HTMLElement).closest('[data-copy]')
+    if (!btn) return
+    try {
+      await navigator.clipboard.writeText(
+        btn.parentElement?.querySelector('p')?.textContent?.trim() ?? '',
+      )
+      flash('تم نسخ النص')
+    } catch {
+      flash('تعذّر النسخ')
+    }
+  })
+</script>

@@ -131,14 +131,14 @@ export default function Player({ videoId, title }: Props) {
       history.replaceState(null, '', url)
     }
 
+    // The original line, not `p.textContent`: the in-page filter rewrites the paragraph
+    // with <mark> around the query, and the reader is quoting the sheikh, not the search.
+    // Whoever wants the moment instead has it in the address bar — seek() writes ?t=
+    // there on every click, and «مشاركة» copies that.
     const copy = async (i: number) => {
-      // trailingSlash is 'always', so the slash before the query keeps this off a 301.
-      // No `q`: this link points at a moment, not at a search — and arriving filtered
-      // would hide the surrounding transcript the link is pointing the reader into.
-      const url = `${location.origin}/v/${videoId}/?t=${Math.floor(starts[i])}`
       try {
-        await navigator.clipboard.writeText(url)
-        flash('تم النسخ')
+        await navigator.clipboard.writeText(texts[i])
+        flash('تم نسخ النص')
       } catch {
         flash('تعذّر النسخ')
       }

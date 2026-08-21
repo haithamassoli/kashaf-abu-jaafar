@@ -9,6 +9,7 @@ import { markMatches } from '../src/lib/mark.ts'
 import { timestamp, duration, arabicDate, lessons, hours, lists, articles, withDigits } from '../src/lib/format.ts'
 import { breadcrumb, mailto, CONTACT_EMAIL, SITE, SITE_URL } from '../src/lib/seo.ts'
 import { allArticles, playlists, playlistVideos } from '../src/lib/data.ts'
+import { all, update, remove } from '../src/lib/store.ts'
 
 // highlight: escapes everything except <mark>, so a hostile transcript cannot inject HTML
 assert.equal(
@@ -187,5 +188,26 @@ for (const a of allArticles().filter((a) => a.source === 'telegram')) {
     assert.ok(img.w > 0 && img.h > 0, `${a.id}: ${img.src} has no dimensions`)
   }
 }
+
+// store: one entry per page holds both the bookmark and the note, and an entry left with
+// neither must disappear — otherwise unstarring a page nobody annotated litters /saved/.
+const mem = new Map<string, string>()
+Object.defineProperty(globalThis, 'localStorage', {
+  value: { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => mem.set(k, v) },
+})
+const page = { title: 'درس', kind: 'v' as const }
+update('/v/x/', page, { mark: true })
+update('/v/x/', page, { note: 'ملاحظة' })
+assert.equal(all()['/v/x/'].mark, true)
+assert.equal(all()['/v/x/'].note, 'ملاحظة')
+update('/v/x/', page, { mark: undefined })
+assert.equal(all()['/v/x/'].note, 'ملاحظة') // the note alone keeps the entry alive
+update('/v/x/', page, { note: undefined })
+assert.deepEqual(all(), {}) // nothing left to remember
+update('/a/y/', page, { mark: true })
+remove('/a/y/')
+assert.deepEqual(all(), {})
+mem.set('kashaf:saved', '[1,2]') // a hand-mangled blob reads as empty, never as a crash
+assert.deepEqual(all(), {})
 
 console.log('selfcheck ok')

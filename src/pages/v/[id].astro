@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro'
 import Player from '../../islands/Player'
 import Cues from '../../components/Cues.astro'
 import Actions from '../../components/Actions.astro'
+import Note from '../../components/Note.astro'
 import { videos, segmentsOf, playlistById, playlistVideos, type Video } from '../../lib/data'
 import { arabicDate, duration, youtubeUrl } from '../../lib/format'
 import { SITE, SITE_URL, person, breadcrumb } from '../../lib/seo'
@@ -89,7 +90,7 @@ const crumbs = breadcrumb([['القوائم', '/p/'], [video.title, `/v/${video.
         </nav>
       )}
 
-      <Actions title={video.title} class="ms-auto shrink-0" />
+      <Actions title={video.title} kind="v" class="ms-auto shrink-0" />
     </div>
 
     <h1 class="mt-4 text-xl font-semibold leading-relaxed sm:text-2xl">{video.title}</h1>
@@ -153,6 +154,8 @@ const crumbs = breadcrumb([['القوائم', '/p/'], [video.title, `/v/${video.
       <div id="after-transcript" tabindex="-1" class="outline-none"></div>
     </section>
   </div>
+
+  <Note title={video.title} kind="v" />
 
   {
     (prev || next) && (

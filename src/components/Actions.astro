@@ -1,14 +1,22 @@
 ---
 /**
- * Share / save-as-PDF / download-as-TXT, for a lesson or an article page.
+ * Bookmark / share / save-as-PDF / download-as-TXT, for a lesson, article or playlist.
  *
  * PDF is the browser's own print-to-PDF (see the @media print block in global.css) —
  * no PDF library ships to the reader, and it prints Arabic shaping correctly, which
  * is more than most of them manage. The .txt body is scraped from the page's own DOM:
  * a transcript is ~1,400 rows already in the HTML, and repeating it in a data
  * attribute would double the page for a button most readers never press.
+ *
+ * The bookmark is localStorage only (lib/store.ts) — there are no accounts.
  */
-const { title, class: cls } = Astro.props as { title: string; class?: string }
+import type { Kind } from '../lib/store'
+
+const {
+  title,
+  kind,
+  class: cls,
+} = Astro.props as { title: string; kind: Kind; class?: string }
 
 // One list rendered twice: a row of buttons from sm up, a single menu below it. The
 // icons are raw <svg> bodies so both renderings share them instead of duplicating 3 KB.
@@ -30,6 +38,11 @@ const ACTS = [
   },
 ]
 
+// A playlist page has no prose: its .txt would be empty and its print is just the
+// lesson list, so those two are dropped and the single button needs no menu.
+const acts = kind === 'p' ? ACTS.slice(0, 1) : ACTS
+const menu = acts.length > 1
+
 const svg = 'size-4 shrink-0'
 const btn =
   'inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-sm text-muted transition-colors hover:text-fg'
@@ -37,10 +50,42 @@ const item =
   'flex min-h-11 w-full items-center gap-2 px-3 text-start text-sm text-muted transition-colors hover:bg-surface-2 hover:text-fg'
 ---
 
-<div data-actions data-title={title} class:list={['print:hidden', cls]}>
-  <div class="hidden flex-wrap items-center gap-2 sm:flex">
+<div
+  data-actions
+  data-title={title}
+  data-kind={kind}
+  class:list={['flex items-center gap-2 print:hidden', cls]}
+>
+  {/* Starts unpressed and is corrected on hydration: the page is a static file, so
+      the saved state cannot be known until localStorage is read in the browser. */}
+  <button
+    type="button"
+    data-mark
+    aria-pressed="false"
+    aria-label="احفظ في المحفوظات"
+    title="احفظ في المحفوظات"
+    class:list={[
+      'grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-surface text-muted transition-colors hover:text-fg',
+      "aria-pressed:text-accent aria-pressed:[&_svg]:fill-current",
+    ]}
+  >
+    <svg
+      class="size-5"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+    </svg>
+  </button>
+
+  <div class:list={['flex-wrap items-center gap-2', menu ? 'hidden sm:flex' : 'flex']}>
     {
-      ACTS.map((a) => (
+      acts.map((a) => (
         <button type="button" data-act={a.act} class={btn}>
           <svg
             class={svg}
@@ -62,58 +107,59 @@ const item =
   {/* ponytail: <details> is the whole mobile menu — native disclosure, no island, no
       dependency. The two lines of JS below are the only things it lacks: click-outside
       and Escape. Swap for a Base UI Menu only if it ever needs arrow-key roving. */}
-  <details data-menu class="relative sm:hidden">
-    <summary
-      class:list={[btn, 'cursor-pointer list-none [&::-webkit-details-marker]:hidden']}
-    >
-      <svg
-        class={svg}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
-        <circle cx="5" cy="12" r="1.4" fill="currentColor"></circle>
-        <circle cx="12" cy="12" r="1.4" fill="currentColor"></circle>
-        <circle cx="19" cy="12" r="1.4" fill="currentColor"></circle>
-      </svg>
-      خيارات
-    </summary>
+  {
+    menu && (
+      <details data-menu class="relative sm:hidden">
+        <summary class:list={[btn, 'cursor-pointer list-none [&::-webkit-details-marker]:hidden']}>
+          <svg
+            class={svg}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="5" cy="12" r="1.4" fill="currentColor" />
+            <circle cx="12" cy="12" r="1.4" fill="currentColor" />
+            <circle cx="19" cy="12" r="1.4" fill="currentColor" />
+          </svg>
+          خيارات
+        </summary>
 
-    <div
-      class="absolute end-0 z-30 mt-2 w-44 overflow-hidden rounded-lg border border-border bg-surface py-1 shadow-lg"
-    >
-      {
-        ACTS.map((a) => (
-          <button type="button" data-act={a.act} class={item}>
-            <svg
-              class={svg}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-              set:html={a.icon}
-            />
-            {a.label}
-          </button>
-        ))
-      }
-    </div>
-  </details>
+        <div class="absolute end-0 z-30 mt-2 w-44 overflow-hidden rounded-lg border border-border bg-surface py-1 shadow-lg">
+          {acts.map((a) => (
+            <button type="button" data-act={a.act} class={item}>
+              <svg
+                class={svg}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                set:html={a.icon}
+              />
+              {a.label}
+            </button>
+          ))}
+        </div>
+      </details>
+    )
+  }
 </div>
 
 <script>
   import { flash } from '../lib/toast'
+  import { all, update, type Kind } from '../lib/store'
 
   const bar = document.querySelector<HTMLElement>('[data-actions]')
   if (bar) {
     const title = bar.dataset.title || document.title
+    const kind = (bar.dataset.kind || 'v') as Kind
+    const path = location.pathname
     const menu = bar.querySelector<HTMLDetailsElement>('[data-menu]')
 
     /** Transcript cues on a lesson page, article paragraphs everywhere else. */
@@ -156,6 +202,22 @@ const item =
         if ((e as Error).name !== 'AbortError') flash('تعذّرت المشاركة')
       }
     }
+
+    const markBtn = bar.querySelector<HTMLButtonElement>('[data-mark]')
+    const paint = (on: boolean) => {
+      markBtn?.setAttribute('aria-pressed', String(on))
+      const label = on ? 'أزل من المحفوظات' : 'احفظ في المحفوظات'
+      markBtn?.setAttribute('aria-label', label)
+      markBtn?.setAttribute('title', label)
+    }
+    paint(!!all()[path]?.mark)
+
+    markBtn?.addEventListener('click', () => {
+      const on = markBtn.getAttribute('aria-pressed') !== 'true'
+      update(path, { title, kind }, { mark: on || undefined })
+      paint(on)
+      flash(on ? 'أُضيف إلى المحفوظات' : 'أُزيل من المحفوظات')
+    })
 
     bar.addEventListener('click', (e) => {
       const act = (e.target as HTMLElement).closest<HTMLElement>('[data-act]')?.dataset.act

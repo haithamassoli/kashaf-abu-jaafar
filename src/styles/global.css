@@ -248,6 +248,8 @@
   @apply prose-naskh min-w-0 flex-1 py-2;
 }
 
+/* Also worn by the per-paragraph copy button on an article page — same affordance,
+   same hover/touch rules, so it borrows the utility rather than growing a twin. */
 @utility cue-copy {
   @apply mt-1 grid size-11 shrink-0 place-items-center rounded-md text-muted opacity-0 transition-opacity hover:text-fg no-hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100;
 }
