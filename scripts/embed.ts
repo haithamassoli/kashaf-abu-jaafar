@@ -7,6 +7,7 @@
  * runs here and ships the vectors, marked
  * `regenerate: false` so Meilisearch keeps them instead of recomputing. The box still embeds the
  * *query* at search time, and any documents added later — a handful per ingest — on its own.
+ * The embedder has to exist on the index *before* those vectors arrive; see `declare` below.
  *
  * Resumable: `--from=40000` picks up where an interrupted run stopped. `--out=<file>` writes the
  * documents instead of sending them and `--push=<file>` sends a file written earlier, so the
@@ -22,7 +23,10 @@ const apiKey = process.env.MEILI_ADMIN_KEY
 const ollama = process.env.OLLAMA_HOST ?? 'http://127.0.0.1:11434'
 if (!apiKey) throw new Error('MEILI_ADMIN_KEY must be set (see .env.example)')
 const uid = process.argv[2]
-if (uid !== 'cues' && uid !== 'articles') throw new Error('usage: pnpm embed cues|articles')
+// `cues_next` is the same shape as `cues`; it exists only so an embedder can be declared while the
+// index is still empty (see scripts/index.ts). Its embedder config is the one `cues` uses.
+const base = (uid ?? '').replace(/_next$/, '')
+if (base !== 'cues' && base !== 'articles') throw new Error('usage: pnpm embed cues|articles')
 const arg = (n: string) => process.argv.find((a) => a.startsWith(`--${n}=`))?.slice(n.length + 3)
 const flag = (n: string, d: number) => Number(arg(n) ?? d)
 const out = arg('out')
@@ -42,7 +46,7 @@ const CHUNK = flag('chunk', 2000)
  */
 const embedder = JSON.parse(
   await readFile(new URL('../meilisearch-embedder.json', import.meta.url), 'utf8'),
-)[uid] as { model: string; documentTemplate: string; documentTemplateMaxBytes: number }
+)[base] as { model: string; documentTemplate: string; documentTemplateMaxBytes: number }
 const MODEL = embedder.model
 const MAX_BYTES = embedder.documentTemplateMaxBytes
 /** The Liquid subset the template actually uses: `{{doc.<field>}}` inside literal text. */
@@ -93,9 +97,15 @@ const send = async (lines: string[]) => {
 }
 
 /**
- * Last, never first: an embedder added to an index whose documents already carry `_vectors`
- * with `regenerate: false` costs one second and embeds nothing, while the same call on an
- * index without them starts a backfill the search box cannot finish.
+ * Declaring costs a second and embeds nothing *only* when every document already carries
+ * `_vectors` with `regenerate: false`. Two ways that stops being true, both measured on
+ * 2026-08-22 against a 100k `cues`:
+ *  - the index has documents and no embedder yet -> declaring enqueues an embed of all of them,
+ *    which on the box dies with `could not reach embedding server: timeout: global`;
+ *  - `_vectors` sent for an embedder that is not declared yet are dropped on the floor, so a
+ *    push-then-declare run reports `0 embeddings` over a full index and looks like it worked.
+ * So the order is: declare on an EMPTY index (`CUES_INDEX=cues_next`), push vectors, add text,
+ * swap. This call stays last because by then it is the no-op it claims to be.
  */
 const declare = async () => {
   const res = await meili(`/indexes/${uid}/settings`, {
@@ -132,7 +142,7 @@ if (push) {
   process.exit(0)
 }
 
-const fields = uid === 'cues' ? 'id,text' : 'id,title,text'
+const fields = base === 'cues' ? 'id,text' : 'id,title,text'
 let docs: Record<string, string>[] = []
 for (let offset = 0; ; offset += 10_000) {
   const r = await meili(`/indexes/${uid}/documents?limit=10000&offset=${offset}&fields=${fields}`).then((x) => x.json())

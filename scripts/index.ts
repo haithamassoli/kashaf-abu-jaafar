@@ -15,6 +15,13 @@ const RAW_DIR = (process.env.RAW_DIR ?? '').replace(/^~/, homedir())
 const host = process.env.MEILI_HOST ?? 'http://127.0.0.1:7700'
 const apiKey = process.env.MEILI_ADMIN_KEY
 const ONLY = process.argv[2]
+/**
+ * Meilisearch drops `_vectors` for an embedder the index has not declared yet, and declaring one
+ * on an index that already holds documents enqueues an embed of *every* one of them — 100k at the
+ * box's ~1/s. The only order that works is: declare on an empty index, then send documents that
+ * already carry their vectors. So a re-vector builds `cues_next` and swaps it in.
+ */
+const CUES = process.env.CUES_INDEX ?? 'cues'
 const wants = (pass: string) => !ONLY || ONLY === pass
 // `cues` and `lessons` are two shapes of the same transcripts, so they share one read of RAW_DIR
 const readsRaw = wants('cues') || wants('lessons')
@@ -49,7 +56,7 @@ const setup = async (uid: string, s: Record<string, unknown>) => {
 
 // Only for the pass that is running: settings would otherwise go up without the synonyms this
 // run never computes, and there is no reason to touch a live index to build a different one.
-if (wants('cues')) await setup('cues', settings)
+if (wants('cues')) await setup(CUES, settings)
 if (wants('lessons')) await setup('lessons', lessonSettings)
 
 const files = readsRaw ? (await readdir(RAW_DIR)).filter((f) => f.endsWith('.chunks.ndjson')) : []
@@ -80,7 +87,7 @@ const flush = async () => {
   // carry (see scripts/embed.ts) and the search box would then re-embed 62k documents at a
   // quarter of a document a second. A merge keeps them; genuinely new cues arrive without
   // vectors and Meilisearch embeds those itself, which is a handful per ingest.
-  const task = await client.index('cues').updateDocuments(batch as Record<string, unknown>[])
+  const task = await client.index(CUES).updateDocuments(batch as Record<string, unknown>[])
   await waitFor(task.taskUid)
   sent += batch.length
   process.stdout.write(`\r${sent} cues indexed`)
@@ -159,7 +166,7 @@ if (lessons.size) {
       link(word, alt)
       link(alt, word)
     }
-  for (const uid of ['cues', 'lessons'].filter(wants)) {
+  for (const uid of [CUES, 'lessons'].filter((u) => wants(u === CUES ? 'cues' : u))) {
     const syn = await client.index(uid).updateSettings({ synonyms })
     await waitFor(syn.taskUid)
   }
@@ -167,7 +174,7 @@ if (lessons.size) {
 }
 
 if (dropped.length && wants('cues')) {
-  const task = await client.index('cues').deleteDocuments(dropped)
+  const task = await client.index(CUES).deleteDocuments(dropped)
   await waitFor(task.taskUid)
   console.log(`dropped ${dropped.length} empty cues`)
 }
@@ -239,7 +246,7 @@ const key =
   }))
 
 const none = { numberOfDocuments: 0 }
-const stats = await client.index('cues').getStats().catch(() => none)
+const stats = await client.index(CUES).getStats().catch(() => none)
 const lessonStats = await client.index('lessons').getStats().catch(() => none)
 const artStats = await client.index('articles').getStats().catch(() => none)
 console.log(
