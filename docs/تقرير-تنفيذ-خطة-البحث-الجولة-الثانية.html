@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>تقرير تنفيذ خطة البحث، الجولة الثانية</title>
+  <style>
+  /* ‎*‎ لا ‎body‎: وكيل المتصفّح يفرض monospace على ‎pre/code‎ وخطَّه على حقول النماذج،
+     ووراثةُ ‎body‎ لا تبلغها. */
+  *{font-family:'Thmanyah Sans'}
+  /* خط ثمانية: مسار الموقع أولًا، ثم المسار النسبي حين يُفتح التقرير من القرص. */
+  @font-face{font-family:'Thmanyah Sans';src:url('/fonts/thmanyahsans-Regular.woff2') format('woff2'),url('../public/fonts/thmanyahsans-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:'Thmanyah Sans';src:url('/fonts/thmanyahsans-Medium.woff2') format('woff2'),url('../public/fonts/thmanyahsans-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
+  @font-face{font-family:'Thmanyah Sans';src:url('/fonts/thmanyahsans-Bold.woff2') format('woff2'),url('../public/fonts/thmanyahsans-Bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
+
+    :root {
+      color-scheme: light;
+      --ink: #18201c;
+      --muted: #5d685f;
+      --paper: #f6f4ed;
+      --card: #fffef9;
+      --line: #d9d5c8;
+      --green: #176c4a;
+      --green-soft: #e3f1e9;
+      --amber: #8a5a05;
+      --amber-soft: #fff1cd;
+      --code: #222a25;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family:'Thmanyah Sans';
+      line-height: 1.85;
+    }
+
+    main {
+      width: min(920px, calc(100% - 32px));
+      margin: 48px auto;
+    }
+
+    header, section {
+      margin-bottom: 20px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--card);
+      padding: clamp(20px, 4vw, 36px);
+    }
+
+    header { border-top: 5px solid var(--green); }
+    h1, h2, h3 { line-height: 1.35; }
+    h1 { margin: 10px 0 8px; font-size: clamp(28px, 5vw, 46px); }
+    h2 { margin: 0 0 16px; font-size: 25px; }
+    h3 { margin: 24px 0 8px; font-size: 19px; }
+    p { margin: 8px 0; }
+    ul, ol { margin: 8px 0; padding-inline-start: 24px; }
+    li + li { margin-top: 6px; }
+
+    .eyebrow, .meta { color: var(--muted); font-size: 14px; }
+    .status {
+      display: inline-block;
+      border-radius: 999px;
+      background: var(--green-soft);
+      color: var(--green);
+      padding: 4px 12px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .notice {
+      margin-top: 20px;
+      border: 1px solid #e7cc8d;
+      border-radius: 12px;
+      background: var(--amber-soft);
+      color: #533600;
+      padding: 14px 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      background: #fbfaf5;
+    }
+
+    .metric strong { display: block; color: var(--green); font-size: 25px; }
+    .metric span { color: var(--muted); font-size: 14px; }
+
+    table {
+      width: 100%;
+      margin-top: 14px;
+      border-collapse: collapse;
+      font-size: 15px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px;
+      text-align: right;
+      vertical-align: top;
+    }
+
+    th { color: var(--muted); font-weight: 700; }
+    code {
+      direction: ltr;
+      unicode-bidi: isolate;
+      border-radius: 5px;
+      background: #eceae1;
+      padding: 2px 6px;
+      font-family:'Thmanyah Sans';
+      font-size: .92em;
+    }
+
+    pre {
+      direction: ltr;
+      overflow-x: auto;
+      border-radius: 12px;
+      background: var(--code);
+      color: #f6f7f6;
+      padding: 16px;
+      line-height: 1.6;
+      text-align: left;
+    }
+
+    pre code { background: transparent; padding: 0; }
+    a { color: #125c40; text-underline-offset: 3px; }
+    .pass { color: var(--green); font-weight: 700; }
+    .pending { color: var(--amber); font-weight: 700; }
+    footer { padding: 10px 4px 30px; color: var(--muted); font-size: 13px; }
+
+    @media (max-width: 640px) {
+      main { width: min(100% - 20px, 920px); margin: 20px auto; }
+      header, section { border-radius: 12px; padding: 18px; }
+      table { display: block; overflow-x: auto; white-space: nowrap; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <span class="status">اكتمل التنفيذ البرمجي والاختبار</span>
+      <p class="eyebrow">SEARCH-PLAN-2.md</p>
+      <h1>تقرير تنفيذ خطة البحث، الجولة الثانية</h1>
+      <p class="meta">20 أغسطس 2026 · مشروع كشّاف أبي جعفر</p>
+      <p>
+        نُفّذت الخطة في ثلاثة مسارات متوازية: سُلّم النتائج، إعداد البحث الهجين، وأداة القياس.
+        بعد الدمج خضع المسار كاملًا لمراجعتين مستقلتين واختبارات فعلية على Meilisearch 1.53.1
+        وOllama مع نموذج bge-m3.
+      </p>
+      <div class="notice">
+        لم أبدأ تضمين الفهرس الحي الذي يضم نحو 99 ألف وثيقة. هذه عملية تستغرق ساعات وقد تمتد إلى يوم.
+        لذلك لا أدّعي اجتياز بوابة الجودة الهجينة على corpus الإنتاج بعد. الكود جاهز، والواجهة ترجع إلى
+        البحث النصي تلقائيًا حتى يكتمل التضمين.
+      </div>
+    </header>
+
+    <section>
+      <h2>النتيجة المختصرة</h2>
+      <div class="grid">
+        <div class="metric"><strong>17 ← 19</strong><span>إجابة صحيحة ضمن أول 3، مجموعة الأساس من 29 سؤالًا</span></div>
+        <div class="metric"><strong>0 / 80</strong><span>أسئلة تترك القارئ بلا شيء في خط الأساس النصي</span></div>
+        <div class="metric"><strong>0 / 10</strong><span>أسئلة خارج المجال عُرضت كتطابق مباشر</span></div>
+        <div class="metric"><strong>1024</strong><span>بُعد متجه bge-m3 في الاختبار الفعلي</span></div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>القياس</th><th>قبل التنفيذ</th><th>بعد Phase 1</th><th>الحالة</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>الأسئلة الأساسية ذات جواب متحقق</td><td>17 / 29</td><td>19 / 29</td><td class="pass">تحسن مثبت</td></tr>
+          <tr><td>مجموعة الأسئلة الموسعة ذات جواب متحقق</td><td>غير موجودة</td><td>23 / 53</td><td>خط أساس جديد</td></tr>
+          <tr><td>صفر نتائج ظاهرة</td><td>0 / 50</td><td>0 / 80</td><td class="pass">محفوظ</td></tr>
+          <tr><td>خارج المجال كتطابق مباشر</td><td>0 / 4</td><td>0 / 10</td><td class="pass">محفوظ</td></tr>
+          <tr><td>بوابة الهجين على الفهرس الكامل</td><td>غير مطبقة</td><td>تنتظر التضمين</td><td class="pending">تشغيل لاحق</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>ما نُفذ</h2>
+
+      <h3>1. سُلّم البحث v2</h3>
+      <ul>
+        <li>إذا كان مجموع نتائج <code>cues + articles</code> النصية أقل من 10، يعمل مرور <code>frequency</code>.</li>
+        <li>تبقى النتائج الدقيقة بترتيبها، ثم تضاف النتائج غير المكررة تحت عنوان «نتائج قريبة».</li>
+        <li>النتائج القريبة محدودة بصفحة واحدة من 20 نتيجة.</li>
+        <li>استُعيد السؤالان المقصودان في الخطة: صلاة الجنازة، وعلى من تجب زكاة الفطر ومتى تخرج.</li>
+      </ul>
+
+      <h3>2. البحث الهجين بـ bge-m3</h3>
+      <ul>
+        <li>أضيف embedder باسم <code>default</code> إلى <code>cues</code> و<code>articles</code>. بقي <code>lessons</code> نصيًا.</li>
+        <li>قالب المقاطع هو <code>{{doc.text}}</code>، وقالب المقالات هو <code>{{doc.title}} + {{doc.text}}</code>.</li>
+        <li>رُفع <code>documentTemplateMaxBytes</code> إلى 3000 بايت و<code>searchCutoffMs</code> إلى 10000 ملّي ثانية.</li>
+        <li>أضيفت خدمات Ollama وسحب bge-m3 وحفظه إلى <code>compose.yml</code>.</li>
+        <li>سُمح لشبكة Docker الخاصة فقط بدل فتح كل عناوين الشبكة الداخلية.</li>
+      </ul>
+
+      <h3>3. تركيب الدقة النصية مع الدلالة</h3>
+      <p>المسار النهائي بسيط ومتحفظ:</p>
+      <ol>
+        <li>10 نتائج نصية فأكثر: يُستخدم ترتيب Meilisearch الهجين.</li>
+        <li>من 1 إلى 9 نتائج نصية: تبقى النصية أولًا، ثم <code>frequency</code>.</li>
+        <li>صفر نتائج نصية بلا كتلة درس: تظهر الدلالية بوسم واضح، وفي صفحة واحدة.</li>
+        <li>إذا كان هناك درس نصي صارم، تبقى نجدة <code>frequency</code> حتى لا نخسر إصلاح زكاة الفطر.</li>
+      </ol>
+      <p>
+        إذا غاب النموذج أو لم يكتمل التضمين، تعيد الواجهة الطلب نصيًا. أما أداة القياس فترفض هذا
+        الرجوع الصامت، حتى لا تسمي قياسًا نصيًا «هجينًا» بالخطأ.
+      </p>
+
+      <h3>4. مجموعة تقييم أكبر</h3>
+      <ul>
+        <li>ارتفعت المجموعة من 50 إلى 80 سؤالًا.</li>
+        <li>أضيفت 12 صياغة لهجية و12 حالة صرفية.</li>
+        <li>أضيفت 6 أسئلة خارج المجال، فأصبح المجموع 10.</li>
+        <li>أضيفت الخيارات <code>--hybrid</code> و<code>--threshold</code> و<code>--gate</code>.</li>
+        <li>تعرض النتائج قياس 53 هدفًا جديدًا، مع إبقاء مقارنة الأساس الأصلية 29 هدفًا.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>قرار Phase 3</h2>
+      <p>
+        بقيت كتلة الدروس. التجربة الدلالية المحفوظة أعطت 30 من 53 للدمج وحده، و35 من 53 عند إضافة
+        كتلة الدروس. وعلى مجموعة الأساس كانت الزيادة من 21 إلى 24 من 29. حذفها الآن سيخفض الجودة.
+      </p>
+      <p>
+        بقي <code>data/domain-synonyms.json</code> كما هو، بلا نمو يدوي جديد. أي مرادف لاحق يجب أن يبدأ
+        من تراجع واضح في مجموعة التقييم، لا من تخمين لغوي.
+      </p>
+    </section>
+
+    <section>
+      <h2>الاختبارات المنفذة</h2>
+      <table>
+        <thead><tr><th>الاختبار</th><th>النتيجة</th></tr></thead>
+        <tbody>
+          <tr><td><code>pnpm check</code></td><td class="pass">ناجح</td></tr>
+          <tr><td><code>pnpm exec tsc --noEmit</code></td><td class="pass">ناجح</td></tr>
+          <tr><td><code>pnpm build</code></td><td class="pass">ناجح، 4965 صفحة</td></tr>
+          <tr><td>تحقق JSON و<code>docker compose config</code></td><td class="pass">ناجح</td></tr>
+          <tr><td><code>git diff --check</code></td><td class="pass">ناجح</td></tr>
+          <tr><td>تسرب مفتاح إدارة Meilisearch إلى <code>dist</code></td><td class="pass">لا يوجد</td></tr>
+          <tr><td>واجهة السؤال «كيف تصلى صلاة الجنازة»</td><td class="pass">كتلة الدروس ثم «نتائج قريبة»، والجواب الصحيح ظاهر</td></tr>
+          <tr><td>رجوع متدرج عند غياب embedder و<code>articles</code></td><td class="pass">يصل إلى <code>cues</code> ولا يعطل البحث</td></tr>
+          <tr><td>Ollama + bge-m3 + Meilisearch مع تضمين حقيقي</td><td class="pass">226 مقطعًا و60 فقرة في فهرس معزول</td></tr>
+          <tr><td>استعلام دلالي «هل للصداق حد أعلى»</td><td class="pass">الفيديو المتوقع ظهر في المرتبة الثانية بالعينة</td></tr>
+        </tbody>
+      </table>
+      <p>
+        أعاد bge-m3 متجهًا من 1024 بُعدًا. زمن الاستدعاء المباشر بعد الإحماء كان نحو 0.37 ثانية
+        على بيئة Docker المحلية. هذا اختبار توصيل وأداء أولي، وليس p95 على خادم الإنتاج.
+      </p>
+    </section>
+
+    <section>
+      <h2>ما لم أفعله</h2>
+      <ul>
+        <li><strong>لم أبدأ تضمين الفهرس الحي.</strong> تركت 62311 مقطعًا و36953 فقرة بلا تغيير.</li>
+        <li><strong>لم أضف سجل الاستعلامات.</strong> Phase 4 اختياري، ومن المبكر فتح مفتاح كتابة عام قبل إطلاق الهجين ووجود قراء حقيقيين.</li>
+        <li><strong>لم أضف stemmer أو LLM rewriting أو فهرس windows.</strong> الخطة نفسها استبعدتها، ولا يوجد قياس يبررها الآن.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>خطوات التشغيل على الخادم</h2>
+      <p>بعد مراجعة التغييرات ونشر Compose:</p>
+      <pre><code>docker compose up -d
+
+export MEILI_OLLAMA_URL=http://ollama:11434/api/embeddings
+pnpm index cues
+# تابع taskUid الذي يطبعه السكربت، ثم أعد الأمر بعد اكتماله
+
+pnpm index articles
+# تابع المهمة حتى يصبح embeddedDocuments = numberOfDocuments</code></pre>
+
+      <p>بعد اكتمال التضمين، تُجرّب النسب الأربع والعتبات على الفهرس نفسه:</p>
+      <pre><code>pnpm eval --ladder --hybrid=0.3 --threshold=0.80 --gate
+pnpm eval --ladder --hybrid=0.4 --threshold=0.80 --gate
+pnpm eval --ladder --hybrid=0.5 --threshold=0.80 --gate
+pnpm eval --ladder --hybrid=0.6 --threshold=0.80 --gate</code></pre>
+      <p>
+        قيمة 0.80 مثال لبدء المسح وليست اختيارًا نهائيًا. تُكرر العتبات، ثم تُحفظ التركيبة التي تحقق
+        بوابة الجودة. أداة القياس ستوقف التشغيل إذا كان أي فهرس ناقص التضمين أو عاد إلى الكلمات فقط.
+      </p>
+    </section>
+
+    <section>
+      <h2>الملفات الرئيسية التي تغيرت</h2>
+      <ul>
+        <li><code>src/lib/meili.ts</code> و<code>src/islands/Search.tsx</code></li>
+        <li><code>scripts/index.ts</code> و<code>scripts/eval.ts</code> و<code>scripts/selfcheck.ts</code></li>
+        <li><code>meilisearch-settings.json</code> و<code>meilisearch-articles-settings.json</code></li>
+        <li><code>compose.yml</code> و<code>.env.example</code> و<code>package.json</code></li>
+        <li><code>data/eval-questions.json</code> و<code>README.md</code></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>مراجع التشغيل</h2>
+      <ul>
+        <li><a href="https://www.meilisearch.com/docs/capabilities/hybrid_search/advanced/custom_hybrid_ranking">ضبط semanticRatio في Meilisearch</a></li>
+        <li><a href="https://www.meilisearch.com/docs/resources/self_hosting/configuration/reference">إعدادات Meilisearch والسماح المحدود للشبكات الخاصة</a></li>
+        <li><a href="https://www.meilisearch.com/docs/reference/api/search/search-with-post">معاملات البحث الهجين وrankingScoreThreshold</a></li>
+        <li><a href="https://ollama.com/library/bge-m3">نموذج bge-m3 في Ollama</a></li>
+      </ul>
+    </section>
+
+    <footer>
+      التقرير لا يحتوي مفاتيح أو أسرارًا. موارد Docker والفهارس المؤقتة التي استُخدمت للاختبار حُذفت بعد انتهاء التحقق.
+    </footer>
+  </main>
+</body>
+</html>

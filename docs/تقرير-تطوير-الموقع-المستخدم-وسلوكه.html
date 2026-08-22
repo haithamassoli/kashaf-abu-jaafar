@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>كشّاف أبي جعفر — تقرير تطوير: المستخدم وسلوكه وما يحتاجه</title>
+<style>
+  /* ‎*‎ لا ‎body‎: وكيل المتصفّح يفرض monospace على ‎pre/code‎ وخطَّه على حقول النماذج،
+     ووراثةُ ‎body‎ لا تبلغها. */
+  *{font-family:'Thmanyah Sans'}
+  /* خط ثمانية: مسار الموقع أولًا، ثم المسار النسبي حين يُفتح التقرير من القرص. */
+  @font-face{font-family:'Thmanyah Sans';src:url('/fonts/thmanyahsans-Regular.woff2') format('woff2'),url('../public/fonts/thmanyahsans-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:'Thmanyah Sans';src:url('/fonts/thmanyahsans-Medium.woff2') format('woff2'),url('../public/fonts/thmanyahsans-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
+  @font-face{font-family:'Thmanyah Sans';src:url('/fonts/thmanyahsans-Bold.woff2') format('woff2'),url('../public/fonts/thmanyahsans-Bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
+
+  :root{
+    color-scheme: light;
+    --ink:#18201c; --muted:#5d685f; --paper:#f6f4ed; --card:#fffef9; --line:#d9d5c8;
+    --green:#176c4a; --green-soft:#e3f1e9; --amber:#8a5a05; --amber-soft:#fff1cd;
+    --red:#8c2d2d; --red-soft:#fbe7e7; --code:#222a25;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Thmanyah Sans';line-height:1.85}
+  main{width:min(940px,calc(100% - 32px));margin:48px auto}
+  header,section{margin-bottom:20px;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:clamp(20px,4vw,36px)}
+  header{border-top:5px solid var(--green)}
+  h1,h2,h3{line-height:1.35}
+  h1{margin:10px 0 8px;font-size:clamp(26px,5vw,42px)}
+  h2{margin:0 0 16px;font-size:25px}
+  h3{margin:26px 0 8px;font-size:19px}
+  p{margin:8px 0}
+  ul,ol{margin:8px 0;padding-inline-start:24px}
+  li+li{margin-top:6px}
+  .eyebrow,.meta{color:var(--muted);font-size:14px}
+  .status{display:inline-block;border-radius:999px;background:var(--green-soft);color:var(--green);padding:4px 12px;font-weight:700;font-size:14px}
+  .notice{margin-top:20px;border:1px solid #e7cc8d;border-radius:12px;background:var(--amber-soft);color:#533600;padding:14px 16px}
+  .danger{margin-top:16px;border:1px solid #e0b3b3;border-radius:12px;background:var(--red-soft);color:#5f1d1d;padding:14px 16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:18px}
+  .metric{border:1px solid var(--line);border-radius:12px;padding:16px;background:#fbfaf5}
+  .metric strong{display:block;color:var(--green);font-size:25px}
+  .metric span{color:var(--muted);font-size:14px}
+  .metric.bad strong{color:var(--red)}
+  table{width:100%;margin-top:14px;border-collapse:collapse;font-size:15px}
+  th,td{border-bottom:1px solid var(--line);padding:10px;text-align:right;vertical-align:top}
+  th{color:var(--muted);font-weight:700}
+  code{direction:ltr;unicode-bidi:isolate;border-radius:5px;background:#eceae1;padding:2px 6px;font-family:'Thmanyah Sans';font-size:.92em}
+  pre{direction:ltr;overflow-x:auto;border-radius:12px;background:var(--code);color:#f6f7f6;padding:16px;line-height:1.6;text-align:left}
+  pre code{background:none;color:inherit;padding:0}
+  .persona{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:#fbfaf5;margin-top:14px}
+  .persona h3{margin:0 0 6px;font-size:18px}
+  .persona .want{color:var(--green);font-weight:700}
+  .idea{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-top:14px;background:#fbfaf5}
+  .idea h3{margin:0 0 8px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:18px}
+  .num{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--green);color:#fff;font-size:15px}
+  .tag{border-radius:999px;padding:2px 10px;font-size:13px;font-weight:700;background:#eceae1;color:var(--muted)}
+  .tag.hi{background:var(--green-soft);color:var(--green)}
+  .tag.mid{background:var(--amber-soft);color:var(--amber)}
+  .quote{border-inline-start:4px solid var(--line);padding:4px 14px;color:var(--muted);margin:12px 0}
+  .digits{font-variant-numeric:tabular-nums}
+  footer{color:var(--muted);font-size:14px;text-align:center;padding-bottom:40px}
+  @media (prefers-color-scheme:dark){
+    :root{color-scheme:dark;--ink:#e6e8e5;--muted:#9aa39c;--paper:#101210;--card:#171a17;--line:#2a2f2a;--green:#5fbf90;--green-soft:#152a20;--amber:#d6a44a;--amber-soft:#2a2314;--red:#e08b8b;--red-soft:#2b1717}
+    .metric,.persona,.idea{background:#141613}
+    code{background:#22261f}
+    .tag{background:#22261f}
+  }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <p class="eyebrow">كشّاف أبي جعفر · <span class="digits">٢١ أغسطس ٢٠٢٦</span></p>
+  <h1>ماذا يريد مستخدم الكشّاف، وأين يتعثّر اليوم</h1>
+  <p class="meta">تقرير تطوير مبني على قراءة الشيفرة كاملة، وقياسات حيّة على خادم البحث في الإنتاج، ومسحٍ لما تقدّمه المواقع المشابهة.</p>
+  <p><span class="status">١٣ فكرة، مرتّبة بالأثر مقسومًا على الجهد</span></p>
+
+  <div class="notice">
+    <strong>أهم سطر في التقرير:</strong> كل عملية بحث على الموقع تستغرق اليوم <span class="digits">١٫٥</span> ثانية داخل Meilisearch، وهو رقم ثابت لأنه سقف المهلة الافتراضي — أي أن البحث <em>يُقطَع</em> لا أنه بطيء فقط. وقياسٌ للبديل أعطى <span class="digits">١١–٢١</span> مللي ثانية لنفس الأسئلة ونفس النتائج، أي أسرع <span class="digits">٧٠</span> ضعفًا، بحذف إعداد واحد ونقل الغربلة إلى المتصفّح. التفصيل في القسم الرابع.
+  </div>
+</header>
+
+<section>
+  <h2>١. لقطة الحال</h2>
+  <p>ما في الموقع اليوم، معدودًا من <code>data/</code> ومن فهرس الإنتاج في <span class="digits">٢١ أغسطس ٢٠٢٦</span>:</p>
+  <div class="grid">
+    <div class="metric"><strong class="digits">١٬٥٨٤</strong><span>درسًا مفرَّغًا</span></div>
+    <div class="metric"><strong class="digits">١٬١٣٦</strong><span>ساعة صوت</span></div>
+    <div class="metric"><strong class="digits">٦٢٬٣١١</strong><span>مقطعًا مفهرسًا</span></div>
+    <div class="metric"><strong class="digits">٣٬٣٣٣</strong><span>مقالة</span></div>
+    <div class="metric"><strong class="digits">٤٣</strong><span>قائمة تشغيل</span></div>
+    <div class="metric bad"><strong class="digits">٤٠٪</strong><span>تغطية القناة</span></div>
+  </div>
+  <p style="margin-top:18px">الموقع نفسه ناضج: بحث هجين (كلمات + معنى)، وضع داكن، تثبيت كتطبيق، مشاركة وطباعة وتنزيل، تفريغ تفاعلي متزامن مع المشغّل، وصفحات ثابتة تُفتح في <span class="digits">٠٫٢٦</span> ثانية. فالمساحة المتبقية للتطوير ليست في «إضافة مزايا»، بل في ثلاثة مواضع: <strong>سرعة البحث</strong>، و<strong>جودة النص المفرَّغ</strong>، و<strong>ما بعد النتيجة</strong> — ماذا يفعل القارئ بعد أن وجد ما بحث عنه.</p>
+</section>
+
+<section>
+  <h2>٢. من يستعمل الكشّاف؟</h2>
+  <p class="meta">لا توجد بيانات نقر اليوم (يُسجَّل حدث <code>search</code> وحده)، فهذه الأنماط مستنبَطة من ثلاثة مصادر متاحة: تركيبة المحتوى نفسه، ومجموعات أسئلة التقييم الـ<span class="digits">٩١</span> المكتوبة سابقًا، وطبيعة قناة الشيخ. إغلاق هذه الفجوة هو <a href="#i3">الفكرة الثالثة</a>.</p>
+
+  <p><strong>تركيبة المحتوى تحسم الأمر:</strong> أضخم القوائم كلّها شروح كتب مسلسلة — شرح الجامع في العقائد <span class="digits">٢٩٣</span> درسًا، شرح مسند الدارمي <span class="digits">٢٠٦</span>، شرح عمدة الفقه <span class="digits">١٧٣</span>، مختصر التحرير <span class="digits">٩٢</span>، زاد المسافر <span class="digits">٥٧</span>. و<span class="digits">١٬٤٢٤</span> عنوانًا من <span class="digits">١٬٥٨٤</span> يحمل رقم درس بين قوسين. هذا ليس أرشيف مقاطع متفرّقة، بل <strong>مدرسة علمية مسلسلة</strong>، وهي حقيقة لا تظهر في تصميم الموقع اليوم.</p>
+
+  <div class="persona">
+    <h3>١. المتابع لسلسلة</h3>
+    <p>يقرأ «شرح عمدة الفقه» بابًا بابًا. يصل إلى الدرس ٥٥ ثم يريد ٥٦.</p>
+    <p><span class="want">يريد:</span> «التالي/السابق»، وأين هو من السلسلة، ومن أين يستأنف. <br><span class="meta">اليوم: لا شيء من ذلك في صفحة الدرس — عليه العودة إلى <code>/p/</code> والبحث عن رقمه بين ١٧٣ صفًّا.</span></p>
+  </div>
+
+  <div class="persona">
+    <h3>٢. السائل عن حكم</h3>
+    <p>مجموعات التقييم كلّها بهذا الشكل: «ما حكم البول واقفًا»، «هل تدخل المرأة الحائض المسجد»، «إذا اشترطت الزوجة شرطًا في عقد الزواج هل يلزم الوفاء به». يسأل بالجملة لا بالكلمة المفتاحية.</p>
+    <p><span class="want">يريد:</span> الجواب، لا قائمة نتائج. <br><span class="meta">اليوم: البحث الدلالي يوصله (١٥ من ٢٥ سؤالًا محجوزًا)، لكنه ينتظر ثانيتين ثم يقرأ عشرين مقطعًا ليجد الجواب.</span></p>
+  </div>
+
+  <div class="persona">
+    <h3>٣. الناقل والمحقّق</h3>
+    <p>يريد أن ينسب قولًا إلى الشيخ بإسناد: اسم الدرس والدقيقة. هذا هو الجمهور الذي بُني له الكشّاف أصلًا، وهو أشدّ الناس حساسية للخطأ.</p>
+    <p><span class="want">يريد:</span> اقتباسًا نظيفًا جاهزًا للّصق، لا رابطًا فقط. <br><span class="meta">اليوم: زر «نسخ رابط السطر» موجود، لكن النص المنسوخ خام بلا ترقيم ولا همز.</span></p>
+  </div>
+
+  <div class="persona">
+    <h3>٤. الباحث عن موقف</h3>
+    <p>«ماذا قال الشيخ في الأشعرية؟» — استعلام واحد يعيد <span class="digits">١٬١٩٠</span> مقطعًا و<span class="digits">٢٤٥</span> فقرة مقال. جزء معتبر من المحتوى مناظرات ومراجعات (سلسلة «مراجعات ومناصحات» ٥١ درسًا، «دردشة حول مدرسة المنار» ٤٢).</p>
+    <p><span class="want">يريد:</span> ترتيبًا زمنيًا لا ترتيب صلة — «ما أحدث ما قاله»، لأن المواقف تتغيّر. <br><span class="meta">اليوم: لا فرز بالتاريخ ولا تصفية بالسنة، مع أن المحتوى يمتدّ من ٢٠١٩ إلى ٢٠٢٦.</span></p>
+  </div>
+
+  <div class="persona">
+    <h3>٥. العابر من رابط</h3>
+    <p>يصل من تيليجرام أو إكس، على الجوال، بنية واحدة: يقرأ ثم يشارك.</p>
+    <p><span class="want">يريد:</span> شيئًا يُشارَك في مجموعة واتساب — والرابط وحده أضعف ما يُشارَك. <br><span class="meta">اليوم: زر مشاركة يرسل الرابط، وصفحة المقالات وحدها تزن ١٫٣ ميغابايت.</span></p>
+  </div>
+</section>
+
+<section>
+  <h2>٣. كيف يتصرّفون فعلًا</h2>
+  <ul>
+    <li><strong>يسألون سؤالًا، لا يكتبون كلمات مفتاحية.</strong> ولهذا أُضيف الشقّ الدلالي أصلًا، وقد رفع «تبويب المقالات الفارغ» من ٤٤ سؤالًا من ٥٤ إلى ٥ فقط.</li>
+    <li><strong>يكتبون بلا همز ولا تشكيل</strong>، ويخطئون في الحروف المتشابهة. <code>charabia</code> والمرادفات المجالية تغطّي هذا اليوم، وهو من أقوى ما في الموقع.</li>
+    <li><strong>الجلسة قصيرة أو طويلة جدًّا، بلا وسط.</strong> إمّا سؤال واحد ثم مغادرة، أو سلسلة من ٢٩٣ درسًا تُتابَع شهورًا. الموقع اليوم مضبوط على الأول وحده.</li>
+    <li><strong>يقرأون أكثر ممّا يسمعون.</strong> النصّ يُقرأ في دقيقة، والدرس ٤٢ دقيقة. هذه هي الميزة الكاملة للكشّاف على يوتيوب — وهي معطّلة جزئيًّا بسبب جودة النص (القسم التالي).</li>
+    <li><strong>يشاركون في مجموعات مغلقة</strong> (واتساب وتيليجرام) لا على المنصّات المفتوحة.</li>
+  </ul>
+</section>
+
+<section id="measured">
+  <h2>٤. ما الذي يعترضهم — بالقياس</h2>
+  <p class="meta">كل رقم في هذا القسم مقيس على الإنتاج (<code>search.assoli.site</code> و<code>alkulify.assoli.site</code>) اليوم، لا مقدَّر.</p>
+
+  <h3>أ) كل بحث يُقطَع عند سقف المهلة</h3>
+  <p>زمن المعالجة داخل Meilisearch لنفس السؤال، بتغيير إعداد واحد في كل مرة:</p>
+  <table>
+    <thead><tr><th>الشكل</th><th>زمن المعالجة</th><th>ملاحظة</th></tr></thead>
+    <tbody>
+      <tr><td>ما يرسله الموقع اليوم (هجين + <code>rankingScoreThreshold</code>)</td><td><strong class="digits">١٥٠١</strong> مللي</td><td>ثابت تمامًا في كل استعلام</td></tr>
+      <tr><td>هجين بلا العتبة</td><td class="digits">١١ مللي</td><td>نفس النتائج في الصدارة</td></tr>
+      <tr><td>كلمات فقط</td><td class="digits">٥ مللي</td><td></td></tr>
+      <tr><td>هجين + عتبة، مصفّى إلى قائمة من ٤ دروس</td><td class="digits">١ مللي</td><td>يثبت أن الكلفة في حجم المسح</td></tr>
+      <tr><td>تضمين السؤال في Ollama على الخادم</td><td class="digits">٥٠٠ مللي</td><td>مرة واحدة؛ المكرَّر مجاني من الذاكرة المؤقتة</td></tr>
+      <tr><td>زمن الشبكة إلى الخادم</td><td class="digits">٢٥٠ مللي</td><td></td></tr>
+    </tbody>
+  </table>
+  <p>الرقم <span class="digits">١٥٠١</span> ليس صدفة: <code>searchCutoffMs</code> على فهرس <code>cues</code> يساوي <code>null</code>، أي القيمة الافتراضية <span class="digits">١٥٠٠</span> مللي. فالبحث يصطدم بالسقف في <em>كل</em> استعلام، ويعيد ما بلغه عند القطع.</p>
+  <p><strong>السبب:</strong> <code>rankingScoreThreshold</code> مع البحث الهجين يُلزم Meilisearch بتقييم كل مرشّح ليعرف كم واحدًا تجاوز العتبة، فيمسح <span class="digits">٦٢</span> ألف متجه على نواة واحدة في كل مرة. وهذا يسوء لا يتحسّن: التفريغ مستمر، وعند <span class="digits">٤٬٠٠٠</span> درس يصير المسح على <span class="digits">١٦٠</span> ألف متجه.</p>
+
+  <div class="danger">
+    <strong>الأثر المزدوج:</strong> ليست المشكلة أن المستخدم ينتظر <span class="digits">١٫٨</span> ثانية فحسب، بل أن العتبة المضبوطة بعناية على <span class="digits">٠٫٧٦٥</span> تُطبَّق على مجموعة مرشّحين مبتورة. أي أن الضبط الدقيق للجولة الثانية يعمل على نصف بيانات.
+  </div>
+
+  <h3>ب) النصّ المفرَّغ غير صالح للقراءة</h3>
+  <p>عدٌّ على درس واحد كامل (<code>data/segments/35-LzT8NtjA.json</code>، ١٤٬٩١٧ حرفًا):</p>
+  <div class="grid">
+    <div class="metric bad"><strong class="digits">٠</strong><span>فاصلة في الدرس كلّه</span></div>
+    <div class="metric bad"><strong class="digits">٦٩</strong><span>نقطة (واحدة كل ٢١٦ حرفًا)</span></div>
+    <div class="metric bad"><strong class="digits">١</strong><span>همزة مكسورة «إ» في الدرس</span></div>
+  </div>
+  <div class="quote">«الحمد لله والصلاة والسلام على رسول الله وعلى اله وصحبه ومن اهتدى بهداه هذا مجلس جديد في مدارسة كتاب التوحيد للامام المجدد محمد ابن عبد الوهاب رحمه الله تعالى وكنا قد وقد وصلنا الى ما جاء في النشرة…»</div>
+  <p>هذا يكفي للبحث، ولا يكفي للقراءة ولا للاقتباس ولا للنشر. وفيه أخطاء تفريغ ظاهرة («تعرظ» و«يظع»)، وتكرار من المتحدّث لم يُنقَّح. ومعنى ذلك أن أقوى ميزة في الموقع — أن تقرأ درسًا في دقيقتين بدل سماعه في ٤٢ — معطّلة عمليًّا.</p>
+
+  <h3>ج) فجوات أصغر، مقيسة</h3>
+  <table>
+    <thead><tr><th>الفجوة</th><th>الدليل</th></tr></thead>
+    <tbody>
+      <tr><td>لا تنقّل بين دروس السلسلة</td><td><code>src/pages/v/[id].astro</code> يعرض شارات القوائم فقط؛ لا «التالي/السابق» مع أن الترتيب موجود في <code>playlist.videoIds</code></td></tr>
+      <tr><td>لا قياس لنجاح البحث</td><td>حدث <code>search</code> وحده في <code>Search.tsx:104</code>؛ لا حدث نقر، فلا يُعرف هل وجد السائل جوابه</td></tr>
+      <tr><td>صفحة المقالات ثقيلة</td><td><span class="digits">١٫٣</span> ميغابايت لـ<span class="digits">٣٬٣٣٣</span> صفًّا في HTML واحد</td></tr>
+      <tr><td>لا صفحة «الجديد» ولا تغذية RSS</td><td>لا شيء في <code>public/</code>، ولا صفحة تعرض آخر ما أُضيف رغم وجود <code>uploadDate</code> لكل درس</td></tr>
+      <tr><td>المقالات والدروس لا يعرف بعضها بعضًا</td><td>لا رابط من مقالة إلى درس في موضوعها ولا العكس، مع <span class="digits">٣٬٣٣٣</span> مقالة و<span class="digits">١٬٥٨٤</span> درسًا</td></tr>
+      <tr><td>لا طريق للإبلاغ عن خطأ تفريغ من موضعه</td><td>README يقول إنها أنفع مساهمة؛ والطريق الوحيد نموذج تواصل يُلصَق فيه الرابط يدويًّا</td></tr>
+      <tr><td>حقل ميّت في الفهرس</td><td><code>chapter</code> على <span class="digits">٢٢٤</span> مستندًا، لا يقرؤه شيء في الشيفرة</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>٥. الأفكار</h2>
+  <p class="meta">مرتّبة بالأثر مقسومًا على الجهد. كل فكرة بأصغر صورة تعمل بها؛ ما زاد عن ذلك مؤجَّل حتى يطلبه القياس.</p>
+
+  <h3>الطبقة الأولى — أثر كبير، عمل يوم أو أقلّ</h3>
+
+  <div class="idea">
+    <h3><span class="num">١</span> البحث في ١٥ مللي بدل ١٥٠١ <span class="tag hi">أثر عالٍ</span> <span class="tag">ملف واحد</span></h3>
+    <p>احذف <code>rankingScoreThreshold</code> من الاستعلام، واطلب <code>showRankingScore</code> مع <code>limit</code>، ثم اغربل بالعتبة نفسها (<span class="digits">٠٫٧٦٥</span>) في المتصفّح. العتبة تبقى كما هي، ويبقى دورها في «لا نتائج» وفي البحث المرن الموسوم — يتغيّر <em>مكان</em> تطبيقها فقط.</p>
+    <p><strong>مقيس على الإنتاج، بأربعة أسئلة منها سؤال هراء:</strong></p>
+    <table>
+      <thead><tr><th>السؤال</th><th>اليوم</th><th>بالبديل</th><th>ما فوق العتبة</th></tr></thead>
+      <tbody>
+        <tr><td>صلاة الوتر</td><td class="digits">١٥٠١ مللي</td><td class="digits">٢١ مللي</td><td class="digits">٦٠ من ٦٠</td></tr>
+        <tr><td>ما حكم قراءة الفاتحة خلف الإمام</td><td class="digits">١٥٠١ مللي</td><td class="digits">١٦ مللي</td><td class="digits">٦٠ من ٦٠</td></tr>
+        <tr><td>زخرفة المساجد</td><td class="digits">١٥٠١ مللي</td><td class="digits">١٩ مللي</td><td class="digits">٢ من ٦٠</td></tr>
+        <tr><td>قهوة بطاطس سيارة <span class="meta">(هراء)</span></td><td class="digits">١٥٠١ مللي</td><td class="digits">٥١٨ مللي</td><td><strong class="digits">٠</strong> — لا نتائج، كما يجب</td></tr>
+      </tbody>
+    </table>
+    <p>الهراء يبقى مرفوضًا، فالغربلة لم تُلغَ. والـ<span class="digits">٥١٨</span> مللي في السطر الأخير هي تضمين سؤال جديد لم يُر من قبل (<span class="digits">٥٠٠</span> مللي منها Ollama)؛ والسؤال المكرَّر يعود من الذاكرة المؤقتة في <span class="digits">١٥</span> مللي.</p>
+    <p><strong>الثمن، صراحةً:</strong> يضيع العدد الدقيق للنتائج، فيصير العدّاد «٦٠+» بدل رقم. والموقع يعرض «+1000» أصلًا فوق الألف، فالفكرة نفسها بحدٍّ أدنى. والتصفّح العميق يبقى رخيصًا: قِسْت <code>offset=500</code> عند <span class="digits">٩٦</span> مللي.</p>
+    <pre><code>// src/lib/meili.ts — بدل rankingScoreThreshold
+const semantic = (s) => s === 'all'
+  ? { hybrid: { embedder: EMBEDDER, semanticRatio: SEMANTIC_RATIO }, showRankingScore: true }
+  : {}
+// ثم في search(): hits.filter(h => h._rankingScore >= SCORE_FLOOR)</code></pre>
+    <p class="meta">أعد <code>pnpm eval --ladder</code> على المجموعات الثلاث قبل الدمج وبعده: العتبة نفسها والنتائج نفسها، فيُتوقَّع ثبات الأرقام — وإن تحرّكت فذلك دليل على أن القطع كان يبتر نتائج حقيقية.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٢</span> «الدرس التالي / السابق» <span class="tag hi">أثر عالٍ</span> <span class="tag">سطران</span></h3>
+    <p>الترتيب موجود في <code>playlist.videoIds</code>، ولا يُستعمل. أضف في أسفل صفحة الدرس: «السابق: … · <span class="digits">٥٦</span> من <span class="digits">١٧٣</span> · التالي: …».</p>
+    <p><strong>لماذا هذه أولًا:</strong> لأن أضخم قوائم الموقع شروح مسلسلة (٢٩٣ و٢٠٦ و١٧٣ درسًا)، و<span class="digits">١٬٤٢٤</span> عنوانًا من <span class="digits">١٬٥٨٤</span> يحمل رقمه. هذا أرخص تحويل في التقرير من «زائر يبحث» إلى «متابع يعود».</p>
+  </div>
+
+  <div class="idea" id="i3">
+    <h3><span class="num">٣</span> حدث نقر واحد في PostHog <span class="tag hi">أثر عالٍ</span> <span class="tag">سطر واحد</span></h3>
+    <p><code>track('result_click', { q, rank, tab, widened })</code> على رابط النتيجة، ومثله عند صفر نتائج. اليوم يُسجَّل السؤال ولا يُسجَّل هل أفاد.</p>
+    <p><strong>لماذا:</strong> بدونه لا يمكن الحكم على أي فكرة في هذا التقرير. وثلاثة أرقام تكفي: نسبة البحث الذي يتبعه نقر، ومتوسط رتبة النتيجة المنقورة، وقائمة الأسئلة التي تعود صفرًا (وهي قائمة أولويات التفريغ المقبلة، مكتوبة بأيدي القرّاء).</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٤</span> أسئلة جاهزة تحت صندوق البحث <span class="tag mid">أثر متوسط</span> <span class="tag">نصف ساعة</span></h3>
+    <p>ستّ رقاقات قابلة للنقر من <code>data/eval-questions.json</code> — أسئلة حقيقية مُتحقَّق من أن لها جوابًا. الزائر الأول اليوم يرى صندوقًا فارغًا ومثالًا واحدًا في الـ<code>placeholder</code>، ولا يعرف ما الذي يستطيع سؤاله.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٥</span> «أبلغ عن خطأ في هذا السطر» <span class="tag mid">أثر متوسط</span> <span class="tag">ساعة</span></h3>
+    <p>بجانب زر نسخ رابط السطر، رابط <code>mailto:</code> مملوء مسبقًا برابط الدرس والتوقيت ونصّ السطر. README يقول إن هذه أنفع مساهمة ممكنة، ولا يوجد اليوم طريق إليها إلا نموذج تواصل يُلصَق فيه كل ذلك يدويًّا — وهو ما لا يفعله أحد.</p>
+  </div>
+
+  <h3>الطبقة الثانية — أثر كبير، عمل أسبوع</h3>
+
+  <div class="idea">
+    <h3><span class="num">٦</span> ترقيم النصّ وهمزه <span class="tag hi">أثر عالٍ</span> <span class="tag mid">تشغيل واحد</span></h3>
+    <p>مرّر النصّ المفرَّغ الموجود على نموذج لغوي، بمهمّة واحدة محدودة: أضف الترقيم، وأعد الهمزات، واحذف تكرار المتحدّث. <strong>ولا تُعِد صياغة كلمة</strong> — واحفظ الخام كما هو مصدرًا، واعرض المنقَّح.</p>
+    <p><strong>لماذا هذه أعلى الطبقة الثانية:</strong> لأنها تفتح ما لا يفتحه غيرها. النصّ المرقَّم يُقرأ ويُقتبس ويُشارَك ويُفهرَس في محرّكات البحث؛ والخام لا يصلح إلا للبحث فيه. وهي كذلك أرخص من إعادة التفريغ بمراحل، لأن الصوت لا يُمَسّ.</p>
+    <p class="meta">حدّها الأدنى: ابدأ بأشهر ٥٠ درسًا لا بالـ١٬٥٨٤، وقِس أثرها في زمن البقاء على الصفحة قبل توسيعها.</p>
+    <div class="notice">الاحتياط الواجب: كل سطر منقَّح يجب أن يبقى قابلًا للمقابلة بالخام وبالصوت. والموقع يقول اليوم في تذييله إن النصوص آلية وقد تخطئ — وهذه الجملة تصير ألزم لا أخفّ بعد التنقيح، لأن النصّ الجميل يُصدَّق أكثر ممّا يستحقّ.</div>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٧</span> اقتباس جاهز للّصق <span class="tag hi">أثر عالٍ</span> <span class="tag">ساعة</span></h3>
+    <p>زر «انسخ الاقتباس» ينسخ: النصّ، ثم اسم الدرس، ثم التوقيت، ثم الرابط — في أربعة أسطر. لا مكتبة صور ولا رسم على <code>canvas</code>؛ نصٌّ منسّق يُلصَق في واتساب وتيليجرام كما هو.</p>
+    <p><strong>لماذا:</strong> جمهور الموقع يشارك في مجموعات مغلقة، والرابط المجرّد لا يُقرأ فيها. هذه أرخص قناة نموّ متاحة، ولا تحتاج حسابًا ولا خادمًا.</p>
+    <p class="meta">إن قِيس أن الزر يُضغط، عندها فقط تُبنى بطاقة صورة — لا قبل ذلك.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٨</span> صفحة «الجديد» + تغذية RSS <span class="tag mid">أثر متوسط</span> <span class="tag">ساعتان</span></h3>
+    <p><code>/new</code> تعرض آخر ما فُرِّغ مرتّبًا بالتاريخ، و<code>/rss.xml</code> يولّدها Astro من <code>data/videos.json</code> بلا عمل يُذكر. آخر دفعة أضافت <span class="digits">١٨٨</span> درسًا ولم يعلم بها أحد.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٩</span> الفرز بالتاريخ والتصفية بالسنة <span class="tag mid">أثر متوسط</span> <span class="tag">ساعتان</span></h3>
+    <p><code>upload_date</code> مصفّى أصلًا في الفهرس. أضف «الأحدث» بجانب «الأصلح»، وشريط سنوات. المحتوى يمتدّ من <span class="digits">٢٠١٩</span> إلى <span class="digits">٢٠٢٦</span>، ومن يبحث عن موقف الشيخ من مسألة يريد أحدث ما قاله فيها لا أقربه لفظًا.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">١٠</span> ربط المقالة بالدرس <span class="tag mid">أثر متوسط</span> <span class="tag mid">نصف يوم</span></h3>
+    <p>في أسفل كل مقالة: «دروس في هذا الموضوع» — استعلام واحد بعنوان المقالة على فهرس <code>lessons</code>. والعكس في أسفل الدرس. <span class="digits">٣٬٣٣٣</span> مقالة و<span class="digits">١٬٥٨٤</span> درسًا لا يعرف بعضها بعضًا اليوم، وكثير منها في المسألة نفسها.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">١١</span> تخفيف صفحة المقالات <span class="tag">أثر محدود</span> <span class="tag">ساعة</span></h3>
+    <p><span class="digits">١٫٣</span> ميغابايت لصفحة فهرس. اعرض <span class="digits">١٠٠</span> صفٍّ والباقي عند التمرير أو عند الكتابة في المرشِّح. الجمهور على الجوال، وهذه أثقل صفحة في الموقع بفارق خمسة أضعاف.</p>
+  </div>
+
+  <h3>الطبقة الثالثة — أكبر، وتحتاج قرارًا</h3>
+
+  <div class="idea">
+    <h3><span class="num">١٢</span> إكمال التفريغ <span class="tag hi">أثر عالٍ</span> <span class="tag mid">مستمرّ</span></h3>
+    <p><span class="digits">٢٬٤٠٠</span> درس متبقٍّ. «لا نتائج» اليوم تعني في الغالب «لم يُفرَّغ بعد»، لا «لم يقله الشيخ» — والموقع يقول ذلك في صفحته الفارغة، وهو صادق. لا فكرة في هذا التقرير ترفع نسبة الإجابة بقدر ما يرفعها هذا.</p>
+    <p class="meta">ورقم النقرات من الفكرة الثالثة يجعل الترتيب مقيسًا لا مخمَّنًا: فرِّغ أولًا القوائم التي تُسأل عنها ولا تُجاب.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">١٣</span> جواب مولَّد باستشهاد — بحذر <span class="tag mid">أثر عالٍ</span> <span class="tag mid">خطر عالٍ</span></h3>
+    <p>«الجواب المختصر» فوق النتائج، مبنيًّا على المقاطع المسترجَعة. البنية التحتية جاهزة كاملة: متجهات على كل مقطع، وفهرس، ونموذج تضمين.</p>
+    <div class="danger"><strong>هذه أخطر فكرة في التقرير.</strong> نسبة قولٍ إلى عالِم لم يقله ليست خطأ منتج، بل خطأ في دِين. إن نُفِّذت فبشرط واحد: <strong>اقتباس حرفيّ</strong> من مقطع واحد مع رابطه وتوقيته، بلا إعادة صياغة ولا جمع بين مقطعين ولا استنتاج. وإن لم يوجد مقطع يجيب حرفيًّا، فلا جواب.</div>
+  </div>
+</section>
+
+<section>
+  <h2>٦. ما استُبعد، ولماذا</h2>
+  <table>
+    <thead><tr><th>الفكرة</th><th>سبب الاستبعاد</th></tr></thead>
+    <tbody>
+      <tr><td>فهرس أبواب الكتاب المشروح</td><td>مُغرٍ نظريًّا، لكن <span class="digits">٣٣</span> عنوانًا فقط من <span class="digits">١٬٥٨٤</span> يحمل «كتاب …» أو «باب …» بين قوسين. البيانات لا تحتمله.</td></tr>
+      <tr><td>تسجيل دخول ومفضّلة ومتابعة تقدّم</td><td>يخالف قرار «بلا تسجيل ولا قاعدة بيانات». وإن لزم حفظ الموضع فـ<code>localStorage</code> يفي، بلا خادم ولا حساب.</td></tr>
+      <tr><td>رفع <code>searchCutoffMs</code></td><td>يعالج العَرَض بجعله أسوأ: البحث يصير أبطأ لا أسرع. العلاج في الفكرة الأولى.</td></tr>
+      <tr><td>التكميم الثنائي للمتجهات (<code>binaryQuantized</code>)</td><td>يصغّر الفهرس ٣٢ ضعفًا، لكنه غير قابل للرجوع ويستلزم إعادة حساب المتجهات كلّها. والفكرة الأولى تحلّ المشكلة بلا مساس بالبيانات — فإن لم تكفِ، فهذا هو التالي.</td></tr>
+      <tr><td>بوت تيليجرام</td><td>يطابق سلوك الجمهور، لكنه خادم دائم يُصان مقابل ما تفعله الفكرة السابعة بزرّ واحد. أجّله حتى تُقاس المشاركة.</td></tr>
+      <tr><td>حقل <code>chapter</code> على ٢٢٤ مستندًا</td><td>بقيّة من فهرسة قديمة لا يقرؤها شيء. احذفه بدل تطويره.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>٧. كيف نعرف أنها نجحت</h2>
+  <p>ثلاثة أرقام تكفي، وكلّها تصير متاحة بعد الفكرة الثالثة:</p>
+  <ol>
+    <li><strong>نسبة البحث الذي يتبعه نقر.</strong> المقياس الوحيد الذي يقول إن البحث «نجح» فعلًا. اليوم مجهولة تمامًا.</li>
+    <li><strong>الزمن حتى النتيجة الأولى.</strong> يُتوقَّع أن ينزل من <span class="digits">١٫٨</span> ثانية إلى ما دون <span class="digits">٠٫٣</span> بالفكرة الأولى وحدها.</li>
+    <li><strong>قائمة الأسئلة التي تعود صفرًا.</strong> ليست مقياسًا فقط، بل خطة عمل: هي بالضبط ما يجب تفريغه بعد ذلك.</li>
+  </ol>
+  <p class="meta">وإن نُفِّذت فكرة واحدة من التقرير فلتكن الأولى: هي الأقلّ عملًا، والأكبر أثرًا، والوحيدة التي تكشف كم من الضبط السابق كان يعمل على بيانات مبتورة.</p>
+</section>
+
+<footer>
+  <p>كشّاف أبي جعفر — تقرير تطوير · <span class="digits">٢١ أغسطس ٢٠٢٦</span></p>
+  <p>القياسات على الإنتاج في تاريخه؛ أنماط المستخدمين مستنبَطة من المحتوى ومجموعات التقييم، لا من بيانات نقر.</p>
+</footer>
+
+</main>
+</body>
+</html>

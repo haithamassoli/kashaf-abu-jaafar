@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>كشّاف أبي جعفر — تطوير البحث، الجولة الثانية: الترتيب والمعنى</title>
+<style>
+  /* ‎*‎ لا ‎body‎: وكيل المتصفّح يفرض monospace على ‎pre/code‎ وخطَّه على حقول النماذج،
+     ووراثةُ ‎body‎ لا تبلغها. */
+  *{font-family:'Thmanyah Sans'}
+  /* خط ثمانية: مسار الموقع أولًا، ثم المسار النسبي حين يُفتح التقرير من القرص. */
+  @font-face{font-family:'Thmanyah Sans';src:url('/fonts/thmanyahsans-Regular.woff2') format('woff2'),url('../public/fonts/thmanyahsans-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:'Thmanyah Sans';src:url('/fonts/thmanyahsans-Medium.woff2') format('woff2'),url('../public/fonts/thmanyahsans-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
+  @font-face{font-family:'Thmanyah Sans';src:url('/fonts/thmanyahsans-Bold.woff2') format('woff2'),url('../public/fonts/thmanyahsans-Bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
+
+  :root{
+    --bg:#faf9f7; --surface:#fff; --fg:#1c1a17; --muted:#6b6560;
+    --line:#e5e0d8; --accent:#0f766e; --accent-soft:#e6f2f0;
+    --good:#166534; --good-bg:#eaf5ec; --warn:#92400e; --warn-bg:#fdf3e7;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#16151a; --surface:#1e1d23; --fg:#eceaf0; --muted:#a09aa8;
+      --line:#312f38; --accent:#52c2a5; --accent-soft:#1b2f2b;
+      --good:#7ee0a0; --good-bg:#16281c; --warn:#f0c07a; --warn-bg:#2c2213;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:2.5rem 1.25rem 5rem; background:var(--bg); color:var(--fg);
+    font-family:'Thmanyah Sans';
+    line-height:1.85; font-size:16.5px;
+  }
+  main{max-width:56rem; margin:0 auto}
+  h1{font-size:1.95rem; line-height:1.4; margin:0 0 .4rem}
+  h2{font-size:1.3rem; margin:3rem 0 .9rem; padding-bottom:.5rem; border-bottom:2px solid var(--line)}
+  h3{font-size:1.05rem; margin:1.8rem 0 .5rem; color:var(--accent)}
+  .sub{color:var(--muted); margin:0 0 2rem; font-size:.95rem}
+  p{margin:.85rem 0}
+  .lede{
+    background:var(--surface); border:1px solid var(--line); border-inline-start:4px solid var(--accent);
+    border-radius:.7rem; padding:1.1rem 1.3rem; margin:1.5rem 0;
+  }
+  .lede p:first-child{margin-top:0} .lede p:last-child{margin-bottom:0}
+  table{width:100%; border-collapse:collapse; margin:1.1rem 0; font-size:.93rem; background:var(--surface);
+        border:1px solid var(--line); border-radius:.6rem; overflow:hidden}
+  th,td{padding:.6rem .8rem; text-align:start; border-bottom:1px solid var(--line)}
+  th{background:var(--accent-soft); font-weight:600; color:var(--fg)}
+  tbody tr:last-child td{border-bottom:none}
+  tr.total td{font-weight:700; background:var(--accent-soft)}
+  .num{font-variant-numeric:tabular-nums; text-align:end; white-space:nowrap}
+  .ok{color:var(--good); font-weight:600}
+  .bad{color:var(--warn); font-weight:600}
+  .pill{display:inline-block; padding:.12rem .55rem; border-radius:999px; font-size:.8rem; font-weight:600}
+  .pill-ok{background:var(--good-bg); color:var(--good)}
+  .pill-warn{background:var(--warn-bg); color:var(--warn)}
+  code{background:var(--accent-soft); padding:.1rem .35rem; border-radius:.3rem;
+       font-family:'Thmanyah Sans'; font-size:.86em; direction:ltr; display:inline-block}
+  pre{background:var(--surface); border:1px solid var(--line); border-radius:.6rem; padding:.9rem 1.1rem;
+      overflow-x:auto; direction:ltr; text-align:left; font-size:.84rem; line-height:1.7}
+  pre code{background:none; padding:0}
+  ul,ol{padding-inline-start:1.4rem} li{margin:.4rem 0}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(11rem,1fr)); gap:.8rem; margin:1.3rem 0}
+  .stat{background:var(--surface); border:1px solid var(--line); border-radius:.6rem; padding:.9rem 1rem}
+  .stat .n{font-size:1.55rem; font-weight:700; font-variant-numeric:tabular-nums; color:var(--accent); line-height:1.25}
+  .stat .l{font-size:.82rem; color:var(--muted)}
+  .quote{background:var(--surface); border:1px solid var(--line); border-radius:.6rem; padding:.9rem 1.1rem; margin:.9rem 0}
+  .quote .q{font-weight:600}
+  .quote .a{color:var(--muted); font-size:.92rem; margin-top:.4rem}
+  .quote .t{color:var(--accent); font-size:.85rem; font-weight:600}
+  footer{margin-top:4rem; padding-top:1.2rem; border-top:1px solid var(--line); color:var(--muted); font-size:.85rem}
+  a{color:var(--accent)}
+  @media (max-width:640px){ body{font-size:16px; padding:1.5rem 1rem 3rem} table{font-size:.85rem} th,td{padding:.5rem .55rem} }
+</style>
+</head>
+<body>
+<main>
+
+<h1>تطوير البحث — الجولة الثانية: الترتيب والمعنى</h1>
+<p class="sub">
+  كشّاف أبي جعفر · قياس فعلي لا تقدير: كل رقم هنا ناتج استعلام شُغِّل على الفهرس الكامل
+  (62,311 مقطعًا، 36,953 فقرة، 1,584 درسًا) أو تجربة أُجريت على المجموعة كلها.
+  التاريخ: 2026-08-20 · Meilisearch 1.53.1 · تكملةٌ
+  <a href="https://kdqucupra7voiohphpqsbi2mqp019rw4.pastehtml.dev/">لتقرير التشخيص</a>
+  و<a href="https://iey6zfk6d2b1y95j1q2z3s2nsoek1y4k.pastehtml.dev/">تقرير التنفيذ</a>.
+</p>
+
+<h2>١. فكرة الموقع: ما المشكلة التي يحلّها؟</h2>
+<p>
+  للشيخ أبي جعفر عبد الله بن فهد الخليفي على يوتيوب نحو أربعة آلاف درس — قرابة 2,300 ساعة كلام —
+  وعلى مدونته أكثر من ثلاثة آلاف مقالة وفتوى. المادة موجودة، لكنها <strong>غير قابلة للسؤال</strong>:
+  طالب العلم يذكر أن الشيخ تكلم في مسألة، ولا يذكر في أي درس ولا في أي دقيقة، وبحث يوتيوب لا يدخل
+  إلى ما قِيل داخل الفيديو. فتبقى مادة عمرها سنوات خارج المتناول عمليًّا، لا لأنها مفقودة بل لأنها
+  غير مفهرسة.
+</p>
+<p>
+  الموقع يقلب المعادلة: يفرّغ الصوت نصًّا، ويفهرس النص، ويعيد للسائل رابطًا يفتح الدرس عند الثانية
+  التي قيلت فيها العبارة — أو الفقرة نفسها من المقالة. هذه هي القيمة كلها: تحويل ساعات لا تُقرأ إلى
+  نص يُبحث فيه، ثم إعادة الوصل بين النص وموضعه في الصوت.
+</p>
+<div class="grid">
+  <div class="stat"><div class="n">1,584</div><div class="l">درسًا مفرَّغًا (≈1,136 ساعة، والتفريغ مستمر)</div></div>
+  <div class="stat"><div class="n">62,311</div><div class="l">مقطع بحث بطابع زمني</div></div>
+  <div class="stat"><div class="n">3,333</div><div class="l">مقالة وفتوى (36,953 فقرة)</div></div>
+  <div class="stat"><div class="n">0%</div><div class="l">أسئلة تعود اليوم بلا أي نتيجة (كانت 56%)</div></div>
+</div>
+
+<h2>٢. أين يقف البحث بعد الجولة الأولى؟</h2>
+<p>
+  الجولة الأولى عالجت «صفر نتائج»: سلّم تصعيد يجرب المطابقة الصارمة أولًا، ثم كتلة «دروس تتناول
+  سؤالك»، ثم إعادة بحث مرنة موسومة. النتيجة على مجموعة القياس الثابتة (50 سؤالًا واقعيًّا، منها 29
+  نعرف يقينًا أي درس يجيب عنها):
+</p>
+<table>
+  <thead><tr><th>القياس</th><th class="num">اليوم</th></tr></thead>
+  <tbody>
+    <tr><td>أسئلة تترك القارئ بلا شيء</td><td class="num ok">0%</td></tr>
+    <tr><td>هراء يُعرض كأنه نتيجة حقيقية</td><td class="num ok">0 من 4</td></tr>
+    <tr><td>الجواب الصحيح ظاهر في أول ثلاث نتائج</td><td class="num bad">17 من 29 (59%)</td></tr>
+  </tbody>
+</table>
+<div class="lede">
+  <p>
+    المشكلة انتقلت: لم يعد السؤال «هل نجد شيئًا؟» بل <strong>«هل نضع الجواب الصحيح في الأعلى؟»</strong>
+    — في 12 سؤالًا من 29 لا نفعل. والقارئ لا يقلّب صفحات؛ إن لم يرَ الجواب في أول شاشة فقد
+    خسرناه.
+  </p>
+</div>
+
+<h2>٣. تشريح الإخفاقات الاثني عشر</h2>
+<p>
+  فحصنا كل سؤال فاشل: أين يقع الدرس الصحيح فعلًا؟ في ترتيب فهرس الدروس؟ في نتائج البحث المرن؟
+  أم غائب تمامًا؟ الإخفاقات ليست نوعًا واحدًا بل ثلاثة:
+</p>
+<table>
+  <thead><tr><th>الفئة</th><th class="num">العدد</th><th>مثال</th><th>الدليل المقاس</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>مدفون في الترتيب</strong></td><td class="num">6</td>
+      <td>ما شروط الوقف الصحيح</td>
+      <td>57 درسًا تطابق، والدرس الصحيح ليس حتى في أول 50 منها؛ البحث المرن يضع مقطعه في المرتبة 17.</td>
+    </tr>
+    <tr>
+      <td><strong>نتيجة صارمة هزيلة تحجب مرنة ممتازة</strong></td><td class="num">2</td>
+      <td>على من تجب زكاة الفطر ومتى تخرج</td>
+      <td>الصارم يُظهر درسًا واحدًا خاطئًا فلا يُشغَّل المرن أبدًا — مع أن المرن يضع الجواب في <strong>المرتبة الأولى</strong>.</td>
+    </tr>
+    <tr>
+      <td><strong>فجوة مفردات حقيقية</strong></td><td class="num">4</td>
+      <td>هل للصداق حد أعلى</td>
+      <td>غائب في كل شيء حتى المرن: الشيخ ناقش الصداق داخل باب الخُلع بصياغة لا تشترك مع السؤال في كلمة واحدة.</td>
+    </tr>
+  </tbody>
+</table>
+<p>وخلف الفئات الثلاث سببان بنيويان لا تصل إليهما أدوات الجولة الأولى:</p>
+<ul>
+  <li>
+    <strong>ترتيب فهرس الدروس ضعيف بنيويًّا.</strong> وثيقة الدرس نصها 9,000 كلمة، فإشارات الترتيب
+    التي يعتمدها المحرك (تقارب الكلمات، دقة المطابقة) تفقد معناها: درس ذكر كل كلمة من سؤالك مرة
+    عابرة يتقدم على الدرس الذي أجاب عنه فعلًا.
+  </li>
+  <li>
+    <strong>المطابقة الصارمة على مقطع 83 ثانية تطالب السائل أن يخمّن صياغة الشيخ.</strong>
+    السائل يقول «الأغاني» والشيخ يقول «الغناء»؛ يقول «التصوير الفوتوغرافي» والشيخ يقول «التقاط
+    الصور». الجولة الأولى التفّت حول الصفر، ولا تستطيع الالتفاف حول الترتيب.
+  </li>
+</ul>
+
+<h2>٤. التجربة التي بنينا عليها القرار: البحث بالمعنى</h2>
+<p>
+  قبل أن نوصي بشيء، جرّبناه فعلًا. ضمَّنّا (embedding) كل المقاطع الـ62,311 بنموذج
+  <code>multilingual-e5-large</code> على جهاز التطوير (ساعتان، مرة واحدة)، ثم أعدنا تقييم الأسئلة
+  التسعة والعشرين نفسها: ماذا لو كان الاسترجاع بالمعنى لا بالحروف، وماذا لو دمجنا الاثنين؟
+</p>
+<table>
+  <thead><tr><th>الطريقة</th><th class="num">الجواب في أول 3</th></tr></thead>
+  <tbody>
+    <tr><td>كلمات فقط — المطابقة الصارمة الحالية على المقاطع</td><td class="num">9 / 29</td></tr>
+    <tr><td>معنى فقط (تشابه المتجهات)</td><td class="num">20 / 29</td></tr>
+    <tr><td>دمج الكلمات والمعنى (RRF)</td><td class="num">21 / 29</td></tr>
+    <tr><td>الدمج + إقحام البحث المرن في الترتيب</td><td class="num bad">18 / 29 — المرن يُغرِق، يبقى ملاذًا أخيرًا لا إشارة ترتيب</td></tr>
+    <tr class="total"><td>كتلة الدروس + الدمج (شكل الإنتاج المقترح)</td><td class="num">24 / 29 (83%)</td></tr>
+    <tr><td>سلّم الإنتاج اليوم، بالتعريف نفسه</td><td class="num">17 / 29 (59%)</td></tr>
+  </tbody>
+</table>
+<p>
+  والأهم من المجموع: <strong>الأسئلة الأربعة «المستحيلة» لفظيًّا وجدها البحث بالمعنى كلها.</strong>
+  أمثلة حقيقية من التجربة — لاحظ أن السؤال والجواب لا يشتركان في الكلمة المفتاحية:
+</p>
+<div class="quote">
+  <div class="q">هل للصداق حد أعلى؟</div>
+  <div class="t">شرح عمدة الفقه (115) — باب الخُلع</div>
+  <div class="a">«…وتقدم معنا ما يجوز أن يكون صداقًا… طيب الصداق يجوز بالمجهول ولا ما يجوز؟ ترى يجوز الصداق…»</div>
+</div>
+<div class="quote">
+  <div class="q">ما حكم المسح على الخفين وكم مدته؟</div>
+  <div class="t">شرح مسند الدارمي (76)</div>
+  <div class="a">«…قال المصنف رحمه الله: باب المسح على الخفين…» — بداية الباب نفسِه الذي يجيب عن السؤال.</div>
+</div>
+<div class="quote">
+  <div class="q">هل يجوز الاستماع للأغاني؟</div>
+  <div class="t">رسالة من أبي سعيد الخدري إلى المتسامحين في السنن</div>
+  <div class="a">«…كثير من الناس ما يمر عليه يوم ما يسمع غناء أو موسيقى… والقرآن في رمضان فقط…»</div>
+</div>
+<div class="quote">
+  <div class="q">حكم التصوير الفوتوغرافي؟</div>
+  <div class="t">مختصر التحرير في أصول الفقه الحنبلي (36)</div>
+  <div class="a">«…يقول يا شيخ: ما حكم التقاط الصور؟ وسمعت واحدًا يقول إن الصور حرام غير الفيديو… فيها خلاف مشهور…»</div>
+</div>
+<div class="lede">
+  <p>
+    <span class="pill pill-warn">تحذير مقاس</span>
+    للبحث بالمعنى ثمن يجب ضبطه: أسئلة الهراء التي نتعمد وضعها في القياس (مثل «تربية أسماك الزينة»)
+    حصلت على درجات تشابه 0.822–0.831، والأسئلة الحقيقية وسيطها 0.860 وأدناها 0.803 —
+    <strong>النطاقان متداخلان</strong>، فلا توجد عتبة درجات وحدها تفصل الهراء عن السؤال الحقيقي.
+    الحماية تأتي من بقاء سلّم التصعيد + معايرة عتبة <code>rankingScoreThreshold</code> على مجموعة
+    القياس، وهذا شرط إلزامي قبل الإطلاق (البند 5-ب).
+  </p>
+</div>
+
+<h2>٥. الخطة</h2>
+
+<h3>المرحلة 1 — إصلاح السلّم: الهزيل لا يحجب الممتاز (بلا أي بنية جديدة)</h3>
+<p>
+  اليوم لا يُشغَّل البحث المرن إلا إذا لم يظهر شيء إطلاقًا، فنتيجة صارمة واحدة خاطئة تحجب بحثًا
+  مرنًا جوابه في المرتبة الأولى. التعديل: إذا كانت النتائج الصارمة أقل من 10، تُلحق نتائج المرن
+  <em>تحتها</em> موسومة «نتائج قريبة» — الصارم لا يُعاد ترتيبه أبدًا.
+</p>
+<ul>
+  <li>مُحاكاة على مجموعة القياس: <strong>17 ← 19 من 29</strong>، ويصلح تحديدًا «صلاة الجنازة» و«زكاة الفطر» — وهما سؤالان يخطئهما البحث الهجين وحده، أي أن المرحلتين تتكاملان (تقديرنا معًا ≈26 من 29).</li>
+  <li>الكلفة: بضعة أسطر في <code>src/lib/meili.ts</code> + اختباران في <code>selfcheck</code>.</li>
+</ul>
+
+<h3>المرحلة 2 — البحث الهجين على المقاطع والمقالات (جوهر الجولة)</h3>
+<p>
+  نضيف بعد المعنى إلى محرك البحث نفسه: Meilisearch 1.53 يدعم البحث الهجين (كلمات + متجهات) دعمًا
+  مستقرًّا، وإضافة المُضمِّن <strong>تغيير إعدادات فقط</strong> — يتولى المحرك تضمين الوثائق
+  الموجودة كلها بنفسه، والرجوع عنه حذف إعداد.
+</p>
+<p><strong>النموذج: <code>bge-m3</code> يعمل محليًّا على خادم البحث نفسه.</strong> القرار بالأرقام لا بالذوق:</p>
+<table>
+  <thead><tr><th>النموذج</th><th class="num">جودة الاسترجاع العربي (MIRACL-ar nDCG@10)</th><th>ملاحظات</th></tr></thead>
+  <tbody>
+    <tr class="total"><td>BAAI/bge-m3</td><td class="num">78.4</td><td>مجاني، يعمل على خادمنا، سياق 8k، لا يحتاج بادئات — أنظف تكامل مع Meilisearch</td></tr>
+    <tr><td>multilingual-e5-large (نموذج تجربتنا)</td><td class="num">76.0</td><td>أرقام تجربتنا أعلاه <em>حد أدنى</em> لما سيعطيه bge-m3</td></tr>
+    <tr><td>OpenAI text-embedding-3-large</td><td class="num">54.9 (متوسط اللغات، لا رقم عربي منشور)</td><td>الأسهل ربطًا والأضعف عربيًّا — مرفوض</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><strong>التشغيل:</strong> <code>ollama pull bge-m3</code> على خادم أوراكل (‎1.2GB، الذاكرة والقرص يتسعان: المتجهات ≈0.4GB والقرص الحر 39GB).</li>
+  <li><strong>زمن الاستعلام:</strong> تضمين السؤال على نواة ARM واحدة ≈ 0.5–2 ثانية. مقبول — تقرر أن سرعة البحث ليست أولوية هذه الجولة.</li>
+  <li><strong>الفهرسة الأولى:</strong> ≈99 ألف وثيقة على نواة واحدة قد تستغرق يومًا كاملًا؛ تُطلق ليلًا وتُراقب من <code>/batches</code>. (تجربتنا المحلية استغرقت ساعتين على معالج أقوى بكثير — التقدير واقعي لا متشائم.)</li>
+  <li><strong>فخّان موثقان يجب تفاديهما:</strong> رفع <code>documentTemplateMaxBytes</code> (افتراضيه 400 بايت يبتر المقطع العربي إلى ربعه)، ورفع <code>searchCutoffMs</code> (افتراضيه 1500ms يقطع نداء المُضمِّن وقت البحث فيتدهور الهجين بصمت إلى كلمات فقط).</li>
+</ul>
+<p><strong>(5-ب) المعايرة شرط الإطلاق</strong> — كل شيء يُضبط على <code>pnpm eval --ladder</code> قبل وبعد:</p>
+<ul>
+  <li>مسح <code>semanticRatio</code> على 0.3 / 0.4 / 0.5 / 0.6 واختيار الأفضل الذي يصمد أمام البوابات.</li>
+  <li>معايرة <code>rankingScoreThreshold</code> بحيث تبقى أسئلة الهراء الأربعة صفرًا ثم مسارًا موسومًا، دون إسقاط أجوبة حقيقية.</li>
+  <li><strong>بوابات الإطلاق:</strong> الجواب في أول 3 ≥ 22/29 · «لا شيء يُعرض» تبقى 0% · الهراء 0/4 · نسبة «الموسّع» لا تزيد. إن استحال الجمع بينها يُشحن الهجين خلف السلّم: الصارم أولًا ثم قسم موسوم «مواضع قريبة المعنى» — الدقة الحرفية محفوظة والدلالة محصورة.</li>
+</ul>
+
+<h3>المرحلة 3 — بعد الهجين: إعادة محاكمة ما بنته الجولة الأولى</h3>
+<ul>
+  <li><strong>كتلة «دروس تتناول سؤالك»:</strong> تضيف اليوم 3 أجوبة فوق الدمج. بعد شحن الهجين يعاد قياسها: تبقى، أو تنزل تحت النتائج، أو تُحذف — بالقياس لا بالعاطفة.</li>
+  <li><strong>جدول المرادفات اليدوي</strong> (76 مفتاحًا): يبقى لأنه يغذي جانب الكلمات مجانًا، لكن يتوقف نموه اليدوي — لا إضافة إلا لعلاج تراجع يسميه القياس.</li>
+  <li><strong>توسيع مجموعة القياس</strong> من 50 إلى ≈80 سؤالًا: صياغات عامية، اختبارات صرفية (مسجد/مساجد، صام/صيام)، وستة أسئلة هراء إضافية.</li>
+</ul>
+
+<h3>المرحلة 4 — سجل استعلامات حقيقي (اختيارية، بعد المرحلة 2)</h3>
+<p>
+  البيانات الوحيدة الناقصة: ماذا يكتب الزوار فعلًا؟ أرخص حل صادق بلا خادم جديد: فهرس
+  <code>queries</code> على Meilisearch نفسه بمفتاح مقيد بالإضافة فقط، والمتصفح يرسل
+  <code>{q, tab, hits, widened, ts}</code> ولا ينتظر الرد. احتمال التخريب مقبول ومحصور
+  (مفتاح مقيد بفهرس واحد لا يقرأه شيء ظاهر، ويُمسح شهريًّا).
+</p>
+
+<h2>٦. ما لن نفعله، ولماذا</h2>
+<table>
+  <thead><tr><th>المقترح</th><th>سبب الرفض</th></tr></thead>
+  <tbody>
+    <tr><td>مُجذِّر عربي (stemmer) وقت الفهرسة</td><td>الهجين يغطي الصرف (مسجد/مساجد متجاوران في فضاء المعنى)، والمجذّر سيصطدم بتطبيع charabia وجدول المرادفات لمكسب غير مقيس.</td></tr>
+    <tr><td>فهرس «نوافذ/فصول» وسيط بين المقطع والدرس</td><td>خطة طوارئ فقط: الإخفاقات المقاسة ترتيبٌ ومفردات، وكلاهما معالَج أعلاه. يُفتح هذا الباب فقط إن فشلت بوابة المرحلة 2 (&lt;22/29).</td></tr>
+    <tr><td>إعادة صياغة السؤال أو إعادة الترتيب بنموذج لغوي كبير</td><td>يتطلب خادمًا وكلفة لكل استعلام؛ الهجين يصل إلى الأسئلة نفسها مجانًا.</td></tr>
+    <tr><td>إقحام البحث المرن في الترتيب الأساسي</td><td>مقيس: أنزل الدقة من 21 إلى 18 من 29. يبقى ملاذًا أخيرًا موسومًا.</td></tr>
+    <tr><td>ترقية Meilisearch</td><td>1.53.1 هي أحدث نسخة مستقرة أصلًا، وكل ما نحتاجه موجود فيها.</td></tr>
+    <tr><td>إعادة تقطيع المقاطع إلى 30 ثانية</td><td>قرار الجولة الأولى قائم، بل الهجين يجعل المقطع العريض أنفع لا أضر.</td></tr>
+  </tbody>
+</table>
+
+<h2>٧. معايير النجاح</h2>
+<table>
+  <thead><tr><th>المقياس</th><th class="num">اليوم</th><th class="num">الهدف</th></tr></thead>
+  <tbody>
+    <tr><td>الجواب الصحيح في أول ثلاث نتائج</td><td class="num">17/29 (59%)</td><td class="num">≥ 22/29 (76%)</td></tr>
+    <tr><td>أسئلة تُعرض بلا شيء</td><td class="num">0%</td><td class="num">0%</td></tr>
+    <tr><td>هراء يُعرض كنتيجة مباشرة</td><td class="num">0/4</td><td class="num">0/4</td></tr>
+    <tr><td>زمن البحث</td><td class="num">1–6ms</td><td class="num">≤ 2s — مقايضة مقبولة ومعلنة</td></tr>
+  </tbody>
+</table>
+<p>
+  وقيمة هذه الجولة تُروى بمثال واحد: سؤال «هل للصداق حد أعلى؟» اليوم يعود بصفر ثم بنتائج موسعة
+  لا تجيب. بعدها: يفتح شرح عمدة الفقه عند دقيقة الكلام عن الصداق — مع أن السائل لم يستعمل كلمة
+  الشيخ ولا الشيخ كلمة السائل.
+</p>
+
+<footer>
+  <p>
+    المنهجية: خط الأساس من <code>pnpm eval --ladder</code> (يستدعي دالة البحث الإنتاجية نفسها)؛
+    تشريح الإخفاقات باستعلامات top-50 على فهرسَي المقاطع والدروس؛ تجربة المعنى بتضمين المقاطع
+    الـ62,311 كاملة بـ<code>multilingual-e5-large</code> ودمج RRF (k=60) ثم التقييم بتعريف
+    «الظاهر على الشاشة» نفسه الذي يستعمله السلّم. مراجع قرارات النموذج والإعدادات موثقة في خطة
+    التنفيذ الإنجليزية: <code>docs/SEARCH-PLAN-2.md</code> في المستودع.
+  </p>
+  <p>أُعدّ في 2026-08-20 · كل الأرقام قابلة لإعادة الإنتاج</p>
+</footer>
+
+</main>
+</body>
+</html>

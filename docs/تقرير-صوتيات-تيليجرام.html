@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>كشّاف أبي جعفر — تقرير: دعم صوتيات تيليجرام</title>
+<style>
+  /* ‎*‎ لا ‎body‎: وكيل المتصفّح يفرض monospace على ‎pre/code‎ وخطَّه على حقول النماذج،
+     ووراثةُ ‎body‎ لا تبلغها. */
+  *{font-family:'Thmanyah Sans'}
+  /* خط ثمانية: مسار الموقع أولًا، ثم المسار النسبي حين يُفتح التقرير من القرص. */
+  @font-face{font-family:'Thmanyah Sans';src:url('/fonts/thmanyahsans-Regular.woff2') format('woff2'),url('../public/fonts/thmanyahsans-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:'Thmanyah Sans';src:url('/fonts/thmanyahsans-Medium.woff2') format('woff2'),url('../public/fonts/thmanyahsans-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
+  @font-face{font-family:'Thmanyah Sans';src:url('/fonts/thmanyahsans-Bold.woff2') format('woff2'),url('../public/fonts/thmanyahsans-Bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
+
+  :root{
+    color-scheme: light;
+    --ink:#18201c; --muted:#5d685f; --paper:#f6f4ed; --card:#fffef9; --line:#d9d5c8;
+    --green:#176c4a; --green-soft:#e3f1e9; --amber:#8a5a05; --amber-soft:#fff1cd;
+    --red:#8c2d2d; --red-soft:#fbe7e7; --code:#222a25;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Thmanyah Sans';line-height:1.85}
+  main{width:min(940px,calc(100% - 32px));margin:48px auto}
+  header,section{margin-bottom:20px;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:clamp(20px,4vw,36px)}
+  header{border-top:5px solid var(--green)}
+  h1,h2,h3{line-height:1.35}
+  h1{margin:10px 0 8px;font-size:clamp(26px,5vw,42px)}
+  h2{margin:0 0 16px;font-size:25px}
+  h3{margin:26px 0 8px;font-size:19px}
+  p{margin:8px 0}
+  ul,ol{margin:8px 0;padding-inline-start:24px}
+  li+li{margin-top:6px}
+  .eyebrow,.meta{color:var(--muted);font-size:14px}
+  .status{display:inline-block;border-radius:999px;background:var(--green-soft);color:var(--green);padding:4px 12px;font-weight:700;font-size:14px}
+  .notice{margin-top:20px;border:1px solid #e7cc8d;border-radius:12px;background:var(--amber-soft);color:#533600;padding:14px 16px}
+  .danger{margin-top:16px;border:1px solid #e0b3b3;border-radius:12px;background:var(--red-soft);color:#5f1d1d;padding:14px 16px}
+  .good{margin-top:16px;border:1px solid #a8d3ba;border-radius:12px;background:var(--green-soft);color:#0d4f34;padding:14px 16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:18px}
+  .metric{border:1px solid var(--line);border-radius:12px;padding:16px;background:#fbfaf5}
+  .metric strong{display:block;color:var(--green);font-size:25px}
+  .metric span{color:var(--muted);font-size:14px}
+  .metric.bad strong{color:var(--red)}
+  .metric.warn strong{color:var(--amber)}
+  table{width:100%;margin-top:14px;border-collapse:collapse;font-size:15px}
+  th,td{border-bottom:1px solid var(--line);padding:10px;text-align:right;vertical-align:top}
+  th{color:var(--muted);font-weight:700}
+  code{direction:ltr;unicode-bidi:isolate;border-radius:5px;background:#eceae1;padding:2px 6px;font-family:'Thmanyah Sans';font-size:.92em}
+  pre{direction:ltr;overflow-x:auto;border-radius:12px;background:var(--code);color:#f6f7f6;padding:16px;line-height:1.6;text-align:left}
+  pre code{background:none;color:inherit;padding:0}
+  .idea{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-top:14px;background:#fbfaf5}
+  .idea h3{margin:0 0 8px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:18px}
+  .num{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--green);color:#fff;font-size:15px}
+  .tag{border-radius:999px;padding:2px 10px;font-size:13px;font-weight:700;background:#eceae1;color:var(--muted)}
+  .tag.hi{background:var(--green-soft);color:var(--green)}
+  .tag.mid{background:var(--amber-soft);color:var(--amber)}
+  .tag.lo{background:var(--red-soft);color:var(--red)}
+  .digits{font-variant-numeric:tabular-nums}
+  .toc{columns:2;column-gap:28px;font-size:15px}
+  .toc a{color:inherit}
+  @media (max-width:640px){.toc{columns:1}}
+  footer{color:var(--muted);font-size:14px;text-align:center;padding-bottom:40px}
+  @media (prefers-color-scheme:dark){
+    :root{color-scheme:dark;--ink:#e6e8e5;--muted:#9aa39c;--paper:#101210;--card:#171a17;--line:#2a2f2a;--green:#5fbf90;--green-soft:#152a20;--amber:#d6a44a;--amber-soft:#2a2314;--red:#e08b8b;--red-soft:#2b1717}
+    .metric,.idea{background:#141613}
+    code{background:#22261f}
+    .tag{background:#22261f}
+    .notice{color:#f0dcb4}.danger{color:#f2c9c9}.good{color:#bfe8d2}
+  }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <p class="eyebrow">كشّاف أبي جعفر · <span class="digits">٢١ أغسطس ٢٠٢٦</span></p>
+  <h1>دعم صوتيات تيليجرام: ما الممكن، وما ثمنه، وما الذي يُفقَد</h1>
+  <p class="meta">تقرير مبني على مسحٍ حيّ للقناتين اليوم، وقراءةٍ لشيفرة الكشّاف ولشيفرة <code>tafrigh</code>، وقياسٍ مباشر لما يعطيه تيليجرام ولما يمنعه.</p>
+  <p><span class="status">الجواب: نعم — لكن القناتين ليستا مسألة واحدة</span></p>
+
+  <div class="notice">
+    <strong>أهمّ سطرين:</strong>
+    قناة <code>@alkulife</code> فيها نحو <span class="digits">٦٬٦٠٠</span> بصمة صوتية ≈ <span class="digits">٥٨٣</span> ساعة، وكلٌّ منها يعطي <em>رابط تنزيل مباشر ومدّة</em> في صفحة الويب العامة. هذه أرخص <span class="digits">٥٨٣</span> ساعة ستضيفها للكشّاف في حياتك، والسكربت الذي يمشي على القناة موجود اليوم ويتخطّاها عمدًا بسطرَين.
+    <br><br>
+    وقناة <code>@doros_alkulify</code> فيها نحو <span class="digits">٣٬٣٨٥</span> ملفًّا صوتيًّا، لكن تيليجرام <strong>لا يكشف عنها شيئًا</strong> عبر الويب: لا رابط، ولا مدّة، ولا حجم، ولا اسم — كلمة <code>Audio</code> فقط. هذه تحتاج تصديرًا من تيليجرام ديسكتوب أو جلسة MTProto، وهذا هو الفرق الحقيقي بين المرحلتَين.
+  </div>
+</header>
+
+<section>
+  <h2>الفهرس</h2>
+  <div class="toc">
+    <p><a href="#s1">١. الجواب المختصر</a></p>
+    <p><a href="#s2">٢. المسح الميداني للقناتين</a></p>
+    <p><a href="#s3">٣. الفرق الذي يحكم كل شيء</a></p>
+    <p><a href="#s4">٤. كيف تُجلب مواد قناة الدروس</a></p>
+    <p><a href="#s5">٥. الدرس المقسّم على عدة رسائل</a></p>
+    <p><a href="#s6">٦. أين توضع في الموقع</a></p>
+    <p><a href="#s7">٧. ماذا ستفقد</a></p>
+    <p><a href="#s8">٨. ماذا لن تفقد، وماذا ستكسب</a></p>
+    <p><a href="#s9">٩. الفاتورة</a></p>
+    <p><a href="#s10">١٠. الازدواج مع يوتيوب</a></p>
+    <p><a href="#s11">١١. الخطة على مراحل</a></p>
+    <p><a href="#s12">١٢. ما أنصح بحذفه</a></p>
+    <p><a href="#s13">١٣. المخاطر</a></p>
+    <p><a href="#s14">ملحق: الأوامر</a></p>
+  </div>
+</section>
+
+<section id="s1">
+  <h2>١. الجواب المختصر</h2>
+  <p>نعم، تستطيع. والمحتوى يستحقّ: المكتبة اليوم <span class="digits">١٬١٣٦</span> ساعة، وما في القناتين يتراوح بين <span class="digits">١٬٥٠٠</span> و<span class="digits">٢٬٥٠٠</span> ساعة إضافية. أي أنّك لا تضيف رفًّا إلى المكتبة، بل تضاعفها.</p>
+
+  <p>لكن «صوتيات تيليجرام» ليست شيئًا واحدًا. هما نوعان يتصرّف تيليجرام معهما تصرّفًا مختلفًا تمامًا، وكل قرار في هذا التقرير يتفرّع من هذا الفرق:</p>
+
+  <table>
+    <thead><tr><th>&nbsp;</th><th>البصمة الصوتية <span class="meta">voice note</span></th><th>الملف الصوتي <span class="meta">audio document</span></th></tr></thead>
+    <tbody>
+      <tr><td><strong>أين</strong></td><td><code>@alkulife</code> — القناة الرئيسية</td><td><code>@doros_alkulify</code> — قناة الدروس</td></tr>
+      <tr><td><strong>العدد المقدَّر</strong></td><td class="digits">~٦٬٦٠٠</td><td class="digits">~٣٬٣٨٥</td></tr>
+      <tr><td><strong>المدّة</strong></td><td>معلومة: متوسط <span class="digits">٥:١٨</span> ≈ <span class="digits">٥٨٣</span> ساعة</td><td>مجهولة تمامًا من الويب</td></tr>
+      <tr><td><strong>رابط تنزيل عام</strong></td><td>✅ <code>.ogg</code> مباشر، يقبل <code>Range</code>، ويرسل <code>Access-Control-Allow-Origin: *</code></td><td>❌ لا شيء</td></tr>
+      <tr><td><strong>ما تحتاجه لجلبها</strong></td><td><code>curl</code> — لا أكثر</td><td>تصدير ديسكتوب أو MTProto</td></tr>
+      <tr><td><strong>الجهد</strong></td><td><span class="tag hi">يوم عمل</span></td><td><span class="tag mid">أسبوع + انتظار التفريغ</span></td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:16px">وأمّا سؤالك عن الدرس المقسّم على أكثر من صوتية — وهو المثال الذي أعطيته — فقد قِسته: <strong><span class="digits">٢٥٪</span> من الدروس مقسّمة</strong>، و<span class="digits">٤٤٪</span> من الرسائل الصوتية تقع داخل درسٍ مجزّأ. الحلّ سطر <code>ffmpeg</code> واحد قبل التفريغ، وتفصيله في <a href="#s5">القسم الخامس</a>.</p>
+</section>
+
+<section id="s2">
+  <h2>٢. المسح الميداني للقناتين</h2>
+  <p class="meta">مسحٌ أُجري اليوم على <code>t.me/s/</code>: <span class="digits">٧٩١</span> رسالة من قناة الدروس موزّعة على <span class="digits">٤٠</span> صفحة عبر كامل تاريخ القناة، و<span class="digits">٦٠٠</span> رسالة من القناة الرئيسية بالطريقة نفسها، وخمس نوافذ متّصلة (<span class="digits">٦٠٠</span> رسالة متتابعة بلا فجوات) لقياس تقسيم الدروس.</p>
+
+  <h3>قناة الدروس <code>@doros_alkulify</code></h3>
+  <p>أحدث رسالة اليوم رقمها <span class="digits">١٢٬٦٨٦</span>، وأقدم ما تُظهره الواجهة العامة يبدأ عند <span class="digits">٢٢</span>. توزيع الأنواع في العيّنة:</p>
+  <table>
+    <thead><tr><th>النوع</th><th>في العيّنة</th><th>النسبة</th><th>الإسقاط على القناة</th></tr></thead>
+    <tbody>
+      <tr><td>نص (عنوان الدرس غالبًا)</td><td class="digits">٤٨٩</td><td class="digits">٦١٫٨٪</td><td class="digits">~٧٬٨٤٠</td></tr>
+      <tr><td><strong>ملف صوتي</strong></td><td class="digits">٢١١</td><td class="digits">٢٦٫٧٪</td><td class="digits"><strong>~٣٬٣٨٥</strong></td></tr>
+      <tr><td>ملف آخر (PDF ونحوه)</td><td class="digits">٥٠</td><td class="digits">٦٫٣٪</td><td class="digits">~٨٠٠</td></tr>
+      <tr><td>صورة</td><td class="digits">٢١</td><td class="digits">٢٫٧٪</td><td class="digits">~٣٤٠</td></tr>
+      <tr><td>بصمة صوتية</td><td class="digits">١٥</td><td class="digits">١٫٩٪</td><td class="digits">~٢٤٠</td></tr>
+      <tr><td>فيديو</td><td class="digits">٤</td><td class="digits">٠٫٥٪</td><td class="digits">~٦٠</td></tr>
+    </tbody>
+  </table>
+  <p class="meta" style="margin-top:10px">ملاحظة تُقرأ مبكرًا: <span class="digits">٧٨</span> ملفًّا من <span class="digits">٢١١</span> (<span class="digits">٣٧٪</span>) يحمل اسم ملفٍ حقيقيًّا يصلح عنوانًا مثل «<span dir="rtl">٨-باب في إتيان الله عزوجل وأنه يأتي جل وعلا</span>». الباقي — <span class="digits">٦٣٪</span> — اسمه <code>Audio</code> حرفيًّا. أي أنّ العنوان لا يأتي من الملف، بل من الرسالة النصّية التي قبله.</p>
+
+  <h3>القناة الرئيسية <code>@alkulife</code></h3>
+  <p>أحدث رسالة رقمها <span class="digits">١٥٬١٠٨</span>. هنا الصورة مختلفة كليًّا:</p>
+  <div class="grid">
+    <div class="metric"><strong class="digits">٤٣٫٧٪</strong><span>من الرسائل بصمة صوتية</span></div>
+    <div class="metric"><strong class="digits">~٦٬٦٠٠</strong><span>بصمة صوتية مقدَّرة</span></div>
+    <div class="metric"><strong class="digits">٥:١٨</strong><span>متوسط المدّة</span></div>
+    <div class="metric"><strong class="digits">~٥٨٣</strong><span>ساعة صوت</span></div>
+  </div>
+  <p style="margin-top:16px">المدّة هنا ليست تقديرًا: تيليجرام يكتبها في الصفحة نفسها (<code>voice_duration</code>)، فقيسَت من <span class="digits">٢٦٢</span> بصمة فعلية — الوسيط <span class="digits">٥:٢١</span>، والأطول <span class="digits">٨:٣٠</span>. هذه أجوبة قصيرة وفوائد، لا شروح كتب، وهي بالضبط ما يبحث عنه «السائل عن حكم» في تقرير المستخدم.</p>
+
+  <div class="good">
+    <strong>وهذه هي المفارقة:</strong> السكربت <code>scripts/telegram.ts</code> يمشي على <code>@alkulife</code> منذ اليوم الأول ويقرأ منها المقالات المكتوبة، وفيه دالّة <code>isVoice</code> مكتوبة صراحةً لكي <em>يتخطّى</em> هذه الـ<span class="digits">٦٬٦٠٠</span> بصمة. تعليق السكربت يقول: «<span dir="rtl">Voice notes are a separate corpus and are skipped</span>». المسار مبنيّ، والباب مغلق بمفتاح في جيبك.
+  </div>
+</section>
+
+<section id="s3">
+  <h2>٣. الفرق الذي يحكم كل شيء</h2>
+  <p>هذا ما يعطيه تيليجرام لبصمة صوتية في القناة الرئيسية — لاحظ <code>src</code>:</p>
+<pre><code>&lt;audio class="tgme_widget_message_voice js-message_voice"
+       src="https://cdn4.telesco.pe/file/9553697dbc.ogg?token=NgaM0Iot…"
+       data-waveform="25,13,8,18,27,…"&gt;
+&lt;div class="tgme_widget_message_voice_duration"&gt;5:17&lt;/div&gt;</code></pre>
+
+  <p>وهذا ما يعطيه لملفٍ صوتي في قناة الدروس — الرسالة <code>12662</code> من مثالك نفسه:</p>
+<pre><code>&lt;a class="tgme_widget_message_document_wrap" href="https://t.me/doros_alkulify/12662"&gt;
+  &lt;div class="tgme_widget_message_document_icon accent_bg audio"&gt;&lt;/div&gt;
+  &lt;div class="tgme_widget_message_document_title"&gt;Audio&lt;/div&gt;
+  &lt;div class="tgme_widget_message_document_extra"&gt;&lt;/div&gt;   &lt;!-- فارغ --&gt;
+&lt;/a&gt;</code></pre>
+
+  <p>لا رابط، ولا مدّة، ولا حجم. وجرّبتُ صفحة التضمين <code>?embed=1</code> أيضًا فأعطت الشيء نفسه بالحرف. هذا ليس نقصًا في طريقة القراءة، بل هو ما تكشفه واجهة تيليجرام العامة للمستندات: الوسائط التي لها مشغّل داخل الصفحة (بصمة صوتية، فيديو، صورة) تُعطي رابطها، والمستندات لا تُعطى إلا لعميلٍ مسجَّل الدخول.</p>
+
+  <h3>ما قِسته على رابط البصمة الصوتية</h3>
+  <table>
+    <thead><tr><th>الاختبار</th><th>النتيجة</th><th>ماذا يعني</th></tr></thead>
+    <tbody>
+      <tr><td>التنزيل بلا رمز <code>token</code></td><td><code>404</code></td><td>الرمز إلزامي</td></tr>
+      <tr><td>ثبات الرمز بين طلبَين</td><td>الرمز نفسه حرفيًّا</td><td>ليس رمزًا لكل جلسة</td></tr>
+      <tr><td><code>Range: bytes=0-999</code></td><td><code>206</code></td><td>التقديم والتأخير يعملان</td></tr>
+      <tr><td><code>Access-Control-Allow-Origin</code></td><td><code>*</code></td><td>يعمل من نطاق الكشّاف</td></tr>
+      <tr><td>ترويسة <code>Referer</code> أجنبية</td><td><code>206</code></td><td>لا حماية ضدّ الربط المباشر</td></tr>
+      <tr><td>الترميز</td><td>Opus ≈ <span class="digits">٣١</span> kbps أحادي</td><td>ساعة ≈ <span class="digits">١٤</span> ميغابايت</td></tr>
+    </tbody>
+  </table>
+  <p>خلاصة عملية: <strong>يمكن تشغيل بصمات <code>@alkulife</code> في الكشّاف اليوم بلا استضافة أصلًا</strong> — حقلٌ واحد في <code>videos.json</code> يحمل الرابط، و<code>&lt;audio src&gt;</code> يشير إليه. وسأعود لهذا في <a href="#s11">الخطة</a> مع سقفه.</p>
+</section>
+
+<section id="s4">
+  <h2>٤. كيف تُجلب مواد قناة الدروس</h2>
+  <table>
+    <thead><tr><th>الطريق</th><th>ماذا يعطي</th><th>الكلفة</th><th>الحكم</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>تصدير تيليجرام ديسكتوب</strong><br><span class="meta">Export chat history</span></td>
+        <td><code>result.json</code> فيه لكل رسالة: <code>id</code>، <code>date</code>، <code>text</code>، <code>file</code>، <code>media_type</code>، <code>mime_type</code>، <code>duration_seconds</code>، <code>title</code>، <code>reply_to_message_id</code> — <em>والملفات نفسها منزَّلة</em> في مجلد بجانبه.</td>
+        <td>نقرات في التطبيق ثم انتظار. لا شيفرة، ولا مفاتيح، ولا خطر حظر.</td>
+        <td><span class="tag hi">الموصى به</span></td>
+      </tr>
+      <tr>
+        <td><strong>MTProto</strong><br><span class="meta">Telethon أو GramJS بحساب مستخدم</span></td>
+        <td>الشيء نفسه، لكن قابلًا للأتمتة والتشغيل التزايدي مع كل درس جديد.</td>
+        <td><code>api_id</code>/<code>api_hash</code>، وملفّ جلسة يجب حمايته، وحدود معدّل تُوقفك إن استعجلت.</td>
+        <td><span class="tag mid">للاحقًا</span></td>
+      </tr>
+      <tr>
+        <td><strong>Bot API</strong></td>
+        <td>لا شيء. البوت لا يقرأ تاريخ قناة، وحتى لو جُعل مشرفًا فإنه يرى الجديد فقط.</td>
+        <td>—</td>
+        <td><span class="tag lo">مستبعَد</span></td>
+      </tr>
+      <tr>
+        <td><strong><code>t.me/s/</code> العامة</strong></td>
+        <td>النصوص والصور والبصمات الصوتية فقط. أثبت المسح أنها لا تعطي الملفات الصوتية.</td>
+        <td>—</td>
+        <td><span class="tag lo">لا تكفي هنا</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px">التصدير هو الطريق لأنّ الشيء الوحيد الذي تحتاجه من تيليجرام دفعةً واحدة — التاريخ كلّه — هو بالضبط ما يُحسنه. وبعد أن يستقرّ الأرشيف، لن تحتاج إلا الجديد، وهو رسائل معدودة كل أسبوع يمكن تصديرها بالطريقة نفسها.</p>
+  <p class="meta">وأوّل ما تفعله بعد التصدير: <code>jq</code> واحدة تجمع <code>duration_seconds</code> فتعرف عدد الساعات <em>بالضبط</em> بدل تقدير هذا التقرير. الأمر في <a href="#s14">الملحق</a>.</p>
+</section>
+
+<section id="s5">
+  <h2>٥. الدرس المقسّم على عدة رسائل</h2>
+  <p>مثالك — <code>12661</code> عنوان، ثم <code>12662</code> و<code>12663</code> صوت — ليس حالة شاذّة، بل نمط القناة. قِسته على خمس نوافذ متّصلة (<span class="digits">٦٠٠</span> رسالة متتابعة) فخرجت <span class="digits">١١٤</span> مجموعة صوتية:</p>
+
+  <table>
+    <thead><tr><th>عدد أجزاء الدرس</th><th class="digits">١</th><th class="digits">٢</th><th class="digits">٣</th><th class="digits">٤</th><th class="digits">٦</th></tr></thead>
+    <tbody><tr><td>عدد الدروس</td><td class="digits">٨٦</td><td class="digits">٢١</td><td class="digits">٤</td><td class="digits">٢</td><td class="digits">١</td></tr></tbody>
+  </table>
+
+  <div class="grid">
+    <div class="metric"><strong class="digits">٢٥٪</strong><span>من الدروس مقسّمة</span></div>
+    <div class="metric"><strong class="digits">٤٤٪</strong><span>من الرسائل الصوتية داخل درسٍ مجزّأ</span></div>
+    <div class="metric"><strong class="digits">٩٧٪</strong><span>من الدروس يسبقها عنوان نصّي</span></div>
+    <div class="metric"><strong class="digits">٦</strong><span>أقصى تجزئة رُصدت</span></div>
+  </div>
+
+  <p style="margin-top:18px">و<span class="digits">٩٧٪</span> رقمٌ ثمين: <strong>الرسالة النصّية التي قبل المجموعة هي عنوان الدرس</strong>، وقد رأيتَه بنفسك في «<span dir="rtl">المشترك بين ابن تيمية والمريسي ( نبوة وليست حجة ) 👇</span>». وهي أحيانًا تُصرّح بعدد الأجزاء: «<span dir="rtl">شرح كتاب الأمر بالمعروف والنهي عن المنكر للحافظ أبي بكر الخلال [ مكتمل - عدد الدروس 4 ]</span>» — وكانت المجموعة بعدها أربعة أجزاء فعلًا.</p>
+
+  <h3>القاعدة التي يقوم عليها الجمع</h3>
+  <ol>
+    <li>امشِ على الرسائل بالترتيب. كل تتابعٍ من رسائل صوتية بلا نصٍّ يقطعه = درسٌ واحد.</li>
+    <li>الرسالة النصّية التي تسبق التتابع هي العنوان.</li>
+    <li>معرّف الدرس = رقم أول رسالة صوتية فيه.</li>
+  </ol>
+
+  <h3>ثم الجمع، لا التقطيع</h3>
+  <p>أمام الأجزاء طريقان. الأول: صفحة لكل جزء — أي درسٌ نصفه في صفحة ونصفه في أخرى، وبحثٌ يعطي «الجزء ٢» لسؤالٍ جوابه في «الجزء ١»، وأربع صفحات لدرسٍ واحد في خريطة الموقع. الثاني: <strong>لصق الأجزاء في ملف واحد قبل التفريغ</strong>:</p>
+<pre><code>printf "file '%s'\n" d-12662.mp3 d-12663.mp3 &gt; parts.txt
+ffmpeg -f concat -safe 0 -i parts.txt -c copy d-12662.mp3</code></pre>
+  <p>وبعد هذا السطر ينتهي الموضوع. الخط الزمني واحد، والتفريغ واحد، والصفحة واحدة، و<code>?t=</code> يشير إلى لحظةٍ في درسٍ متّصل — ولا يعلم أيُّ سطرٍ من بقيّة الكشّاف أنّ هناك تقسيمًا أصلًا. <span class="meta">إن اختلف ترميز الأجزاء رفض <code>-c copy</code> فيُعاد الترميز بدله؛ حالة نادرة يكفيها <code>||</code> في السكربت.</span></p>
+  <p class="meta">وسبب اختيار «أول رسالة» معرّفًا: هو أصغر رقم في المجموعة، فلا يتغيّر إن أُضيف جزءٌ لاحق، ورابط <code>t.me/doros_alkulify/12662</code> يفتح المجموعة كلّها لمن أراد الأصل.</p>
+</section>
+
+<section id="s6">
+  <h2>٦. أين توضع في الموقع</h2>
+  <p>الخلاصة المعمارية: <strong>لا تبنِ شيئًا جديدًا.</strong> الصوتية درسٌ مثل بقيّة الدروس — عنوان، ومدّة، وتاريخ، وتفريغ مقطَّع بأزمنة. وهذا هو <code>videos.json</code> بحذافيره، وفيه حقل <code>source</code> موجودٌ اليوم يميّز <code>youtube</code> من <code>wit.ai</code>، فيقبل <code>telegram</code> بلا تعديل.</p>
+
+  <h3>المعرّفات</h3>
+  <table>
+    <thead><tr><th>البادئة</th><th>المصدر</th><th>المسار</th><th>الحال</th></tr></thead>
+    <tbody>
+      <tr><td><code>&lt;11 حرفًا&gt;</code></td><td>يوتيوب</td><td><code>/v/</code></td><td>قائم</td></tr>
+      <tr><td><code>tg-&lt;id&gt;</code></td><td>منشورات <code>@alkulife</code> المكتوبة</td><td><code>/a/</code></td><td>قائم</td></tr>
+      <tr><td><code>s-&lt;id&gt;</code></td><td>بصمات <code>@alkulife</code> الصوتية</td><td><code>/v/</code></td><td>مقترح</td></tr>
+      <tr><td><code>d-&lt;id&gt;</code></td><td>ملفات <code>@doros_alkulify</code></td><td><code>/v/</code></td><td>مقترح</td></tr>
+    </tbody>
+  </table>
+  <p class="meta">بادئتان منفصلتان لا واحدة، لأنّ رقم الرسالة <span class="digits">١٢٦٦٢</span> موجود في القناتين معًا.</p>
+
+  <h3>لماذا يمرّ خطّ التفريغ بلا تعديل يُذكر</h3>
+  <p>قرأتُ <code>tafrigh/cli.py</code>: فيه <code>process_local</code> يقبل ملفًّا أو مجلدًا، <strong>ويجعل اسم الملف بلا امتداده هو معرّف المادة</strong>. أي أنّ تسمية الملف <code>d-12662.mp3</code> تكفي لأن يخرج منه <code>d-12662.transcript.json</code> و<code>d-12662.chunks.ndjson</code> بالصيغة التي يقرأها <code>pnpm data</code> و<code>pnpm index</code> اليوم.</p>
+  <p>ما لا يعرفه <code>tafrigh</code> عن ملفٍ محلّي ثلاثة حقول يتركها فارغة: <code>title</code> (يضع اسم الملف)، و<code>duration</code>، و<code>upload_date</code>، و<code>playlists</code> (قائمة فارغة). فيرقّعها سكربتٌ صغير من بيانات تيليجرام قبل <code>pnpm data</code>. هذا كلّ التعديل على خطّ البيانات.</p>
+<pre><code>تصدير تيليجرام ─▶ تجميع الأجزاء (ffmpeg) ─▶ RAW_DIR/d-&lt;id&gt;.mp3
+                                                    │
+                                       tafrigh (wit.ai) ─▶ .transcript.json + .chunks.ndjson
+                                                    │
+                                       ترقيع العنوان/المدّة/التاريخ/القائمة
+                                                    │
+                              pnpm data ─▶ pnpm index ─▶ pnpm embed   (بلا تغيير)</code></pre>
+
+  <h3>ما يتغيّر في الموقع نفسه</h3>
+  <table>
+    <thead><tr><th>الملف</th><th>التعديل</th><th>الحجم</th></tr></thead>
+    <tbody>
+      <tr><td><code>src/islands/Player.tsx</code></td><td>فرعٌ يستبدل <code>&lt;audio&gt;</code> بمشغّل يوتيوب. <code>seekTo()</code> تصير <code>currentTime =</code>، وحلقة الاستطلاع كل <span class="digits">٥٠٠</span> مللي تصير حدث <code>timeupdate</code>. باقي الجزيرة — النقر على السطر، والمتابعة التلقائية، والبحث داخل الدرس، ونسخ الرابط عند الدقيقة — لا يمسّه شيء، لأنّه يعمل على DOM يخرج من الخادم لا من يوتيوب.</td><td class="digits">~٣٠ سطرًا</td></tr>
+      <tr><td><code>src/pages/v/[id].astro</code></td><td><code>AudioObject</code> بدل <code>VideoObject</code>، و«افتح في تيليجرام» بدل «افتح في يوتيوب»، وبطاقة بلا صورة مصغّرة.</td><td class="digits">~٢٥ سطرًا</td></tr>
+      <tr><td><code>src/pages/p/[id].astro</code></td><td>البطاقة تتحمّل غياب <code>i.ytimg.com</code>.</td><td class="digits">~١٠ أسطر</td></tr>
+      <tr><td><code>vercel.json</code></td><td>إضافة <code>media-src</code> إلى الـCSP. لا وجود له اليوم.</td><td>سطر</td></tr>
+      <tr><td><code>scripts/telegram-audio.ts</code></td><td>جديد: يمشي على القناة، يجمع المجموعات، يسمّي الملفات، يكتب بيانات الترقيع.</td><td class="digits">~١٥٠ سطرًا</td></tr>
+    </tbody>
+  </table>
+  <p class="good"><strong>وميزة مجانية:</strong> حقل <code>channel</code> مُفهرَس اليوم في <code>meilisearch-settings.json</code> ضمن <code>filterableAttributes</code>. أي أنّ «ابحث في الصوتيات فقط» أو «استثنِ الصوتيات» متاح بلا أيّ تعديل على الفهرس — فرقٌ في قيمة الحقل لا أكثر.</p>
+</section>
+
+<section id="s7">
+  <h2>٧. ماذا ستفقد</h2>
+  <p>هذا هو القسم الذي سألتَ عنه، وهو مرتَّب بالأثر الحقيقي لا بترتيب الخطور على البال.</p>
+
+  <div class="idea">
+    <h3><span class="num">١</span> الترجمة المجانية من يوتيوب <span class="tag lo">الأثقل بفارق كبير</span></h3>
+    <p><span class="digits">١٬٠٦٣</span> درسًا من <span class="digits">١٬٥٨٤</span> — أي <span class="digits">٦٧٪</span> من الكشّاف كلّه — لم يُفرَّغ بوِت أصلًا، بل أُخذت ترجمة يوتيوب العربية جاهزة بسرعة ~<span class="digits">٢٠٠٠</span> ضعف الزمن الحقيقي. تيليجرام لا يملك مكافئًا. <strong>كل ثانية صوت من تيليجرام يجب أن تمرّ على wit.ai بسرعة ~<span class="digits">٥</span> أضعاف الزمن الحقيقي لكل رمز.</strong></p>
+    <p class="meta">أي أنّ ساعةً من يوتيوب كانت تكلّف ثوانيَ معدودة، وساعةً من تيليجرام تكلّف <span class="digits">١٢</span> دقيقة من رمزٍ واحد. الأرقام كاملة في <a href="#s9">الفاتورة</a>.</p>
+    <p><strong>التخفيف:</strong> الرموز تتوازى خطيًّا. أربعة رموز = رُبع الزمن.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٢</span> يوتيوب كان يحمل البايتات مجانًا <span class="tag mid">متوسط</span></h3>
+    <p>«استضافة الصوت» مكتوبة اليوم في <code>docs/PRD.md</code> تحت بند <strong>Out of scope</strong> — وهذا القرار ينقلب هنا. تحتاج بين <span class="digits">٨</span> و<span class="digits">٤٥</span> غيغابايت من الملفات، ونطاقًا ترددّيًّا يتناسب مع الاستماع.</p>
+    <p><strong>التخفيف:</strong> بصمات <code>@alkulife</code> تُشغَّل من روابط تيليجرام مباشرة بلا استضافة أصلًا (قِسته: <code>206</code> و<code>ACAO: *</code>). وما يحتاج استضافةً فعلًا هو ملفات قناة الدروس وحدها. الخيارات في <a href="#s9">الفاتورة</a>.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٣</span> النتائج الغنية للفيديو في جوجل <span class="tag mid">متوسط، ودائم</span></h3>
+    <p>كل صفحة <code>/v/</code> تُخرج اليوم مخطّط <code>VideoObject</code> بـ<code>embedUrl</code> و<code>thumbnailUrl</code>، وهذا ما يجعل جوجل يعرضها بصورة مصغّرة في النتائج. مقابله للصوت <code>AudioObject</code> أو <code>PodcastEpisode</code>، ولا يعطي جوجل لأيٍّ منهما معاملةً مكافئة في صفحة النتائج.</p>
+    <p><strong>التخفيف:</strong> لا شيء يستردّ هذا. لكنّ نصّ التفريغ نفسه — وهو ما يُدخل الناس إلى الموقع من البحث أصلًا — لا يتأثّر بحرف.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٤</span> قوائم التشغيل <span class="tag mid">متوسط، وقابل للاستنباط</span></h3>
+    <p>قائمة التشغيل من يوتيوب تحمل معرّفًا وعنوانًا وترتيبًا، وهي التي تُبنى عليها صفحة <code>/p/</code>، وتصفية البحث بالقائمة، و«الدرس السابق/التالي»، ومواضع JSON-LD. تيليجرام لا يعرف القوائم.</p>
+    <p><strong>التخفيف:</strong> العنوان يحملها. «<span dir="rtl">شرح عمدة الفقه البيوع والمعاملات ( ٧١ )</span>» فيه اسم السلسلة ورقم الدرس في سطر واحد، وقد رأيتُ النمط نفسه في «<span dir="rtl">تعليق على الجامع في عقائد ورسائل أهل السنة والأثر [ ١٦٢ ]</span>». وهذا الاستنباط بالذات ليس مغامرة: <span class="digits">١٬٤٢٤</span> عنوانًا من عناوين يوتيوب الحالية تحمل رقم درسٍ بين قوسين، فالمحلّل يُقاس على مادةٍ معروفة الجواب قبل أن يُشغَّل على تيليجرام.</p>
+    <p class="meta">وسيبقى بقيّةٌ لا تنتظم في سلسلة — فوائد مفردة وأجوبة — وهذه تبقى بلا قائمة، كما هو حال درسٍ واحد اليوم في الكشّاف.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٥</span> العنوان نفسه <span class="tag mid">متوسط</span></h3>
+    <p><span class="digits">٦٣٪</span> من الملفات الصوتية اسمها <code>Audio</code>. العنوان في الرسالة التي قبلها، وهي رسالةٌ كتبها الشيخ لقارئٍ يرى الصوتية تحتها مباشرة — فتنتهي بـ«👇» وتفترض السياق. وضعُها عنوانَ صفحةٍ مستقلّة يحتاج تنظيفًا.</p>
+    <p><strong>التخفيف:</strong> السكربت الحالي <code>scripts/telegram.ts</code> فيه <code>titleOf</code> تفعل هذا للمقالات، وتمدّ العنوان إلى السطر الثاني إن كان الأول قصيرًا. تُعاد الاستفادة منها كما هي.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٦</span> المدّة والتاريخ من المنصّة <span class="tag mid">متوسط</span></h3>
+    <p>المدّة تظهر في بطاقة الدرس، وفي <code>/p/</code>، وفي مخطّط JSON-LD، وفي مجموع ساعات الموقع. وقناة الدروس لا تعطيها عبر الويب.</p>
+    <p><strong>التخفيف:</strong> التصدير يعطي <code>duration_seconds</code>، و<code>ffprobe</code> يعطيها من الملف نفسه إن غابت.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٧</span> الرابط الزمني إلى المنصّة <span class="tag hi">طفيف</span></h3>
+    <p><code>youtu.be/&lt;id&gt;?t=</code> يفتح يوتيوب عند الثانية نفسها. <code>t.me/&lt;ch&gt;/&lt;id&gt;</code> لا يملك مكافئًا — الرابط يفتح الرسالة من أوّلها.</p>
+    <p><strong>التخفيف:</strong> لا شيء. ولا يهمّ كثيرًا: الرابط الذي ينسخه القارئ من زرّ «نسخ رابط السطر» يشير إلى الكشّاف لا إلى المنصّة، وهو يعمل تمامًا.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٨</span> ثبات المعرّف <span class="tag mid">متوسط، ومعروف مسبقًا</span></h3>
+    <p>معرّف يوتيوب دائم. ورقم رسالة تيليجرام دائم أيضًا ما دامت الرسالة، لكن إن حذفها الشيخ وأعاد نشرها صار الرقم غيره — فتموت صفحة، وتنشأ صفحة جديدة بالمحتوى نفسه.</p>
+    <p><strong>التخفيف:</strong> الكشّاف مرّ بهذا مع «الفيديوهات المحذوفة» من يوتيوب. يكفي أن يُبقي التفريغ في <code>data/</code> حتى لو غابت الرسالة، وأن يكشف <code>pnpm check</code> الرسائل التي اختفت.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٩</span> الصورة المصغّرة <span class="tag hi">طفيف</span></h3>
+    <p><code>i.ytimg.com/vi/&lt;id&gt;/mqdefault.jpg</code> تظهر في بطاقات <code>/p/</code> وفي صورة المشاركة على الشبكات. الصوتية بلا صورة.</p>
+    <p><strong>التخفيف:</strong> صورة مشاركة واحدة عامّة تكفي، أو موجة الصوت التي يعطيها تيليجرام أصلًا في <code>data-waveform</code> — وهي بيانات موجودة مجانًا وتصلح صورةً مميّزة لكل صوتية.</p>
+  </div>
+</section>
+
+<section id="s8">
+  <h2>٨. ماذا لن تفقد، وماذا ستكسب</h2>
+  <h3>لن يتغيّر شيء من هذا</h3>
+  <ul>
+    <li><strong>البحث بكل طبقاته.</strong> الفهارس الثلاثة — <code>cues</code> و<code>lessons</code> و<code>articles</code> — تقرأ نصًّا وأزمنة، ولا تعرف من أين جاء الصوت. البحث الهجين والمرادفات والأرضية عند <span class="digits">٠٫٧٦٥</span> والاتّساع عند انعدام النتيجة: كلّها تعمل على الصوتيات يوم تدخل الفهرس.</li>
+    <li><strong>لوحة التفريغ كلّها.</strong> النقر على السطر للتقديم، والمتابعة التلقائية، والبحث داخل الدرس، وتظليل المطابقات، ونسخ رابط السطر، والطباعة. الجزيرة تقود DOM يخرج من <code>Cues.astro</code>، لا من يوتيوب.</li>
+    <li><strong>السابق/التالي، وصفحة القائمة، وخريطة الموقع، والسيو النصّي.</strong></li>
+  </ul>
+
+  <h3>وهذا مكسب صافٍ</h3>
+  <ul>
+    <li><strong>الصفحة تخفّ.</strong> يذهب سكربت <code>iframe_api</code> من يوتيوب ومعه الإطار كلّه، ويحلّ محلّه عنصر <code>&lt;audio&gt;</code> أصليّ. وتنكمش الـCSP: <code>frame-src</code> و<code>script-src https://www.youtube.com</code> لم يعودا لازمَين لهذه الصفحات.</li>
+    <li><strong>لا حظر تضمين.</strong> في <code>Player.tsx</code> اليوم مجموعة <code>EMBED_ERRORS</code> لأخطاء <span class="digits">١٠١</span> و<span class="digits">١٥٠</span> و<span class="digits">١٥٣</span> — فيديو منع صاحبه تضمينه. هذا الاحتمال يزول.</li>
+    <li><strong>التقديم أدقّ.</strong> <code>currentTime</code> فوريّ، وحدث <code>timeupdate</code> يُغني عن استطلاع كل <span class="digits">٥٠٠</span> مللي ثانية.</li>
+    <li><strong>التنزيل يصير ممكنًا.</strong> بند «تنزيل الصوت» مكتوب في PRD تحت <strong>Out</strong> لأنّ يوتيوب لا يسمح. والملف الذي تستضيفه أنت، تُنزّله.</li>
+    <li><strong>خصوصية أفضل.</strong> لا طلب إلى يوتيوب من صفحة الدرس.</li>
+  </ul>
+</section>
+
+<section id="s9">
+  <h2>٩. الفاتورة</h2>
+
+  <h3>وقت التفريغ — البند الأكبر</h3>
+  <p class="meta">الأساس: PRD يقول إنّ تفريغ القناة كاملة (<span class="digits">٢٬٣٢٤</span> ساعة) يستغرق <span class="digits">١٩</span> يومًا لكل رمز wit، أي ~<span class="digits">٥</span> أضعاف الزمن الحقيقي.</p>
+  <table>
+    <thead><tr><th>المادة</th><th>الساعات</th><th>برمز واحد</th><th>بأربعة رموز</th></tr></thead>
+    <tbody>
+      <tr><td>بصمات <code>@alkulife</code></td><td class="digits">~٥٨٣</td><td class="digits">~٥ أيام</td><td class="digits">~٢٩ ساعة</td></tr>
+      <tr><td>ملفات <code>@doros_alkulify</code> <span class="meta">(تقدير)</span></td><td class="digits">~١٬٣٠٠</td><td class="digits">~١١ يومًا</td><td class="digits">~٢٫٧ يوم</td></tr>
+      <tr><td><strong>المجموع</strong></td><td class="digits"><strong>~١٬٨٨٣</strong></td><td class="digits"><strong>~١٦ يومًا</strong></td><td class="digits"><strong>~٤ أيام</strong></td></tr>
+    </tbody>
+  </table>
+  <p class="meta">ساعات قناة الدروس تقديرٌ مبني على متوسط الدرس الحالي (<span class="digits">٤٣</span> دقيقة) وعدد المجموعات المقدَّر. الرقم الحقيقي يخرج من التصدير بأمرٍ واحد، وقد يكون أقلّ بكثير لأنّ كثيرًا من الملفات فوائد قصيرة لا شروح كاملة.</p>
+
+  <h3>التخزين</h3>
+  <table>
+    <thead><tr><th>المادة</th><th>الترميز</th><th>الحجم</th></tr></thead>
+    <tbody>
+      <tr><td>بصمات <code>@alkulife</code></td><td>Opus <span class="digits">٣١</span> kbps (كما هي)</td><td class="digits">~٨ غيغابايت</td></tr>
+      <tr><td>ملفات قناة الدروس</td><td>كما نزلت (MP3 <span class="digits">٦٤</span> kbps تقديرًا)</td><td class="digits">~٣٧ غيغابايت</td></tr>
+      <tr><td>ملفات قناة الدروس</td><td>بعد إعادة الترميز إلى Opus <span class="digits">٣٢</span> kbps</td><td class="digits">~١٩ غيغابايت</td></tr>
+    </tbody>
+  </table>
+  <p>إعادة الترميز إلى Opus أحادي عند <span class="digits">٣٢</span> kbps تنصف الحجم بلا فرقٍ مسموع في تسجيل درس، ويقبلها كل متصفّح حديث.</p>
+
+  <h3>أين تُستضاف</h3>
+  <table>
+    <thead><tr><th>المكان</th><th>الحجّة</th><th>المشكلة</th></tr></thead>
+    <tbody>
+      <tr><td><strong>روابط تيليجرام مباشرة</strong></td><td>صفر تخزين وصفر نطاق. يعمل اليوم للبصمات الصوتية.</td><td>لا يعمل لملفات قناة الدروس أصلًا، والرمز قد يتغيّر يومًا.</td></tr>
+      <tr><td><strong>صندوق أوراكل خلف Caddy</strong> <span class="tag hi">الموصى به</span></td><td>قائمٌ يعمل، وعليه تحديد معدّل جاهز، وحصّة أوراكل المجانية <span class="digits">٢٠٠</span> غيغابايت تخزينًا و<span class="digits">١٠</span> تيرابايت خروجًا شهريًّا. وربط <code>audio.assoli.site</code> سجلّ A واحد في Namecheap.</td><td>هو نفسه صندوق البحث بنواةٍ واحدة. خدمة ملفات ثابتة عملُ قرصٍ لا معالج، لكنّ سيلًا عليها يزاحم Meilisearch.</td></tr>
+      <tr><td><strong>Cloudflare R2</strong></td><td>الخروج مجّاني تمامًا، ولا يزاحم صندوق البحث.</td><td>النطاق المخصّص يشترط أن يكون النطاق على Cloudflare، و<code>assoli.site</code> على Namecheap. نقل النطاق ليس قرارًا صغيرًا.</td></tr>
+      <tr><td><strong>Vercel</strong></td><td>—</td><td>لا. حزمة النشر ليست مكانًا لعشرات الغيغابايت.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>الفهرس والمتّجهات</h3>
+  <p>القياس الحالي: <span class="digits">٦٢٬٣١١</span> مقطعًا لـ<span class="digits">١٬١٣٦</span> ساعة = <span class="digits">٥٥</span> مقطعًا للساعة.</p>
+  <div class="grid">
+    <div class="metric"><strong class="digits">~١٠٤٬٠٠٠</strong><span>مقطع جديد</span></div>
+    <div class="metric warn"><strong class="digits">×٢٫٧</strong><span>حجم فهرس <code>cues</code></span></div>
+    <div class="metric"><strong class="digits">~٢ ساعة</strong><span>حساب المتّجهات محليًّا</span></div>
+    <div class="metric"><strong class="digits">~٤٣٠ م.ب</strong><span>حجم المتّجهات الجديدة</span></div>
+  </div>
+  <p style="margin-top:16px">حساب المتّجهات على هذا الجهاز (<span class="digits">١٠</span>–<span class="digits">١٩</span> مستندًا في الثانية) لا على صندوق البحث (مستند واحد في الثانية) — وهذا ما يفعله <code>scripts/embed.ts</code> اليوم أصلًا، فلا جديد.</p>
+  <div class="danger">
+    <strong>هذا البند يستحقّ وقفة:</strong> فهرس <code>cues</code> يتضاعف <span class="digits">٢٫٧</span> مرة على صندوق بنواةٍ واحدة يشغّل Meilisearch وOllama معًا، وتقرير التطوير الأخير سجّل أنّ البحث اليوم يستغرق <span class="digits">١٫٥</span> ثانية لأنه <em>يُقطَع</em> عند سقف المهلة لا لأنه بطيء. أي أنّ مشكلة الأداء قائمة قبل الصوتيات، وثلاثة أضعاف المحتوى تجعلها أظهر. <strong>عالِج الأداء قبل الفهرسة، لا بعدها.</strong>
+  </div>
+</section>
+
+<section id="s10">
+  <h2>١٠. الازدواج مع يوتيوب</h2>
+  <p>قلتَ إنّ في تيليجرام كثيرًا ممّا ليس في يوتيوب، وهذا صحيح — لكنّ فيه أيضًا ما هو في يوتيوب. وتفريغُ ساعةٍ مفرَّغة أصلًا يهدر <span class="digits">١٢</span> دقيقة من رمز، ويضع في الكشّاف درسًا مكرَّرًا يزاحم نفسه في النتائج.</p>
+  <p>قِستُ ثلاث إشارات لكشف المكرَّر:</p>
+  <table>
+    <thead><tr><th>الإشارة</th><th>ما قِسته</th><th>الحكم</th></tr></thead>
+    <tbody>
+      <tr><td><strong>رابط يوتيوب في العنوان</strong></td><td><span class="digits">٢٦</span> من <span class="digits">١١٤</span> مجموعة (<span class="digits">٢٣٪</span>) عنوانها يحمل رابط يوتيوب صريحًا، منها <span class="digits">١٠</span> معرّفات موجودة في <code>videos.json</code> اليوم.</td><td>قاطعة حين توجد. مجّانية.</td></tr>
+      <tr><td><strong>تطابق العنوان</strong></td><td>من <span class="digits">٨٨</span> مجموعة بلا رابط، طابق <span class="digits">١١٪</span> فقط عنوانَ درسٍ موجود.</td><td>ضعيفة. عناوين تيليجرام جملٌ وصفية لا عناوين يوتيوب.</td></tr>
+      <tr><td><strong>تطابق المدّة</strong></td><td>لم يُقَس (المدد غير متاحة قبل التصدير).</td><td>الأقوى غالبًا. تطابق ±<span class="digits">٢</span> ثانية مع درسٍ في <code>videos.json</code> ليس صدفة، ويُفحَص قبل التفريغ فيوفّر كلفته.</td></tr>
+    </tbody>
+  </table>
+  <p><strong>الترتيب العملي:</strong> رابط يوتيوب أوّلًا (مجّاني)، ثم المدّة بعد التصدير (مجّاني وقويّ)، ثم — لِما بقي — استعلامٌ إلى فهرس <code>lessons</code> بأوّل مئتَي حرف من التفريغ بعد خروجه. الأخير يستعمل بنيةً قائمة، لكنه لا يوفّر كلفة التفريغ لأنّه يأتي بعده، فلا تجعله الحاجز الأول.</p>
+  <p class="meta">وبقيت نتيجة تستحقّ الذكر: <span class="digits">٧٧٪</span> من المجموعات لا تحمل رابط يوتيوب ولا يطابق عنوانها درسًا موجودًا. هذا لا يثبت أنها غير موجودة على يوتيوب، لكنه أقوى سندٍ متاح اليوم لِما قلتَه.</p>
+</section>
+
+<section id="s11">
+  <h2>١١. الخطة على مراحل</h2>
+  <p>مرتَّبة بحيث تعطي كل مرحلة قيمةً كاملة وحدها، ويمكن التوقّف بعد أيٍّ منها بلا شيء معلّق.</p>
+
+  <div class="idea">
+    <h3><span class="num">١</span> بصمات القناة الرئيسية <span class="tag hi">أعلى عائد، أقلّ جهد</span></h3>
+    <p><strong>ما تكسبه:</strong> <span class="digits">٥٨٣</span> ساعة، ~<span class="digits">٣٢٬٠٠٠</span> مقطع بحث، أجوبةٌ قصيرة مباشرة تناسب أكثر أسئلة الزوّار.</p>
+    <ol>
+      <li>في <code>scripts/telegram.ts</code>: بدل تخطّي <code>isVoice</code>، اكتب <code>data/voice.json</code> فيه لكل بصمة <code>{ id, url, duration, date, title }</code> — كلّها في الصفحة، لا شيء منها يحتاج تصديرًا.</li>
+      <li><code>curl</code> على الروابط إلى <code>RAW_DIR/s-&lt;id&gt;.ogg</code>.</li>
+      <li><code>tafrigh</code> على المجلد، ثم ترقيع، ثم <code>pnpm data &amp;&amp; pnpm index &amp;&amp; pnpm embed</code>.</li>
+      <li>فرع <code>&lt;audio&gt;</code> في <code>Player.tsx</code>.</li>
+    </ol>
+    <p class="meta">لا تقسيم في هذه المرحلة: البصمة الصوتية واحدة دائمًا. ولا استضافة إن اخترت الروابط المباشرة — ومعها احتياطٌ عند فشل التشغيل يظهر «افتح في تيليجرام»، وهو النمط نفسه الذي تستعمله الجزيرة اليوم عند حظر التضمين.</p>
+    <p><strong>السقف المعروف:</strong> رمز تيليجرام قد يتغيّر يومًا فتصمت المشغّلات كلّها دفعةً واحدة. الترقية معروفة: نزّل الـ<span class="digits">٨</span> غيغابايت واستضِفها. لا تدفع هذا الثمن قبل أن يقع.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٢</span> أداء البحث قبل مضاعفة الفهرس <span class="tag hi">شرطٌ لا خطوة</span></h3>
+    <p>الفهرس يمرّ من <span class="digits">٦٢</span> ألف مقطع إلى ~<span class="digits">١٦٦</span> ألفًا. تقرير التطوير الأخير يقول إنّ البحث اليوم يُقطَع عند سقف المهلة. لا تفتح المرحلة الثالثة قبل إغلاق هذه.</p>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٣</span> ملفات قناة الدروس <span class="tag mid">الأثقل، والأثمن</span></h3>
+    <ol>
+      <li>تصدير القناة من تيليجرام ديسكتوب (JSON + الملفات).</li>
+      <li>اجمع المجموعات، وألصق الأجزاء بـ<code>ffmpeg</code>، وسمِّ الناتج <code>d-&lt;أول رقم&gt;.mp3</code>.</li>
+      <li>احذف المكرَّر برابط يوتيوب ثم بالمدّة، <em>قبل</em> التفريغ.</li>
+      <li>استنبط السلسلة ورقم الدرس من العنوان — واختبر المحلّل على عناوين يوتيوب أوّلًا حيث الجواب معروف.</li>
+      <li>فرّق التفريغ على الرموز المتاحة، وارفع دفعةً دفعة لا مرّةً واحدة.</li>
+    </ol>
+  </div>
+
+  <div class="idea">
+    <h3><span class="num">٤</span> ما بعد ذلك <span class="tag mid">حين تدعو الحاجة</span></h3>
+    <p>MTProto لجلبٍ تزايديّ يمشي وحده. وإعادة ترميز إلى Opus إن ضاق التخزين. وموجة الصوت من <code>data-waveform</code> صورةً مميّزة. كلّها اختيارية.</p>
+  </div>
+</section>
+
+<section id="s12">
+  <h2>١٢. ما أنصح بحذفه من الخطة</h2>
+  <ul>
+    <li><strong>مسار محتوى جديد بجانب <code>/v/</code>.</strong> الصوتية درسٌ له تفريغ. <code>videos.json</code> يكفيها، وحقل <code>source</code> يميّزها، وحقل <code>channel</code> المُفهرَس يصفّيها.</li>
+    <li><strong>مشغّل صوت مكتوب من الصفر.</strong> <code>&lt;audio controls&gt;</code> الأصليّ يعطي التشغيل والتقديم والسرعة ولوحة المفاتيح وقارئ الشاشة مجّانًا. الجزيرة تحتاج منه <code>currentTime</code> و<code>timeupdate</code> فقط.</li>
+    <li><strong>صفحة لكل جزء من الدرس المقسّم.</strong> سطر <code>ffmpeg</code> يحذف المسألة كلّها قبل أن تصل إلى الشيفرة.</li>
+    <li><strong>تفريغ الملفات المكرَّرة «احتياطًا».</strong> كل مكرَّر يُكشف قبل التفريغ يوفّر <span class="digits">١٢</span> دقيقة من رمز، ويمنع درسًا مزدوجًا في النتائج.</li>
+    <li><strong>استضافة بصمات القناة الرئيسية من اليوم الأول.</strong> روابط تيليجرام تعمل. استضِفها حين تتوقّف، لا قبل.</li>
+    <li><strong>Cloudflare R2 ونقل النطاق من Namecheap.</strong> صندوق أوراكل يعمل اليوم وحصّته تكفي. أعِد النظر إن انتقل النطاق لسببٍ آخر.</li>
+  </ul>
+</section>
+
+<section id="s13">
+  <h2>١٣. المخاطر</h2>
+  <table>
+    <thead><tr><th>الخطر</th><th>الاحتمال</th><th>الأثر</th><th>ما يُفعل</th></tr></thead>
+    <tbody>
+      <tr><td>تغيّر رمز روابط تيليجرام فتصمت البصمات</td><td>متوسط</td><td>مشغّل صامت في مئات الصفحات</td><td>احتياطٌ عند <code>error</code> يظهر رابط تيليجرام، ومراقبٌ يفحص رابطًا واحدًا يوميًّا</td></tr>
+      <tr><td>تغيّر ترميز صفحات <code>t.me/s/</code></td><td>منخفض</td><td>يتوقّف الجلب</td><td>الخطر قائم اليوم أصلًا في <code>scripts/telegram.ts</code>؛ لا جديد</td></tr>
+      <tr><td>تضاعف الفهرس يُبطئ البحث</td><td class="digits">مرتفع</td><td>بحثٌ يُقطَع في كل استعلام</td><td>المرحلة الثانية شرطٌ قبل الثالثة</td></tr>
+      <tr><td>امتلاء قرص صندوق أوراكل</td><td>متوسط</td><td>يتوقّف Meilisearch</td><td>عتبة القرص في <code>ops/monitors.sh</code> قائمة؛ افحص المساحة الحرّة قبل رفع أول غيغابايت</td></tr>
+      <tr><td>حذف رسائل فتموت صفحات</td><td>متوسط</td><td>روابط مكسورة</td><td>أبقِ التفريغ في <code>data/</code> ولو غابت الرسالة؛ ليكشفها <code>pnpm check</code></td></tr>
+      <tr><td>خطأ في استنباط السلسلة يخلط الدروس</td><td>متوسط</td><td>ترتيب سابق/تالٍ خاطئ</td><td>اختبر المحلّل على عناوين يوتيوب حيث الجواب معروف قبل تشغيله على تيليجرام</td></tr>
+      <tr><td>جودة تفريغ أضعف لصوتٍ مضغوط</td><td>متوسط</td><td>مقاطع ركيكة في الفهرس</td><td>فرّغ من الأصل لا من نسخةٍ أعيد ترميزها، وقِس على عشر صوتيات قبل الثلاثة آلاف</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="s14">
+  <h2>ملحق: الأوامر</h2>
+
+  <h3>عدد الساعات الحقيقي بعد التصدير</h3>
+<pre><code>jq '[.messages[] | select(.media_type=="audio_file" or .media_type=="voice_message")
+     | .duration_seconds] | add / 3600' result.json</code></pre>
+
+  <h3>توزيع مدد الدروس</h3>
+<pre><code>jq -r '.messages[] | select(.media_type=="audio_file") | .duration_seconds' result.json \
+  | sort -n | awk '{a[NR]=$1} END {print "n="NR, "median="a[int(NR/2)], "max="a[NR]}'</code></pre>
+
+  <h3>مطابقة المدد مع دروس يوتيوب — قبل التفريغ</h3>
+<pre><code>jq -r '.[] | "\(.duration) \(.id)"' data/videos.json | sort -n &gt; yt.txt
+# ثم قابِل كل duration_seconds بفارق ±2 ثانية</code></pre>
+
+  <h3>لصق أجزاء درس</h3>
+<pre><code>printf "file '%s'\n" d-12662.mp3 d-12663.mp3 &gt; parts.txt
+ffmpeg -f concat -safe 0 -i parts.txt -c copy d-12662.mp3 \
+  || ffmpeg -f concat -safe 0 -i parts.txt -c:a libmp3lame -b:a 64k d-12662.mp3</code></pre>
+
+  <h3>التفريغ — الملفات المحلّية</h3>
+<pre><code>cd ~/Downloads/tafrigh
+.venv312/bin/tafrigh ~/Downloads/tg-audio \
+  --skip_if_output_exist -o output -f none --save_search_chunks \
+  -w $WIT_TOKEN_1
+# اسم الملف بلا امتداده يصير معرّف المادة — سمِّها d-<id>.mp3 قبل التشغيل</code></pre>
+
+  <h3>إعادة ترميز إلى Opus إن ضاق التخزين</h3>
+<pre><code>ffmpeg -i in.mp3 -ac 1 -c:a libopus -b:a 32k -application voip out.opus</code></pre>
+
+  <h3>سطر الـCSP في <code>vercel.json</code></h3>
+<pre><code>media-src 'self' https://audio.assoli.site https://cdn4.telesco.pe;</code></pre>
+</section>
+
+<footer>
+  <p>كشّاف أبي جعفر — تقرير دعم صوتيات تيليجرام · <span class="digits">٢١ أغسطس ٢٠٢٦</span></p>
+  <p>الأرقام المنسوبة إلى «المسح» قِيست اليوم من <code>t.me/s/</code>، والأرقام المنسوبة إلى الكشّاف من <code>data/</code> ومن الشيفرة.</p>
+</footer>
+
+</main>
+</body>
+</html>
