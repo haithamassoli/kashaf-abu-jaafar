@@ -114,7 +114,7 @@
   --color-accent-soft: var(--accent-soft);
 
   --font-sans: 'Thmanyah Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-naskh: 'Noto Naskh Arabic Variable', 'Noto Naskh Arabic', serif;
+  --font-naskh: var(--font-sans);
   --font-heading: var(--font-sans);
   --color-ring: var(--ring);
   --color-input: var(--input);

@@ -27,8 +27,6 @@
     "@astrojs/react": "^4.2.0",
     "@astrojs/sitemap": "^3.7.3",
     "@base-ui/react": "^1.7.0",
-    "@fontsource-variable/noto-naskh-arabic": "^5.1.0",
-    "@fontsource/ibm-plex-sans-arabic": "^5.1.0",
     "@tailwindcss/vite": "^4.0.0",
     "astro": "^5.2.0",
     "chart.js": "^4.5.1",
