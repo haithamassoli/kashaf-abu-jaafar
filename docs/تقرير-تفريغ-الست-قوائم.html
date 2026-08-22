@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>تقرير تفريغ ست قوائم — كشّاف أبي جعفر</title>
 <style>
+  html,body{font-family:'Thmanyah Sans'}
+  /* خط ثمانية: مسار الموقع أولًا، ثم المسار النسبي حين يُفتح التقرير من القرص. */
+  @font-face{font-family:'Thmanyah Sans';src:url('/fonts/thmanyahsans-Regular.woff2') format('woff2'),url('../public/fonts/thmanyahsans-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:'Thmanyah Sans';src:url('/fonts/thmanyahsans-Medium.woff2') format('woff2'),url('../public/fonts/thmanyahsans-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
+  @font-face{font-family:'Thmanyah Sans';src:url('/fonts/thmanyahsans-Bold.woff2') format('woff2'),url('../public/fonts/thmanyahsans-Bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
+
   :root{
     --bg:#faf9f7; --surface:#fff; --fg:#1c1a17; --muted:#6b6560;
     --line:#e5e0d8; --accent:#0f766e; --accent-soft:#e6f2f0;
@@ -20,7 +26,7 @@
   *{box-sizing:border-box}
   body{
     margin:0; padding:2.5rem 1.25rem 5rem; background:var(--bg); color:var(--fg);
-    font-family:"IBM Plex Sans Arabic","Noto Naskh Arabic",system-ui,"Segoe UI",sans-serif;
+    font-family:'Thmanyah Sans';
     line-height:1.85; font-size:16.5px;
   }
   main{max-width:56rem; margin:0 auto}
@@ -47,7 +53,7 @@
   .pill-ok{background:var(--good-bg); color:var(--good)}
   .pill-warn{background:var(--warn-bg); color:var(--warn)}
   code{background:var(--accent-soft); padding:.1rem .35rem; border-radius:.3rem;
-       font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.86em; direction:ltr; display:inline-block}
+       font-family:'Thmanyah Sans'; font-size:.86em; direction:ltr; display:inline-block}
   pre{background:var(--surface); border:1px solid var(--line); border-radius:.6rem; padding:.9rem 1.1rem;
       overflow-x:auto; direction:ltr; text-align:left; font-size:.84rem; line-height:1.7}
   pre code{background:none; padding:0}

@@ -114,8 +114,12 @@
   --color-accent-soft: var(--accent-soft);
 
   --font-sans: 'Thmanyah Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-naskh: var(--font-sans);
   --font-heading: var(--font-sans);
+  --font-mono: var(--font-sans);
+  /* Tailwind preflight falls back to these on html/<code>/form controls. Pin them
+     too, so nothing on the page can reach a system font. */
+  --default-font-family: var(--font-sans);
+  --default-mono-font-family: var(--font-sans);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-destructive: var(--destructive);
@@ -198,8 +202,7 @@
   }
 }
 
-@utility prose-naskh {
-  font-family: var(--font-naskh);
+@utility prose-read {
   line-height: 2;
   font-size: 1.0625rem;
   letter-spacing: 0;
@@ -213,7 +216,7 @@
 
 /* An article hit links to /a/<id>#p<n>: tint the paragraph that matched, the same way
    the transcript marks the playing cue. */
-.prose-naskh p:target {
+.prose-read p:target {
   background: var(--accent-soft);
   border-inline-start: 2px solid var(--accent);
   border-radius: 0.5rem;
@@ -245,7 +248,7 @@
 }
 
 @utility cue-txt {
-  @apply prose-naskh min-w-0 flex-1 py-2;
+  @apply prose-read min-w-0 flex-1 py-2;
 }
 
 @utility cue-copy {

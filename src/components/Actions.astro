@@ -175,7 +175,7 @@ const item =
           cues,
           (li) => `[${li.querySelector('.cue-ts')?.textContent?.trim()}] ${li.querySelector('.cue-txt')?.textContent?.trim()}`,
         ).join('\n')
-      return Array.from(document.querySelectorAll('.prose-naskh p'), (p) =>
+      return Array.from(document.querySelectorAll('.prose-read p'), (p) =>
         p.textContent?.trim(),
       ).join('\n\n')
     }

@@ -480,7 +480,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
                         }}
                       ></h2>
                       <p
-                        className="prose-naskh mt-2 line-clamp-3 text-muted"
+                        className="prose-read mt-2 line-clamp-3 text-muted"
                         dangerouslySetInnerHTML={{
                           __html: highlight(a._formatted?.text, a.text),
                         }}
@@ -501,7 +501,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
                     >
                       <h2 className="text-base font-medium text-fg">{cue.title}</h2>
                       <p
-                        className="prose-naskh mt-2 line-clamp-3 text-muted"
+                        className="prose-read mt-2 line-clamp-3 text-muted"
                         dangerouslySetInnerHTML={{
                           __html: highlight(cue._formatted?.text, cue.text),
                         }}
