@@ -53,11 +53,25 @@ const videoIds = new Set(videos.map((v) => v.id))
 // 1 — RAW_DIR *.transcript.json <-> videos.json <-> data/segments/<id>.json
 const raw = new Set(rawFiles.filter((f) => f.endsWith('.transcript.json')).map((f) => f.slice(0, -16)))
 const segFiles = new Set((await readdir(join(DATA, 'segments'))).map((f) => f.slice(0, -5)))
-const rawAhead = [...raw].filter((id) => !videoIds.has(id))
+/**
+ * build-data.ts drops a transcript whose segments are all empty, so one of those on disk is not
+ * "RAW ahead" — it is the two agreeing. `4Yz0T6X8kq8` is the real case: a 29-minute lesson whose
+ * uploaded audio is 786 KB of near-silence, so both YouTube and wit.ai return nothing. Counting
+ * it as a failure would leave this check permanently red, which is how a check stops being read.
+ */
+const empty = new Set(
+  await Promise.all(
+    [...raw].map(async (id) => {
+      const t = JSON.parse(await readFile(join(RAW, `${id}.transcript.json`), 'utf8'))
+      return ((t.segments ?? []) as { text?: string }[]).some((s) => (s.text ?? '').trim()) ? '' : id
+    }),
+  ).then((ids) => ids.filter(Boolean)),
+)
+const rawAhead = [...raw].filter((id) => !videoIds.has(id) && !empty.has(id))
 const dataAhead = [...videoIds].filter((id) => !raw.has(id))
 const noSeg = [...videoIds].filter((id) => !segFiles.has(id))
 const straySeg = [...segFiles].filter((id) => !videoIds.has(id))
-check(1, `raw/data/segments — ${raw.size} transcripts, ${videos.length} videos, ${segFiles.size} segment files`, [
+check(1, `raw/data/segments — ${raw.size} transcripts (${empty.size} with no speech), ${videos.length} videos, ${segFiles.size} segment files`, [
   rawAhead.length && `RAW ahead by ${rawAhead.length}: ${few(rawAhead)} (run \`pnpm data\`)`,
   dataAhead.length && `data ahead by ${dataAhead.length}, transcript gone: ${few(dataAhead)}`,
   noSeg.length && `video with no segments file: ${few(noSeg)}`,
