@@ -199,10 +199,15 @@ for (const p of playlists) {
   )
 }
 
+const corpus = allArticles()
+const books = corpus.filter((a) => a.type === 'book')
+assert.equal(books.length, 8)
+assert.ok(books.every((book) => book.download?.endsWith('.pdf')), 'a book has no PDF')
+
 // Telegram articles: their photos live in public/, which nothing else in the build validates —
 // a missed download or a renamed file is a 404 on a live page and silent everywhere else.
 const pub = new URL('../public/', import.meta.url).pathname
-for (const a of allArticles().filter((a) => a.source === 'telegram')) {
+for (const a of corpus.filter((a) => a.source === 'telegram')) {
   assert.ok(a.title && a.paragraphs.length && a.date, `${a.id} came out of Telegram empty`)
   assert.ok(a.url.startsWith('https://t.me/'), `${a.id} has no source message`)
   for (const img of a.images ?? []) {

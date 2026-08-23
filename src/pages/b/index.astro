@@ -1,0 +1,77 @@
+---
+import Base from '../../layouts/Base.astro'
+import { allArticles } from '../../lib/data'
+import { arabicDate } from '../../lib/format'
+import { SITE_URL, SHEIKH, breadcrumb } from '../../lib/seo'
+
+const books = allArticles()
+  .filter((article) => article.type === 'book')
+  .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+
+const summary = (text = '') => (text.length > 180 ? `${text.slice(0, 180).trimEnd()}…` : text)
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  '@id': `${SITE_URL}/b/#collection`,
+  name: 'الكتب',
+  inLanguage: 'ar',
+  mainEntity: {
+    '@type': 'ItemList',
+    numberOfItems: books.length,
+    itemListElement: books.map((book, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: new URL(`/a/${book.id}/`, SITE_URL).href,
+      name: book.title,
+    })),
+  },
+}
+---
+
+<Base
+  title="الكتب"
+  description={`كتب ومصنفات ${SHEIKH} مع روابط القراءة والتنزيل بصيغة PDF.`}
+  schema={[schema, breadcrumb([['الكتب', '/b/']])]}
+>
+  <h1 class="mt-10 text-2xl font-semibold tracking-tight sm:text-3xl">كتب ومصنفات الشيخ</h1>
+  <p class="mt-3 text-muted">
+    جميع الكتب المنشورة في صفحة الشيخ الرسمية، مع روابط القراءة والتنزيل بصيغة PDF.
+  </p>
+
+  <ul class="mt-6 grid gap-3 sm:grid-cols-2">
+    {
+      books.map((book) => (
+        <li class="card flex flex-col p-5">
+          <span class="text-xs text-muted">كتاب رقمي</span>
+          <h2 class="mt-2 font-semibold leading-relaxed">
+            <a href={`/a/${book.id}/`} class="hover:text-accent">{book.title}</a>
+          </h2>
+          {book.date && <bdi class="mt-1 text-sm text-muted">{arabicDate(book.date)}</bdi>}
+          <p class="mt-3 text-sm leading-7 text-muted">{summary(book.paragraphs[0])}</p>
+
+          <div class="mt-auto flex flex-wrap gap-2 pt-5">
+            <a
+              href={`/a/${book.id}/`}
+              class="inline-flex min-h-11 items-center rounded-lg border border-border px-4 text-sm transition-colors hover:bg-surface-2"
+            >
+              عن الكتاب
+            </a>
+            {
+              book.download && (
+                <a
+                  href={book.download}
+                  target="_blank"
+                  rel="noopener"
+                  class="inline-flex min-h-11 items-center rounded-lg bg-accent px-4 text-sm font-medium text-accent-fg"
+                >
+                  قراءة وتنزيل PDF
+                </a>
+              )
+            }
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+</Base>

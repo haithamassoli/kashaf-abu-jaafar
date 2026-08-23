@@ -79,6 +79,18 @@ const crumbs = breadcrumb([[article.title, `/a/${article.id}/`]])
         class="inline-flex min-h-11 items-center text-accent underline underline-offset-4">المصدر</a
       >
       {
+        article.download && (
+          <a
+            href={article.download}
+            target="_blank"
+            rel="noopener"
+            class="inline-flex min-h-11 items-center rounded-lg bg-accent px-4 font-medium text-accent-fg"
+          >
+            قراءة وتنزيل PDF
+          </a>
+        )
+      }
+      {
         archive && (
           <a
             href={archive}
@@ -119,4 +131,3 @@ const crumbs = breadcrumb([[article.title, `/a/${article.id}/`]])
     <Note title={article.title} kind="a" />
   </article>
 </Base>
-
