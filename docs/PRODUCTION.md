@@ -280,18 +280,17 @@ about 50 seconds.
 
 ---
 
-## 6. Two free fixes found on the way
+## 6. Build guard
 
 ```json
-"build": "astro build && pnpm run guard",
-"guard": "! grep -rql '127.0.0.1:7700' dist || (echo 'PUBLIC_MEILI_HOST is still localhost — set the public one and rebuild' && false)",
+"build": "astro build && pnpm guard",
+"guard": "! grep -rql 'PUBLIC_MEILI_HOST:\"http://127.0.0.1:7700\"' dist/_astro || (echo 'PUBLIC_MEILI_HOST is still localhost — set the public one and rebuild' && false)",
 ```
 
-- The `predeploy` guard **never runs today**. It is bound to `pnpm deploy`, which is a dead
-  wrangler script — deployment is Vercel, not Cloudflare Pages. Chaining it onto `build` with
-  `&&` (rather than relying on a `postbuild` hook, whose pnpm default has changed between
-  versions) makes it run on Vercel and in CI.
-- Delete `"deploy": "wrangler pages deploy dist"`.
+The guard runs explicitly from `build`, so Vercel and CI cannot publish a bundle whose baked
+`PUBLIC_MEILI_HOST` still points at localhost. Matching the environment entry rather than every
+localhost string leaves the intentional development fallback alone. The old Cloudflare Pages
+deploy script has been removed.
 
 ---
 
@@ -304,9 +303,9 @@ about 50 seconds.
 | 3. Uptime and server monitoring | done — four monitors and the heartbeat are live and green |
 | 4. Analytics | done — `src/lib/analytics.ts`, silent unless `PUBLIC_POSTHOG_KEY` is set |
 | 5. Dependabot and CI | done — `.github/` |
-| 6. The build guard | **open** — `predeploy` is still bound to the dead `pnpm deploy`, so it never runs |
+| 6. The build guard | done — `pnpm build` runs it explicitly |
 
-Item 6 is all that is left, and it is a two-line change to `package.json`.
+All six items are done.
 
 ## Deliberately skipped
 

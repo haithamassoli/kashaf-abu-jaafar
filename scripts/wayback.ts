@@ -62,6 +62,7 @@ function extract(html: string) {
 
   const cls = /<body[^>]*class="([^"]*)"/.exec(b)?.[1] ?? ''
   const id = /postid-(\d+)/.exec(cls)?.[1]
+  const type = /\bsingle-(?!format\b)(\w+)/.exec(cls)?.[1] ?? 'post'
   const title =
     /property="og:title" content="([^"]*)"/.exec(b)?.[1] ??
     /<h1[^>]*>([\s\S]*?)<\/h1>/.exec(b)?.[1] ??
@@ -70,8 +71,8 @@ function extract(html: string) {
   if (!id || !title.trim() || !body.length) return null
 
   return {
-    id: `${/\bsingle-(?!format\b)(\w+)/.exec(cls)?.[1] ?? 'post'}-${id}`,
-    type: /\bsingle-(?!format\b)(\w+)/.exec(cls)?.[1] ?? 'post',
+    id: `${type}-${id}`,
+    type,
     source: 'wp',
     title: decode(title.replace(/<[^>]+>/g, ''))
       .replace(/\s*[-|]\s*عبدالله بن فهد الخليفي\s*$/, '')

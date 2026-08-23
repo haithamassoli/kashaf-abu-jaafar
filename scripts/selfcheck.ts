@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { existsSync } from 'node:fs'
 import { client, highlight, peek, rateLimited, search } from '../src/lib/meili.ts'
 import { normalize } from '../src/lib/normalize.ts'
-import { clean } from '../src/lib/clean.ts'
+import { clean, mergeSegments } from '../src/lib/clean.ts'
 import { chunk, decode, paragraphs, titleKey } from '../src/lib/html.ts'
 import { markMatches } from '../src/lib/mark.ts'
 import { timestamp, duration, arabicDate, lessons, hours, lists, articles, withDigits } from '../src/lib/format.ts'
@@ -37,6 +37,23 @@ assert.equal(normalize('مصطفى'), 'مصطفي')
 assert.equal(clean('قال [موسيقى] الشيخ'), 'قال الشيخ')
 assert.equal(clean('[تصفيق]'), '')
 assert.equal(clean('باب الطلاق'), 'باب الطلاق')
+
+// mergeSegments: short speech fragments join, but silence and a 20 s span remain boundaries.
+assert.deepEqual(
+  mergeSegments([
+    { text: '1 2 3 4 5', start: 0, end: 3 },
+    { text: '6 7 8 9 10 11 12 13 14 15', start: 3.5, end: 8 },
+    { text: 'قصير', start: 8.5, end: 9 },
+    { text: 'بعد صمت', start: 11.1, end: 12 },
+    { text: 'بعيد', start: 12.5, end: 32 },
+  ]),
+  [
+    { text: '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15', start: 0, end: 8 },
+    { text: 'قصير', start: 8.5, end: 9 },
+    { text: 'بعد صمت', start: 11.1, end: 12 },
+    { text: 'بعيد', start: 12.5, end: 32 },
+  ],
+)
 
 // html: Word-pasted article markup in, ~paragraph-sized chunks out
 assert.deepEqual(paragraphs('<div>سطر أول</div><div>سطر ثانٍ</div>'), ['سطر أول سطر ثانٍ'])

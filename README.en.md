@@ -256,8 +256,6 @@ transcript panel and `data/` are built from).
   its last step. Declaring it on an index without vectors starts a backfill the box needs a full
   day to finish.
 
-> `pnpm deploy` is a leftover from the Cloudflare Pages setup that predated Vercel; it is unused.
-
 ## Layout
 
 ```

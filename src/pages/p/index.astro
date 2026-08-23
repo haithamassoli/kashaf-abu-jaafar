@@ -75,35 +75,25 @@ const indexSchema = {
     }
   </ul>
 
-  <script is:inline>
+  <script>
+    import { normalize } from '../../lib/normalize'
+
     // Client-side title filter: fold the query the same way build-time data-title was folded.
-    const input = document.getElementById('playlist-filter')
-    const shownEl = document.getElementById('playlist-shown')
-    const count = document.getElementById('playlist-count')
-    const empty = document.getElementById('playlist-empty')
-    const items = document.querySelectorAll('#playlist-list > li')
-    const total = items.length
-    const fold = (s) =>
-      s
-        .replace(/[ً-ْٰـ]/g, '')
-        .replace(/[أإآٱ]/g, 'ا')
-        .replace(/ة/g, 'ه')
-        .replace(/ى/g, 'ي')
-        .replace(/ؤ/g, 'و')
-        .replace(/ئ/g, 'ي')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .toLowerCase()
+    const input = document.querySelector<HTMLInputElement>('#playlist-filter')!
+    const shownEl = document.getElementById('playlist-shown')!
+    const count = document.getElementById('playlist-count')!
+    const empty = document.getElementById('playlist-empty')!
+    const items = document.querySelectorAll<HTMLLIElement>('#playlist-list > li')
 
     input.addEventListener('input', () => {
-      const q = fold(input.value)
+      const q = normalize(input.value)
       let shown = 0
       items.forEach((li) => {
-        const hit = !q || li.dataset.title.includes(q)
+        const hit = !q || li.dataset.title?.includes(q)
         li.hidden = !hit
         if (hit) shown++
       })
-      shownEl.textContent = shown
+      shownEl.textContent = String(shown)
       count.hidden = shown === 0
       empty.hidden = shown !== 0
     })

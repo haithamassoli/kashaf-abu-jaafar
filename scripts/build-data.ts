@@ -6,7 +6,8 @@
 import { readdir, readFile, writeFile, mkdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { homedir } from 'node:os'
-import { clean } from '../src/lib/clean.ts'
+import { clean, mergeSegments } from '../src/lib/clean.ts'
+import type { Playlist, Video } from '../src/lib/data.ts'
 
 const RAW_DIR = (process.env.RAW_DIR ?? '').replace(/^~/, homedir())
 if (!RAW_DIR) throw new Error('RAW_DIR is not set (see .env.example)')
@@ -18,28 +19,12 @@ type Transcript = {
   video: {
     id: string
     title: string
-    channel: string
     duration: number
     upload_date: string | null
     playlists: { id: string; title: string; index: number }[]
-    description?: string
   }
-  transcription: { source: string; language: string; generated?: boolean }
   segments: Segment[]
 }
-
-export type Video = {
-  id: string
-  title: string
-  duration: number
-  uploadDate: string | null
-  channel: string
-  playlists: { id: string; title: string; index: number }[]
-  source: string
-  segmentCount: number
-}
-
-export type Playlist = { id: string; title: string; videoIds: string[] }
 
 const round = (n: number) => Math.round(n * 100) / 100
 
@@ -67,9 +52,11 @@ async function main() {
     const t: Transcript = JSON.parse(await readFile(join(RAW_DIR, file), 'utf8'))
     const v = t.video
     // Empty transcripts happen when both YouTube captions and wit.ai come back blank.
-    const segments = (t.segments ?? [])
-      .map((s) => ({ ...s, text: clean(s.text ?? '') }))
-      .filter((s) => s.text)
+    const segments = mergeSegments(
+      (t.segments ?? [])
+        .map((s) => ({ ...s, text: clean(s.text ?? '') }))
+        .filter((s) => s.text),
+    )
     if (segments.length === 0) continue
 
     const kept = (v.playlists ?? []).filter((p) => !SKIP_PLAYLISTS.has(p.id))
@@ -80,9 +67,7 @@ async function main() {
       title: v.title,
       duration: v.duration,
       uploadDate: v.upload_date,
-      channel: v.channel,
       playlists: inPlaylists,
-      source: t.transcription?.source ?? 'unknown',
       segmentCount: segments.length,
     })
 

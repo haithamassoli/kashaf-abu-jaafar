@@ -225,8 +225,6 @@ cd ~/Downloads/tafrigh && .venv312/bin/tafrigh "<رابط قائمة أو قنا
 - **النموذج يُعرَّف بعد المتجهات لا قبلها**، وإلا بدأ Meilisearch يضمّن المدوّنة كلها على نواة واحدة. لذلك `pnpm index` لا يلمس `embedders` أبدًا؛ الملف `meilisearch-embedder.json` يملكه `pnpm embed` ويطبّقه في آخر خطواته.
 - إعدادان لازمان على الخادم وإلا فشل كل شيء برسالة غامضة: `MEILI_EXPERIMENTAL_ALLOWED_IP_NETWORKS=127.0.0.0/8` (بدونه يرفض Meilisearch مناداة نموذج على العنوان المحلي: `bad uri: Rejected URI`) و`MEILI_EXPERIMENTAL_EMBEDDING_CACHE_ENTRIES=20000` (يجعل السؤال المكرَّر بلا كلفة).
 
-> السكربت `pnpm deploy` بقيّة من مسار Cloudflare Pages قبل الانتقال إلى Vercel، ولا يُستعمل الآن.
-
 ## بنية المشروع
 
 ```

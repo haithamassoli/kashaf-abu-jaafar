@@ -47,7 +47,7 @@ if (process.argv.includes('--ladder')) {
   const rows: { q: string; outcome: Outcome; n: number; answered: boolean | null }[] = []
 
   for (const question of questions) {
-    const { q, expect, expectArticle } = question
+    const { q, expectArticle } = question
     const want = targets(question)
     const r = await search(q, expectArticle ? { tab: 'a' } : {})
     const shown = r.counts.v + r.counts.a
@@ -67,7 +67,6 @@ if (process.argv.includes('--ladder')) {
       n: r.widened ? shown : shown || r.lessonsTotal,
       answered: expectArticle ? seen.includes(expectArticle) : want.length ? want.some((v) => seen.includes(v)) : null,
     })
-    void expect
   }
 
   const count = (o: Outcome) => rows.filter((r) => r.outcome === o).length
