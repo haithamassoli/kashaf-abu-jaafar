@@ -6,7 +6,7 @@
 import { readdir, readFile, writeFile, mkdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { homedir } from 'node:os'
-import { clean } from '../src/lib/clean.ts'
+import { clean, mergeSegments } from '../src/lib/clean.ts'
 import type { Playlist, Video } from '../src/lib/data.ts'
 
 const RAW_DIR = (process.env.RAW_DIR ?? '').replace(/^~/, homedir())
@@ -52,9 +52,11 @@ async function main() {
     const t: Transcript = JSON.parse(await readFile(join(RAW_DIR, file), 'utf8'))
     const v = t.video
     // Empty transcripts happen when both YouTube captions and wit.ai come back blank.
-    const segments = (t.segments ?? [])
-      .map((s) => ({ ...s, text: clean(s.text ?? '') }))
-      .filter((s) => s.text)
+    const segments = mergeSegments(
+      (t.segments ?? [])
+        .map((s) => ({ ...s, text: clean(s.text ?? '') }))
+        .filter((s) => s.text),
+    )
     if (segments.length === 0) continue
 
     const kept = (v.playlists ?? []).filter((p) => !SKIP_PLAYLISTS.has(p.id))
