@@ -5,8 +5,11 @@ import { arabicDate } from '../../lib/format'
 import { SITE_URL, SHEIKH, breadcrumb } from '../../lib/seo'
 
 const books = allArticles()
-  .filter((article) => article.type === 'book')
-  .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+  .filter((article) => article.type === 'book' && article.download?.startsWith('https://drive.google.com/'))
+  .sort(
+    (a, b) =>
+      (b.date ?? '').localeCompare(a.date ?? '') || a.title.localeCompare(b.title, 'ar'),
+  )
 
 const summary = (text = '') => (text.length > 180 ? `${text.slice(0, 180).trimEnd()}…` : text)
 
@@ -36,8 +39,16 @@ const schema = {
 >
   <h1 class="mt-10 text-2xl font-semibold tracking-tight sm:text-3xl">كتب ومصنفات الشيخ</h1>
   <p class="mt-3 text-muted">
-    جميع الكتب المنشورة في صفحة الشيخ الرسمية، مع روابط القراءة والتنزيل بصيغة PDF.
+    كتب الشيخ المتاحة للقراءة والتنزيل بصيغة PDF.
   </p>
+  <a
+    href="https://drive.google.com/drive/folders/1_PWOwSJ3ptMTMM_Cn2yuu4jQSLQ406B2"
+    target="_blank"
+    rel="noopener"
+    class="mt-5 inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm transition-colors hover:bg-surface-2"
+  >
+    فتح مجلد الكتب في Google Drive
+  </a>
 
   <ul class="mt-6 grid gap-3 sm:grid-cols-2">
     {

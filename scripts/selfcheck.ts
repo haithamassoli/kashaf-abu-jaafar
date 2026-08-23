@@ -200,9 +200,11 @@ for (const p of playlists) {
 }
 
 const corpus = allArticles()
-const books = corpus.filter((a) => a.type === 'book')
-assert.equal(books.length, 8)
-assert.ok(books.every((book) => book.download?.endsWith('.pdf')), 'a book has no PDF')
+const books = corpus.filter(
+  (a) => a.type === 'book' && a.download?.startsWith('https://drive.google.com/file/d/'),
+)
+assert.equal(books.length, 11)
+assert.equal(new Set(books.map((book) => book.download)).size, books.length)
 
 // Telegram articles: their photos live in public/, which nothing else in the build validates —
 // a missed download or a renamed file is a 404 on a live page and silent everywhere else.
