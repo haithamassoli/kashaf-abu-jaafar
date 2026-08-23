@@ -322,3 +322,25 @@
     line-height: 1.7;
   }
 }
+
+/* تبديلُ الوضع: القديمُ ثابتٌ تحت، والجديدُ دائرةٌ تتّسع من زرّ التبديل. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 0;
+}
+::view-transition-new(root) {
+  z-index: 1;
+  animation: theme-wipe 420ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes theme-wipe {
+  from {
+    clip-path: circle(0 at var(--wipe-x, 50%) var(--wipe-y, 0));
+  }
+  to {
+    clip-path: circle(var(--wipe-r, 150vmax) at var(--wipe-x, 50%) var(--wipe-y, 0));
+  }
+}
