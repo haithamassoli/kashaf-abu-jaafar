@@ -37,6 +37,11 @@ assert.equal(normalize('مصطفى'), 'مصطفي')
 assert.equal(clean('قال [موسيقى] الشيخ'), 'قال الشيخ')
 assert.equal(clean('[تصفيق]'), '')
 assert.equal(clean('باب الطلاق'), 'باب الطلاق')
+assert.equal(
+  clean('بعظ الموظوع ايظا رافظي يظرب ظعيفا ظبط ظمن الظرورة وظع رظي رمظان قظية فظائل يظحك غظب الوعض ضاهر حظور فضيع'),
+  'بعض الموضوع ايضا رافضي يضرب ضعيفا ضبط ضمن الضرورة وضع رضي رمضان قضية فضائل يضحك غضب الوعظ ظاهر حضور فظيع',
+)
+assert.equal(clean('بعظمة محظور فضيعة القرظي فظلت'), 'بعظمة محظور فضيعة القرظي فظلت')
 
 // mergeSegments: short speech fragments join, but silence and a 20 s span remain boundaries.
 assert.deepEqual(
