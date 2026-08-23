@@ -31,6 +31,7 @@ const arg = (n: string) => process.argv.find((a) => a.startsWith(`--${n}=`))?.sl
 const flag = (n: string, d: number) => Number(arg(n) ?? d)
 const out = arg('out')
 const push = arg('push')
+const skip = arg('skip')
 const from = flag('from', 0)
 /** One Ollama request per batch; 32 keeps the prompt under bge-m3's context on one GPU. */
 const BATCH = flag('batch', 32)
@@ -155,9 +156,9 @@ for (let offset = 0; ; offset += 10_000) {
  * corpus otherwise re-embeds everything that was already frozen — an hour of GPU for vectors
  * that exist. `cat` the two output files before `--push`; the merge is by id either way.
  */
-if (arg('skip')) {
+if (skip) {
   const done = new Set<string>()
-  for await (const line of createInterface({ input: createReadStream(arg('skip') as string), crlfDelay: Infinity }))
+  for await (const line of createInterface({ input: createReadStream(skip), crlfDelay: Infinity }))
     if (line) done.add(JSON.parse(line).id)
   const before = docs.length
   docs = docs.filter((d) => !done.has(d.id))

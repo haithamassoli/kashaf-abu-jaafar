@@ -1,7 +1,6 @@
 ---
 import '../styles/global.css'
 import { SITE, SHEIKH, HOME_TITLE } from '../lib/seo'
-import JsonLd from '../components/JsonLd.astro'
 
 interface Props {
   title?: string
@@ -60,6 +59,7 @@ const canonical = new URL(Astro.url.pathname, base).href
 const ogImage = new URL(image, base).href
 // Only the site card's dimensions are known ahead of time; YouTube thumbs are 480×360.
 const ogSize = image === '/og.png' ? { w: '1200', h: '630' } : { w: '480', h: '360' }
+const jsonLd = (data: Record<string, unknown>) => JSON.stringify(data).replaceAll('<', '\\u003c')
 ---
 
 <!doctype html>
@@ -93,7 +93,11 @@ const ogSize = image === '/og.png' ? { w: '1200', h: '630' } : { w: '480', h: '3
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    {schema.map((data) => <JsonLd data={data} />)}
+    {
+      schema.map((data) => (
+        <script type="application/ld+json" is:inline set:html={jsonLd(data)}></script>
+      ))
+    }
     <script is:inline>
       // Applied before first paint so the theme never flashes.
       try {

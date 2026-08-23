@@ -1,9 +1,0 @@
----
-// Escapes `<` so a title containing "</script>" can't break out of the tag.
-interface Props {
-  data: Record<string, unknown>
-}
-const json = JSON.stringify(Astro.props.data).replaceAll('<', '\\u003c')
----
-
-<script type="application/ld+json" is:inline set:html={json} />

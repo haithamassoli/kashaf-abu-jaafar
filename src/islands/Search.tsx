@@ -16,8 +16,6 @@ import { arabicDate, duration, lessons as countLessons, timestamp } from '../lib
 import { normalize } from '../lib/normalize'
 import { DirectionProvider } from '@base-ui/react/direction-provider'
 import { Combobox } from '@base-ui/react/combobox'
-import { CheckIcon, ChevronDownIcon } from 'lucide-react'
-import { Input } from '@/components/ui/input'
 import { track } from '../lib/analytics'
 
 type PlaylistOption = { id: string; title: string; count: number }
@@ -213,7 +211,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
           ابحث في نصوص الدروس
         </label>
         <div className="flex gap-2">
-          <Input
+          <input
             id="search-q"
             data-search-input
             type="search"
@@ -224,7 +222,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
             autoComplete="off"
             spellCheck={false}
             enterKeyHint="search"
-            className="h-12 min-w-0 flex-1 rounded-xl border-border-strong bg-surface px-4 text-base md:text-base"
+            className="h-12 min-w-0 flex-1 rounded-xl border border-border-strong bg-surface px-4 text-base placeholder:text-muted"
           />
           <button
             type="submit"
@@ -258,7 +256,16 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
                   className="flex h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-lg border border-border-strong bg-surface px-3 text-sm text-fg transition-colors hover:bg-surface-2 sm:max-w-xs"
                 >
                   <span className="truncate">{playlistLabel(pl, playlists)}</span>
-                  <ChevronDownIcon className="size-4 shrink-0 text-muted" />
+                  <svg
+                    className="size-4 shrink-0 text-muted"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
                 </Combobox.Trigger>
                 <Combobox.Portal>
                   <Combobox.Positioner sideOffset={4} className="z-50">
@@ -285,7 +292,18 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
                               ({byId.get(id)?.count})
                             </span>
                             <Combobox.ItemIndicator className="absolute end-2 flex size-4 items-center justify-center">
-                              <CheckIcon className="size-4" />
+                              <svg
+                                className="size-4"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="m5 12 4 4L19 6" />
+                              </svg>
                             </Combobox.ItemIndicator>
                           </Combobox.Item>
                         )}

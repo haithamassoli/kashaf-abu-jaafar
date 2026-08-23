@@ -5,7 +5,7 @@ import Cues from '../../components/Cues.astro'
 import Actions from '../../components/Actions.astro'
 import Note from '../../components/Note.astro'
 import { videos, segmentsOf, playlistById, playlistVideos, type Video } from '../../lib/data'
-import { arabicDate, duration, youtubeUrl } from '../../lib/format'
+import { arabicDate, duration, withDigits, youtubeUrl } from '../../lib/format'
 import { SITE, SITE_URL, person, breadcrumb } from '../../lib/seo'
 
 export function getStaticPaths() {
@@ -24,9 +24,6 @@ const intro = segments
   .map((s) => s.t)
   .join(' ')
 const description = intro.length > 150 ? `${intro.slice(0, 150).trimEnd()}…` : intro
-
-/** Wrap Western digit runs so they keep LTR order and tabular figures. */
-const digits = (s: string) => s.replace(/\d+/g, '<span class="digits">$&</span>')
 
 const total = Math.floor(video.duration)
 const isoDuration = `PT${Math.floor(total / 3600)}H${Math.floor((total % 3600) / 60)}M${total % 60}S`
@@ -96,8 +93,8 @@ const crumbs = breadcrumb([['القوائم', '/p/'], [video.title, `/v/${video.
     <h1 class="mt-4 text-xl font-semibold leading-relaxed sm:text-2xl">{video.title}</h1>
 
     <div class="mt-1 flex flex-wrap items-center gap-x-5 text-sm text-muted">
-      {video.uploadDate && <span set:html={digits(arabicDate(video.uploadDate))} />}
-      <span set:html={digits(duration(video.duration))} />
+      {video.uploadDate && <span set:html={withDigits(arabicDate(video.uploadDate))} />}
+      <span set:html={withDigits(duration(video.duration))} />
       <a
         href={youtubeUrl(video.id)}
         rel="noopener"

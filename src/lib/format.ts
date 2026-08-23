@@ -18,16 +18,17 @@ export function duration(seconds: number): string {
 }
 
 /** ISO date -> Arabic-labelled Gregorian date with Western digits. */
-const MONTHS = [
-  'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-  'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
-]
+const DATE = new Intl.DateTimeFormat('ar-u-nu-latn', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
 
 export function arabicDate(iso: string | null | undefined): string {
   if (!iso) return ''
-  const [y, m, d] = iso.split('-').map(Number)
-  if (!y || !m || !d) return ''
-  return `${d} ${MONTHS[m - 1]} ${y}`
+  const date = new Date(`${iso}T00:00:00Z`)
+  return Number.isNaN(date.getTime()) ? '' : DATE.format(date)
 }
 
 export function youtubeUrl(videoId: string, t?: number): string {

@@ -6,9 +6,7 @@ export type Video = {
   title: string
   duration: number
   uploadDate: string | null
-  channel: string
   playlists: { id: string; title: string; index: number }[]
-  source: string
   segmentCount: number
 }
 

@@ -61,14 +61,9 @@ export type Cue = {
   id: string
   video_id: string
   title: string
-  url: string
   start: number
-  end: number
   text: string
-  playlist_ids?: string[]
   upload_date?: string
-  duration?: number
-  channel?: string
   _formatted?: { text?: string }
 }
 
@@ -77,7 +72,6 @@ export type ArticleHit = {
   id: string
   articleId: string
   type: string
-  source: string
   title: string
   categories: string[]
   date: string | null
@@ -94,7 +88,6 @@ export type LessonHit = {
   id: string
   video_id: string
   title: string
-  playlist_ids?: string[]
   upload_date?: string
   duration?: number
   _formatted?: { title?: string }
@@ -111,7 +104,6 @@ export type SearchResult = {
   totalIsCapped: boolean
   page: number
   totalPages: number
-  processingTimeMs: number
   /**
    * Nothing matched strictly — anywhere, including at lesson level — so these hits come from
    * a relaxed retry and must be labelled as such. The user asked a question; silently handing
@@ -157,16 +149,17 @@ type Strategy = 'all' | 'frequency'
  * the floor, so asking the same vectors again would return the same rejects, and a query worth
  * widening for is one whose words exist somewhere — that is `frequency`'s job, not the vector's.
  */
-const semantic = (strategy: Strategy) =>
-  strategy === 'all'
-    ? { hybrid: { embedder: EMBEDDER, semanticRatio: SEMANTIC_RATIO }, rankingScoreThreshold: SCORE_FLOOR }
-    : {}
-
 function pair(q: string, { tab = 'v', page = 1, playlists = [], types = [] }: Options, strategy: Strategy) {
   const ids = playlists.map(safePlaylist).filter(Boolean)
   const kinds = types.filter((t) => ARTICLE_TYPES.has(t))
   const at = Math.min(page, MAX_PAGES)
-  const shared = { ...common, matchingStrategy: strategy, ...semantic(strategy) }
+  const shared = {
+    ...common,
+    matchingStrategy: strategy,
+    ...(strategy === 'all'
+      ? { hybrid: { embedder: EMBEDDER, semanticRatio: SEMANTIC_RATIO }, rankingScoreThreshold: SCORE_FLOOR }
+      : {}),
+  }
 
   return [
     {
@@ -353,7 +346,6 @@ export async function search(q: string, options: Options = {}): Promise<SearchRe
     page: active.page ?? 1,
     // A widened query has no meaningful tail — page 40 of a loose match is noise, so cap it.
     totalPages: widened ? Math.min(active.totalPages ?? 1, 1) : Math.min(active.totalPages ?? 1, MAX_PAGES),
-    processingTimeMs: active.processingTimeMs,
     widened,
     lessons,
     lessonsTotal,
