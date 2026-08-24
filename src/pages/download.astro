@@ -1,0 +1,151 @@
+---
+import Base from '../layouts/Base.astro'
+
+const api = import.meta.env.PUBLIC_DOWNLOAD_HOST || 'https://download.assoli.site'
+---
+
+<Base
+  title="تنزيل الصوت والفيديو"
+  description="نزّل فيديو أو قائمة تشغيل من يوتيوب بصيغة صوت أو فيديو وبالجودة التي تختارها."
+>
+  <section class="mx-auto max-w-xl pt-10 sm:pt-16">
+    <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">تنزيل الصوت والفيديو</h1>
+    <p class="mt-3 leading-8 text-muted">
+      ألصق رابط فيديو أو قائمة تشغيل من يوتيوب. الصوت يُنزّل بأفضل جودة متاحة، وللفيديو يمكنك
+      فحص الرابط واختيار أي جودة متاحة.
+    </p>
+
+    <form
+      id="download-form"
+      action={`${api}/download`}
+      data-api={api}
+      method="get"
+      class="card mt-7 space-y-6 p-5 sm:p-6"
+    >
+      <div>
+        <label for="media-url" class="mb-2 block text-sm font-medium">رابط يوتيوب</label>
+        <input
+          id="media-url"
+          name="url"
+          type="url"
+          inputmode="url"
+          autocomplete="url"
+          required
+          placeholder="https://www.youtube.com/watch?v=..."
+          class="h-12 w-full rounded-xl border border-border-strong bg-bg px-4 text-start text-sm placeholder:text-muted"
+          dir="ltr"
+        />
+      </div>
+
+      <fieldset>
+        <legend class="mb-2 text-sm font-medium">النوع</legend>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-border bg-bg px-4">
+            <input type="radio" name="type" value="video" checked class="size-4 accent-accent" />
+            فيديو
+          </label>
+          <label class="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-border bg-bg px-4">
+            <input type="radio" name="type" value="audio" class="size-4 accent-accent" />
+            صوت
+          </label>
+        </div>
+      </fieldset>
+
+      <div id="quality-field">
+        <label for="quality" class="mb-2 block text-sm font-medium">جودة الفيديو</label>
+        <div class="flex gap-2">
+          <select
+            id="quality"
+            name="quality"
+            class="h-12 min-w-0 flex-1 rounded-xl border border-border-strong bg-bg px-3"
+          >
+            <option value="best">أفضل جودة</option>
+          </select>
+          <button
+            id="inspect"
+            type="button"
+            class="min-h-12 shrink-0 rounded-xl border border-border bg-surface px-4 text-sm text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+          >
+            عرض الجودات
+          </button>
+        </div>
+      </div>
+
+      <p id="download-status" aria-live="polite" class="min-h-6 text-sm text-muted"></p>
+
+      <button
+        type="submit"
+        class="min-h-12 w-full rounded-xl bg-accent px-5 py-3 font-medium text-accent-fg transition-opacity hover:opacity-90"
+      >
+        تنزيل
+      </button>
+    </form>
+
+    <p class="mt-5 text-sm leading-7 text-muted">
+      قد يستغرق تجهيز القوائم الكبيرة عدة دقائق. نزّل فقط المواد التي يحق لك حفظها.
+    </p>
+  </section>
+</Base>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('#download-form')!
+  const input = document.querySelector<HTMLInputElement>('#media-url')!
+  const quality = document.querySelector<HTMLSelectElement>('#quality')!
+  const qualityField = document.querySelector<HTMLElement>('#quality-field')!
+  const inspect = document.querySelector<HTMLButtonElement>('#inspect')!
+  const status = document.querySelector<HTMLElement>('#download-status')!
+  const api = form.dataset.api!
+
+  const resetQualities = () => {
+    quality.replaceChildren(new Option('أفضل جودة', 'best'))
+  }
+
+  const setType = () => {
+    const audio = form.querySelector<HTMLInputElement>('[name="type"]:checked')?.value === 'audio'
+    qualityField.hidden = audio
+    quality.disabled = audio
+    inspect.disabled = audio
+    if (audio) status.textContent = 'سيُنزل الصوت بأفضل جودة متاحة.'
+    else if (status.textContent === 'سيُنزل الصوت بأفضل جودة متاحة.') status.textContent = ''
+  }
+
+  const preset = new URLSearchParams(location.search).get('url')
+  if (preset) input.value = preset
+  form.addEventListener('change', (event) => {
+    if ((event.target as HTMLInputElement).name === 'type') setType()
+  })
+  input.addEventListener('input', () => {
+    resetQualities()
+    status.textContent = ''
+  })
+
+  inspect.addEventListener('click', async () => {
+    if (!input.reportValidity()) return
+    inspect.disabled = true
+    status.textContent = 'جارٍ فحص الرابط...'
+    try {
+      const response = await fetch(`${api}/info`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: input.value }),
+      })
+      if (!response.ok) throw new Error()
+      const info = await response.json()
+      resetQualities()
+      for (const height of info.qualities || []) {
+        quality.insertBefore(new Option(`${height}p`, String(height)), quality.lastElementChild)
+      }
+      status.textContent = info.playlist
+        ? `${info.title}، قائمة فيها ${Number(info.count).toLocaleString('ar')} فيديو.`
+        : info.title
+    } catch {
+      status.textContent = 'تعذّر فحص الرابط. تأكد أنه رابط يوتيوب متاح ثم أعد المحاولة.'
+    } finally {
+      inspect.disabled = false
+    }
+  })
+
+  form.addEventListener('submit', () => {
+    status.textContent = 'بدأ تجهيز التنزيل. لا تغلق هذه الصفحة حتى يبدأ حفظ الملف.'
+  })
+</script>

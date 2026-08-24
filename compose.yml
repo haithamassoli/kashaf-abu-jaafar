@@ -1,7 +1,14 @@
-# Meilisearch on the VPS, behind Caddy for TLS, with the embedding model beside it. Local dev
-# uses the brew binaries instead (`pnpm meili` + `ollama serve`), so this file only ever runs
-# in production.
+# Production services on the VPS. Local development runs the binaries directly instead.
 services:
+  downloader:
+    build: ./download
+    restart: unless-stopped
+    environment:
+      SITE_ORIGINS: https://alkulify.assoli.site
+      MAX_CONCURRENT_DOWNLOADS: '2'
+    ports:
+      - '127.0.0.1:8080:8080'
+
   meilisearch:
     image: getmeili/meilisearch:v1.53
     restart: unless-stopped

@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build && pnpm guard",
+    "test": "node --test download/server.test.mjs",
     "guard": "(test -d dist/v || (echo 'dynamic routes are missing — check the build-time data path' && false)) && (! grep -rql 'PUBLIC_MEILI_HOST:\"http://127.0.0.1:7700\"' dist/_astro || (echo 'PUBLIC_MEILI_HOST is still localhost — set the public one and rebuild' && false))",
     "preview": "astro preview",
     "meili": "meilisearch --db-path ./data/meili/data.ms --master-key $MEILI_ADMIN_KEY --http-addr 127.0.0.1:7700 --env development",

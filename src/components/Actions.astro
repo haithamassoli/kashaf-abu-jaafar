@@ -1,6 +1,6 @@
 ---
 /**
- * Bookmark / share / save-as-PDF / download-as-TXT, for a lesson, article or playlist.
+ * Bookmark / share / save-as-PDF / download-as-TXT or media, for a lesson, article or playlist.
  *
  * PDF is the browser's own print-to-PDF (see the @media print block in global.css) —
  * no PDF library ships to the reader, and it prints Arabic shaping correctly, which
@@ -15,12 +15,22 @@ import type { Kind } from '../lib/store'
 const {
   title,
   kind,
+  mediaUrl,
   class: cls,
-} = Astro.props as { title: string; kind: Kind; class?: string }
+} = Astro.props as { title: string; kind: Kind; mediaUrl?: string; class?: string }
 
 // One list rendered twice: a row of buttons from sm up, a single menu below it. The
 // icons are raw <svg> bodies so both renderings share them instead of duplicating 3 KB.
 const ACTS = [
+  ...(mediaUrl
+    ? [
+        {
+          act: 'media',
+          label: 'تنزيل الصوت أو الفيديو',
+          icon: `<path d="M12 3v12M7 10l5 5 5-5M5 21h14"></path>`,
+        },
+      ]
+    : []),
   {
     act: 'share',
     label: 'مشاركة',
@@ -43,9 +53,8 @@ const ACTS = [
   },
 ]
 
-// A playlist page has no prose: there is nothing to copy or download, and its print is
-// just the lesson list. Only sharing survives, and one button needs no menu.
-const acts = kind === 'p' ? ACTS.filter((a) => a.act === 'share') : ACTS
+// A playlist page has no prose, so its actions are the media download and share links.
+const acts = kind === 'p' ? ACTS.filter((a) => a.act === 'media' || a.act === 'share') : ACTS
 const menu = acts.length > 1
 
 const svg = 'size-4 shrink-0'
@@ -59,6 +68,7 @@ const item =
   data-actions
   data-title={title}
   data-kind={kind}
+  data-media-url={mediaUrl}
   class:list={['flex items-center gap-2 print:hidden', cls]}
 >
   {/* Starts unpressed and is corrected on hydration: the page is a static file, so
@@ -164,6 +174,7 @@ const item =
   if (bar) {
     const title = bar.dataset.title || document.title
     const kind = (bar.dataset.kind || 'v') as Kind
+    const mediaUrl = bar.dataset.mediaUrl
     const path = location.pathname
     const menu = bar.querySelector<HTMLDetailsElement>('[data-menu]')
 
@@ -240,7 +251,9 @@ const item =
       const act = (e.target as HTMLElement).closest<HTMLElement>('[data-act]')?.dataset.act
       if (!act) return
       if (menu) menu.open = false
-      if (act === 'share') share()
+      if (act === 'media' && mediaUrl)
+        location.href = `/download/?url=${encodeURIComponent(mediaUrl)}`
+      else if (act === 'share') share()
       else if (act === 'copy') copy()
       else if (act === 'pdf') print()
       else if (act === 'txt') txt()
