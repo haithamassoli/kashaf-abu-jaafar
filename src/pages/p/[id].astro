@@ -131,10 +131,10 @@ const crumbs = breadcrumb([['القوائم', '/p/'], [playlist.title, `/p/${pla
   <script>
     // Reverses the DOM rather than the CSS: on a 293-lesson list, tab order and
     // screen-reader order have to keep matching the eye (WCAG 1.3.2).
-    const orderLabel = document.getElementById('order-label')
-    const lessonList = document.getElementById('lesson-list')
+    const orderLabel = document.getElementById('order-label')!
+    const lessonList = document.getElementById('lesson-list')!
     let newestFirst = false
-    document.getElementById('order-toggle').addEventListener('click', () => {
+    document.getElementById('order-toggle')!.addEventListener('click', () => {
       lessonList.append(...[...lessonList.children].reverse())
       newestFirst = !newestFirst
       orderLabel.textContent = newestFirst ? 'الأحدث أولاً' : 'الأقدم أولاً'

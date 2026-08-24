@@ -58,6 +58,20 @@ export default defineConfig({
     },
   },
   integrations: [
+    {
+      name: 'theme-bootstrap',
+      hooks: {
+        'astro:config:setup': ({ injectScript }) =>
+          injectScript(
+            'head-inline',
+            `try {
+  const saved = localStorage.getItem('theme')
+  const dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches
+  document.documentElement.classList.toggle('dark', dark)
+} catch {}`,
+          ),
+      },
+    },
     react(),
     sitemap({
       // Error pages and /saved/ are noindex; the latter is empty until localStorage fills it.
@@ -69,6 +83,8 @@ export default defineConfig({
       }),
     }),
   ],
+  // The site has no Markdown routes, and Shiki's inline styles conflict with CSP.
+  markdown: { syntaxHighlight: false },
   vite: { plugins: [tailwindcss()] },
   build: { inlineStylesheets: 'auto' },
 })

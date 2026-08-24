@@ -112,10 +112,11 @@ hashes in each HTML page. `vercel.json` keeps only `frame-ancestors 'none'`, whi
 ignore in a meta policy, alongside the non-CSP security headers.
 
 Executable `<script is:inline>` bodies bypass Vite and Astro does not hash them. The theme
-bootstrap therefore lives in `public/theme.js` as a blocking same-origin script; the other
-executable scripts use normal bundled `<script>` tags. JSON-LD and chart data keep their
-non-executable script types. Any new executable script must be bundled or externalized, then
-tested with `astro build` and `astro preview`; otherwise the browser blocks it silently.
+bootstrap therefore uses Astro's `head-inline` integration hook, which keeps it blocking and
+adds its hash to the generated policy. The other executable scripts use normal bundled
+`<script>` tags. JSON-LD and chart data keep their non-executable script types. Any new
+executable script must be bundled or injected through Astro, then tested with `astro build`
+and `astro preview`; otherwise the browser blocks it silently.
 
 ---
 

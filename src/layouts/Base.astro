@@ -108,7 +108,6 @@ const jsonLd = (data: Record<string, unknown>) => JSON.stringify(data).replaceAl
         <script type="application/ld+json" is:inline set:html={jsonLd(data)}></script>
       ))
     }
-    <script is:inline src="/theme.js"></script>
   </head>
 
   <body class="bg-bg text-fg antialiased">
@@ -299,11 +298,11 @@ const jsonLd = (data: Record<string, unknown>) => JSON.stringify(data).replaceAl
     </div>
 
     <script>
-      const toggle = document.getElementById('theme-toggle')
+      const toggle = document.getElementById('theme-toggle')!
       const syncToggle = () =>
-        toggle?.setAttribute('aria-pressed', String(document.documentElement.classList.contains('dark')))
+        toggle.setAttribute('aria-pressed', String(document.documentElement.classList.contains('dark')))
       syncToggle()
-      toggle?.addEventListener('click', () => {
+      toggle.addEventListener('click', () => {
         const flip = () => {
           const dark = document.documentElement.classList.toggle('dark')
           syncToggle()
@@ -364,7 +363,7 @@ const jsonLd = (data: Record<string, unknown>) => JSON.stringify(data).replaceAl
       }
       document.getElementById('install-close')?.addEventListener('click', hideInstall)
 
-      let installEvent: Event & { prompt(): void }
+      let installEvent: (Event & { prompt(): void }) | undefined
       addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault()
         installEvent = e as typeof installEvent
