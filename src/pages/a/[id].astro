@@ -2,12 +2,16 @@
 import Base from '../../layouts/Base.astro'
 import Actions from '../../components/Actions.astro'
 import Note from '../../components/Note.astro'
-import { allArticles, type Article } from '../../lib/data'
+import { allArticles, contentDigest, type Article } from '../../lib/data'
 import { arabicDate } from '../../lib/format'
 import { SITE, SITE_URL, person, breadcrumb } from '../../lib/seo'
 
 export function getStaticPaths() {
-  return allArticles().map((article) => ({ params: { id: article.id }, props: { article } }))
+  return allArticles().map((article) => ({
+    params: { id: article.id },
+    props: { article },
+    cacheKey: contentDigest(article),
+  }))
 }
 
 interface Props {

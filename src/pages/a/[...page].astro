@@ -1,13 +1,17 @@
 ---
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro'
 import Base from '../../layouts/Base.astro'
+import { contentDigest } from '../../lib/data'
 import { arabicDate, articles as counted, withDigits } from '../../lib/format'
 import { SITE_URL, SHEIKH, breadcrumb } from '../../lib/seo'
 import { rows } from './index.json.ts'
 
 // One document for all 3,333 articles was 1.3 MB of HTML. `[...page]` keeps page 1 at /a/.
 export const getStaticPaths = (({ paginate }) =>
-  paginate(rows, { pageSize: 50 })) satisfies GetStaticPaths
+  paginate(rows, { pageSize: 50 }).map((path) => ({
+    ...path,
+    cacheKey: contentDigest(path.props.page),
+  }))) satisfies GetStaticPaths
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>
 

@@ -1,12 +1,23 @@
 ---
 import Base from '../../layouts/Base.astro'
 import Actions from '../../components/Actions.astro'
-import { playlists, playlistVideos, playlistDuration, type Playlist } from '../../lib/data'
+import {
+  contentDigest,
+  playlists,
+  playlistVideos,
+  playlistDuration,
+  videoById,
+  type Playlist,
+} from '../../lib/data'
 import { arabicDate, duration, lessons, withDigits } from '../../lib/format'
 import { SITE_URL, SHEIKH, breadcrumb } from '../../lib/seo'
 
 export function getStaticPaths() {
-  return playlists.map((playlist) => ({ params: { id: playlist.id }, props: { playlist } }))
+  return playlists.map((playlist) => ({
+    params: { id: playlist.id },
+    props: { playlist },
+    cacheKey: contentDigest(playlist, playlist.videoIds.map((id) => videoById.get(id))),
+  }))
 }
 
 type Props = { playlist: Playlist }
@@ -117,7 +128,7 @@ const crumbs = breadcrumb([['القوائم', '/p/'], [playlist.title, `/p/${pla
     }
   </ol>
 
-  <script is:inline>
+  <script>
     // Reverses the DOM rather than the CSS: on a 293-lesson list, tab order and
     // screen-reader order have to keep matching the eye (WCAG 1.3.2).
     const orderLabel = document.getElementById('order-label')

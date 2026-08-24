@@ -4,12 +4,33 @@ import Player from '../../islands/Player'
 import Cues from '../../components/Cues.astro'
 import Actions from '../../components/Actions.astro'
 import Note from '../../components/Note.astro'
-import { videos, segmentsOf, playlistById, playlistVideos, type Video } from '../../lib/data'
+import {
+  contentDigest,
+  playlistById,
+  playlistVideos,
+  segmentsDigest,
+  segmentsOf,
+  videoById,
+  videos,
+  type Video,
+} from '../../lib/data'
 import { arabicDate, duration, withDigits, youtubeUrl } from '../../lib/format'
 import { SITE, SITE_URL, person, breadcrumb } from '../../lib/seo'
 
 export function getStaticPaths() {
-  return videos.map((video) => ({ params: { id: video.id }, props: { video } }))
+  return videos.map((video) => {
+    const series = playlistById.get(video.playlists[0]?.id ?? '')
+    return {
+      params: { id: video.id },
+      props: { video },
+      cacheKey: contentDigest(
+        video,
+        segmentsDigest(video.id),
+        series,
+        series?.videoIds.map((id) => videoById.get(id)),
+      ),
+    }
+  })
 }
 
 interface Props {
