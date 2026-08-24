@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css'
+import { Font } from 'astro:assets'
 import { SITE, SHEIKH, HOME_TITLE } from '../lib/seo'
 
 interface Props {
@@ -67,6 +68,7 @@ const jsonLd = (data: Record<string, unknown>) => JSON.stringify(data).replaceAl
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <Font cssVariable="--font-thmanyah-sans" preload={[{ weight: 400, style: 'normal' }]} />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
@@ -106,14 +108,6 @@ const jsonLd = (data: Record<string, unknown>) => JSON.stringify(data).replaceAl
         <script type="application/ld+json" is:inline set:html={jsonLd(data)}></script>
       ))
     }
-    <script is:inline>
-      // Applied before first paint so the theme never flashes.
-      try {
-        const saved = localStorage.getItem('theme')
-        const dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches
-        document.documentElement.classList.toggle('dark', dark)
-      } catch {}
-    </script>
   </head>
 
   <body class="bg-bg text-fg antialiased">
@@ -303,12 +297,12 @@ const jsonLd = (data: Record<string, unknown>) => JSON.stringify(data).replaceAl
       <span class="card px-4 py-2 text-sm shadow-lg" hidden></span>
     </div>
 
-    <script is:inline>
-      const toggle = document.getElementById('theme-toggle')
+    <script>
+      const toggle = document.getElementById('theme-toggle')!
       const syncToggle = () =>
-        toggle?.setAttribute('aria-pressed', String(document.documentElement.classList.contains('dark')))
+        toggle.setAttribute('aria-pressed', String(document.documentElement.classList.contains('dark')))
       syncToggle()
-      toggle?.addEventListener('click', () => {
+      toggle.addEventListener('click', () => {
         const flip = () => {
           const dark = document.documentElement.classList.toggle('dark')
           syncToggle()
@@ -362,31 +356,32 @@ const jsonLd = (data: Record<string, unknown>) => JSON.stringify(data).replaceAl
         }
       }
       const hideInstall = () => {
-        installUI.hidden = true
+        if (installUI) installUI.hidden = true
         try {
           sessionStorage.setItem('install-seen', '1')
         } catch {}
       }
-      document.getElementById('install-close').addEventListener('click', hideInstall)
+      document.getElementById('install-close')?.addEventListener('click', hideInstall)
 
-      let installEvent
+      let installEvent: (Event & { prompt(): void }) | undefined
       addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault()
-        installEvent = e
-        if (!installSeen()) installUI.hidden = false
+        installEvent = e as typeof installEvent
+        if (!installSeen() && installUI) installUI.hidden = false
       })
-      document.getElementById('install-go').addEventListener('click', () => {
+      document.getElementById('install-go')?.addEventListener('click', () => {
         hideInstall()
         installEvent?.prompt()
       })
 
       // Safari never fires beforeinstallprompt; navigator.standalone exists only there,
       // and is false only while the site isn't installed yet.
-      if (!installSeen() && navigator.standalone === false) {
-        document.getElementById('install-hint').textContent =
-          'من زر المشاركة، اختر «إضافة إلى الشاشة الرئيسية».'
-        document.getElementById('install-go').hidden = true
-        installUI.hidden = false
+      if (!installSeen() && (navigator as Navigator & { standalone?: boolean }).standalone === false) {
+        const hint = document.getElementById('install-hint')
+        const install = document.getElementById('install-go')
+        if (hint) hint.textContent = 'من زر المشاركة، اختر «إضافة إلى الشاشة الرئيسية».'
+        if (install) install.hidden = true
+        if (installUI) installUI.hidden = false
       }
 
     </script>

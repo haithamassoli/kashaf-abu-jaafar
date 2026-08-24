@@ -1,4 +1,5 @@
 /** Build-time reads of the data/ snapshot produced by scripts/build-data.ts. */
+import { createHash } from 'node:crypto'
 import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -19,6 +20,13 @@ export type Segment = { s: number; e: number; t: string }
 const dir = `${resolve('data')}/`
 const read = <T>(file: string, fallback: T): T =>
   existsSync(dir + file) ? (JSON.parse(readFileSync(dir + file, 'utf8')) as T) : fallback
+
+const hash = (value: string | Buffer): string => createHash('sha256').update(value).digest('hex')
+export const contentDigest = (...values: unknown[]): string => hash(JSON.stringify(values))
+export const segmentsDigest = (id: string): string => {
+  const file = `${dir}segments/${id}.json`
+  return hash(existsSync(file) ? readFileSync(file) : '[]')
+}
 
 export const videos: Video[] = read<Video[]>('videos.json', [])
 export const playlists: Playlist[] = read<Playlist[]>('playlists.json', [])

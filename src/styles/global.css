@@ -1,45 +1,5 @@
 @import 'tailwindcss';
 
-@font-face {
-  font-family: 'Thmanyah Sans';
-  src: url('/fonts/thmanyahsans-Light.woff2') format('woff2');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Thmanyah Sans';
-  src: url('/fonts/thmanyahsans-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Thmanyah Sans';
-  src: url('/fonts/thmanyahsans-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Thmanyah Sans';
-  src: url('/fonts/thmanyahsans-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Thmanyah Sans';
-  src: url('/fonts/thmanyahsans-Black.woff2') format('woff2');
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
-
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant no-hover (@media (hover: none));
 
@@ -91,7 +51,7 @@
   --color-accent-fg: var(--accent-fg);
   --color-accent-soft: var(--accent-soft);
 
-  --font-sans: 'Thmanyah Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-thmanyah-sans);
   --font-heading: var(--font-sans);
   --font-mono: var(--font-sans);
   /* Tailwind preflight falls back to these on html/<code>/form controls. Pin them

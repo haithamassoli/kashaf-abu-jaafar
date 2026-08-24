@@ -8,7 +8,7 @@ import { chunk, decode, paragraphs, titleKey } from '../src/lib/html.ts'
 import { markMatches } from '../src/lib/mark.ts'
 import { timestamp, duration, arabicDate, lessons, hours, lists, articles, withDigits } from '../src/lib/format.ts'
 import { breadcrumb, mailto, CONTACT_EMAIL, SITE, SITE_URL } from '../src/lib/seo.ts'
-import { allArticles, playlists, playlistVideos } from '../src/lib/data.ts'
+import { allArticles, contentDigest, playlists, playlistVideos } from '../src/lib/data.ts'
 import { all, update } from '../src/lib/store.ts'
 
 // highlight: escapes everything except <mark>, so a hostile transcript cannot inject HTML
@@ -74,6 +74,13 @@ assert.deepEqual(paragraphs(`<p>${long}</p><p>ذيل</p>`), [long, 'ذيل'])
 // titleKey: the same post on wp and blogger, differing only in diacritics/punctuation
 assert.equal(titleKey('الصَّلاة … '), titleKey('الصلاه'))
 assert.notEqual(titleKey('تقويم المعاصرين ( الحلقة الثانية )'), titleKey('تقويم المعاصرين ( الحلقة الثانية عشر )'))
+
+// Incremental builds must reuse identical JSON, but transcript corrections and list order
+// both change rendered pages and therefore their cache keys.
+const cached = { transcript: ['النص القديم'], videos: ['a', 'b'] }
+assert.equal(contentDigest(cached), contentDigest({ ...cached }))
+assert.notEqual(contentDigest(cached), contentDigest({ ...cached, transcript: ['النص المصحح'] }))
+assert.notEqual(contentDigest(cached), contentDigest({ ...cached, videos: ['b', 'a'] }))
 
 // format
 assert.equal(timestamp(0), '00:00')
