@@ -1,0 +1,13 @@
+---
+import ErrorPage from '../components/ErrorPage.astro'
+
+Astro.response.status = 422
+Astro.response.statusText = 'Unprocessable Content'
+---
+
+<ErrorPage
+  code={422}
+  title="تعذّر معالجة الطلب"
+  description="لم نتمكن من معالجة البيانات المرسلة. راجعها ثم حاول مرة أخرى."
+  secondary={{ href: '/contact/', label: 'تواصل معنا' }}
+/>

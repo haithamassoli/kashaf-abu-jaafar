@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro'
+
+interface Props {
+  code: 404 | 422 | 500
+  title: string
+  description: string
+  secondary: { href: string; label: string }
+}
+
+const { code, title, description, secondary } = Astro.props
+---
+
+<Base title={`${code} — ${title}`} description={description} noindex>
+  <section class="py-24 text-center">
+    <p class="digits text-sm font-semibold text-accent" aria-hidden="true">{code}</p>
+    <h1 class="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
+    <p class="mx-auto mt-3 max-w-xl text-muted">{description}</p>
+    <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+      <a
+        href="/"
+        class="inline-flex h-11 items-center rounded-xl bg-accent px-5 font-medium text-accent-fg transition-opacity hover:opacity-90"
+        >الصفحة الرئيسية</a
+      >
+      <a
+        href={secondary.href}
+        class="inline-flex h-11 items-center rounded-xl border border-border-strong px-5 text-fg transition-colors hover:bg-surface-2"
+        >{secondary.label}</a
+      >
+    </div>
+  </section>
+</Base>

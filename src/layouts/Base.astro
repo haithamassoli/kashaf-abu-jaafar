@@ -72,7 +72,11 @@ const jsonLd = (data: Record<string, unknown>) => JSON.stringify(data).replaceAl
     <link rel="canonical" href={canonical} />
     <meta
       name="robots"
-      content={noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large, max-snippet:-1'}
+      content={
+        noindex
+          ? 'noindex, follow'
+          : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
+      }
     />
     <meta property="og:site_name" content={SITE} />
     <meta property="og:title" content={fullTitle} />
@@ -81,10 +85,14 @@ const jsonLd = (data: Record<string, unknown>) => JSON.stringify(data).replaceAl
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content="ar_AR" />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:type" content={image === '/og.png' ? 'image/png' : 'image/jpeg'} />
     <meta property="og:image:alt" content={title ?? SITE} />
     <meta property="og:image:width" content={ogSize.w} />
     <meta property="og:image:height" content={ogSize.h} />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@Xalkulify" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
     <meta name="twitter:image:alt" content={title ?? SITE} />
     <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)" />

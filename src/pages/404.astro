@@ -1,22 +1,10 @@
 ---
-import Base from '../layouts/Base.astro'
+import ErrorPage from '../components/ErrorPage.astro'
 ---
 
-<Base title="الصفحة غير موجودة" noindex>
-  <section class="py-24 text-center">
-    <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">الصفحة غير موجودة</h1>
-    <p class="mt-3 text-muted">ربما تغيّر الرابط أو حُذف؛ ابدأ من الصفحة الرئيسية أو تصفّح القوائم.</p>
-    <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-      <a
-        href="/"
-        class="inline-flex h-11 items-center rounded-xl bg-accent px-5 font-medium text-accent-fg transition-opacity hover:opacity-90"
-        >الصفحة الرئيسية</a
-      >
-      <a
-        href="/p/"
-        class="inline-flex h-11 items-center rounded-xl border border-border-strong px-5 text-fg transition-colors hover:bg-surface-2"
-        >القوائم</a
-      >
-    </div>
-  </section>
-</Base>
+<ErrorPage
+  code={404}
+  title="الصفحة غير موجودة"
+  description="ربما تغيّر الرابط أو حُذف؛ ابدأ من الصفحة الرئيسية أو تصفّح القوائم."
+  secondary={{ href: '/p/', label: 'القوائم' }}
+/>

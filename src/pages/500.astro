@@ -1,0 +1,10 @@
+---
+import ErrorPage from '../components/ErrorPage.astro'
+---
+
+<ErrorPage
+  code={500}
+  title="عطل مؤقت"
+  description="حدث عطل غير متوقع. حاول مرة أخرى بعد قليل."
+  secondary={{ href: '', label: 'أعد المحاولة' }}
+/>

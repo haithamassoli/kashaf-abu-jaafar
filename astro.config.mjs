@@ -12,9 +12,8 @@ export default defineConfig({
   integrations: [
     react(),
     sitemap({
-      // /404 and /saved/ are the only pages that shouldn't be listed — /saved/ is an
-      // empty shell until localStorage fills it in. Everything else is indexable.
-      filter: (page) => !page.endsWith('/404/') && !page.endsWith('/saved/'),
+      // Error pages and /saved/ are noindex; the latter is empty until localStorage fills it.
+      filter: (page) => !['/404/', '/422/', '/500/', '/saved/'].some((path) => page.endsWith(path)),
       serialize: (item) => ({
         ...item,
         // Lesson pages are the long tail; the hubs are what we want crawled first.
