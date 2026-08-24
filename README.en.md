@@ -9,7 +9,7 @@
 Arabic-only, RTL, no login, no database.
 
 [![Site](https://img.shields.io/badge/site-kashaf--alkulify.assoli.site-1f6f4a)](https://alkulify.assoli.site)
-[![Astro](https://img.shields.io/badge/Astro-5-BC52EE?logo=astro&logoColor=white)](https://astro.build)
+[![Astro](https://img.shields.io/badge/Astro-7-BC52EE?logo=astro&logoColor=white)](https://astro.build)
 [![Meilisearch](https://img.shields.io/badge/Meilisearch-1.53-FF5CAA?logo=meilisearch&logoColor=white)](https://www.meilisearch.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 

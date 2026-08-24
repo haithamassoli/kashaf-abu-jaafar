@@ -9,6 +9,7 @@ export default defineConfig({
   // Canonicals and the sitemap emit /path/ — keep dev and internal links on the same
   // form so Cloudflare Pages never has to 301 an internal hop.
   trailingSlash: 'always',
+  compressHTML: true,
   integrations: [
     react(),
     sitemap({

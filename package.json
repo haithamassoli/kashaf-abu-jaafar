@@ -4,12 +4,12 @@
   "type": "module",
   "packageManager": "pnpm@9.12.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12.0"
   },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build && pnpm guard",
-    "guard": "! grep -rql 'PUBLIC_MEILI_HOST:\"http://127.0.0.1:7700\"' dist/_astro || (echo 'PUBLIC_MEILI_HOST is still localhost — set the public one and rebuild' && false)",
+    "guard": "(test -d dist/v || (echo 'dynamic routes are missing — check the build-time data path' && false)) && (! grep -rql 'PUBLIC_MEILI_HOST:\"http://127.0.0.1:7700\"' dist/_astro || (echo 'PUBLIC_MEILI_HOST is still localhost — set the public one and rebuild' && false))",
     "preview": "astro preview",
     "meili": "meilisearch --db-path ./data/meili/data.ms --master-key $MEILI_ADMIN_KEY --http-addr 127.0.0.1:7700 --env development",
     "data": "tsx --env-file-if-exists=.env scripts/build-data.ts",
@@ -23,23 +23,23 @@
     "eval": "tsx --env-file-if-exists=.env scripts/eval.ts"
   },
   "dependencies": {
-    "@astrojs/react": "^4.2.0",
+    "@astrojs/react": "^6.0.4",
     "@astrojs/sitemap": "^3.7.3",
     "@base-ui/react": "^1.7.0",
-    "@tailwindcss/vite": "^4.0.0",
-    "astro": "^5.2.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.2.4",
     "chart.js": "^4.5.1",
     "meilisearch": "^0.60.0",
-    "posthog-js": "^1.418.6",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "tailwindcss": "^4.0.0"
+    "posthog-js": "^1.418.10",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "@types/node": "^22.20.1",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "tsx": "^4.23.12",
+    "typescript": "^6.0.3"
   }
 }

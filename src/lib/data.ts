@@ -1,5 +1,6 @@
 /** Build-time reads of the data/ snapshot produced by scripts/build-data.ts. */
 import { readFileSync, existsSync, readdirSync } from 'node:fs'
+import { resolve } from 'node:path'
 
 export type Video = {
   id: string
@@ -13,7 +14,9 @@ export type Video = {
 export type Playlist = { id: string; title: string; videoIds: string[] }
 export type Segment = { s: number; e: number; t: string }
 
-const dir = new URL('../../data/', import.meta.url).pathname
+// Astro 7 bundles server modules, so import.meta.url points inside the build output.
+// ponytail: package scripts run at the repo root; add DATA_DIR if external callers appear.
+const dir = `${resolve('data')}/`
 const read = <T>(file: string, fallback: T): T =>
   existsSync(dir + file) ? (JSON.parse(readFileSync(dir + file, 'utf8')) as T) : fallback
 
