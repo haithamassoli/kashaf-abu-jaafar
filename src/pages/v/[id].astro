@@ -108,12 +108,7 @@ const crumbs = breadcrumb([['القوائم', '/p/'], [video.title, `/v/${video.
         </nav>
       )}
 
-      <Actions
-        title={video.title}
-        kind="v"
-        mediaUrl={youtubeUrl(video.id)}
-        class="ms-auto shrink-0"
-      />
+      <Actions title={video.title} kind="v" class="ms-auto shrink-0" />
     </div>
 
     <h1 class="mt-4 text-xl font-semibold leading-relaxed sm:text-2xl">{video.title}</h1>

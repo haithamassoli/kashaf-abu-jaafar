@@ -40,25 +40,3 @@ search.assoli.site {
 		respond `{"message":"too many requests","code":"rate_limited"}` 429
 	}
 }
-
-download.assoli.site {
-	rate_limit {
-		zone downloads {
-			match {
-				not method OPTIONS
-				path /info /download
-			}
-			key {remote_host}
-			events 10
-			window 1m
-		}
-	}
-
-	reverse_proxy 127.0.0.1:8080
-
-	handle_errors 429 {
-		header Access-Control-Allow-Origin https://alkulify.assoli.site
-		header Content-Type application/json
-		respond `{"error":"too many requests"}` 429
-	}
-}

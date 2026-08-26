@@ -4,8 +4,6 @@ import react from '@astrojs/react'
 import sitemap from '@astrojs/sitemap'
 import tailwindcss from '@tailwindcss/vite'
 
-const downloadHost = process.env.PUBLIC_DOWNLOAD_HOST ?? 'https://download.assoli.site'
-
 export default defineConfig({
   site: 'https://alkulify.assoli.site',
   // Canonicals and the sitemap emit /path/ — keep dev and internal links on the same
@@ -36,10 +34,10 @@ export default defineConfig({
         "default-src 'self'",
         "img-src 'self' data: https://i.ytimg.com",
         "font-src 'self'",
-        `connect-src 'self' https://search.assoli.site https://eu.i.posthog.com https://eu-assets.i.posthog.com ${downloadHost}`,
+        "connect-src 'self' https://search.assoli.site https://eu.i.posthog.com https://eu-assets.i.posthog.com",
         'frame-src https://www.youtube-nocookie.com https://www.youtube.com',
         "base-uri 'none'",
-        `form-action 'self' ${downloadHost}`,
+        "form-action 'self'",
         "object-src 'none'",
         'upgrade-insecure-requests',
       ],

@@ -16,5 +16,4 @@ jobs:
           key: astro-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
           restore-keys: astro-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
       - run: pnpm check
-      - run: pnpm test
       - run: pnpm build

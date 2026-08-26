@@ -35,10 +35,6 @@ export function youtubeUrl(videoId: string, t?: number): string {
   return t ? `https://youtu.be/${videoId}?t=${Math.floor(t)}` : `https://youtu.be/${videoId}`
 }
 
-export function youtubePlaylistUrl(playlistId: string): string {
-  return `https://www.youtube.com/playlist?list=${playlistId}`
-}
-
 /**
  * Arabic counted nouns (تمييز العدد). The form follows the last two digits:
  * 1 → مفرد, 2 → مثنى (and the numeral is dropped), 3–10 → جمع,

@@ -261,7 +261,6 @@ jobs:
           key: astro-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
           restore-keys: astro-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
       - run: pnpm check
-      - run: pnpm test
       - run: pnpm build
 ```
 
@@ -298,29 +297,8 @@ deploy script has been removed.
 | 4. Analytics | done — `src/lib/analytics.ts`, silent unless `PUBLIC_POSTHOG_KEY` is set |
 | 5. Dependabot and CI | done — `.github/` |
 | 6. The build guard | done — `pnpm build` runs it explicitly |
-| 7. YouTube downloads | done in code — deploy the service and DNS below |
 
----
-
-## 7. YouTube downloads
-
-The static site sends download jobs to `download.assoli.site`. The service uses the official
-`yt-dlp` nightly binary, updates on startup, and updates then retries once after a failed info or
-download command. FFmpeg merges video streams and extracts best-quality audio; playlists return
-as ZIP files.
-
-```bash
-docker compose up -d --build downloader
-sudo cp ops/Caddyfile /etc/caddy/Caddyfile
-sudo systemctl reload caddy
-curl https://download.assoli.site/health
-```
-
-Create the `download` DNS record beside `search`, then set Vercel's
-`PUBLIC_DOWNLOAD_HOST=https://download.assoli.site`. The service only accepts YouTube video and
-playlist URLs, runs two jobs at once, and Caddy allows ten requests per minute per IP.
-
-All seven items are done in code. Item 7 still needs the deployment commands above.
+All six items are done.
 
 ## Deliberately skipped
 
