@@ -271,7 +271,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
                   <Combobox.Positioner sideOffset={4} className="z-50">
                     <Combobox.Popup
                       aria-label="قائمة التشغيل"
-                      className="w-(--anchor-width) max-w-(--available-width) overflow-hidden rounded-lg bg-surface text-fg shadow-md ring-1 ring-border"
+                      className="min-w-(--anchor-width) max-w-(--available-width) overflow-hidden rounded-lg bg-surface text-fg shadow-md ring-1 ring-border"
                     >
                       <Combobox.Input
                         placeholder="ابحث في القوائم"
