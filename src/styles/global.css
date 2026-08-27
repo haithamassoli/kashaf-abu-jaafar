@@ -99,6 +99,25 @@
     color: var(--fg);
   }
 
+  /* Base UI hides its form input via an inline style attribute, but our CSP
+     (styleDirective attribute: 'none') strips style attributes from SSR'd markup
+     and React never re-applies them on hydration — so the input reappears at full
+     width and squeezes the flex-1 combobox trigger, truncating its label. Restore
+     the visually-hidden styling from the stylesheet, which CSP allows. */
+  input[id$='-hidden-input'] {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
