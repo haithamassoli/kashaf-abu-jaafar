@@ -160,7 +160,7 @@
     </tbody>
   </table>
   <p>الرقم <span class="digits">١٥٠١</span> ليس صدفة: <code>searchCutoffMs</code> على فهرس <code>cues</code> يساوي <code>null</code>، أي القيمة الافتراضية <span class="digits">١٥٠٠</span> مللي. فالبحث يصطدم بالسقف في <em>كل</em> استعلام، ويعيد ما بلغه عند القطع.</p>
-  <p><strong>السبب:</strong> <code>rankingScoreThreshold</code> مع البحث الهجين يُلزم Meilisearch بتقييم كل مرشّح ليعرف كم واحدًا تجاوز العتبة، فيمسح <span class="digits">٦٢</span> ألف متجه على نواة واحدة في كل مرة. وهذا يسوء لا يتحسّن: التفريغ مستمر، وعند <span class="digits">٤٬٠٠٠</span> درس يصير المسح على <span class="digits">١٦٠</span> ألف متجه.</p>
+  <p><strong>السبب:</strong> <code>rankingScoreThreshold</code> مع البحث الهجين يُلزم Meilisearch بتقييم كل مرشّح ليعرف كم واحدًا تجاوز العتبة، فيمسح <span class="digits">٦٢</span> ألف متجه على الخادم في كل مرة. وهذا يسوء لا يتحسّن: التفريغ مستمر، وعند <span class="digits">٤٬٠٠٠</span> درس يصير المسح على <span class="digits">١٦٠</span> ألف متجه.</p>
 
   <div class="danger">
     <strong>الأثر المزدوج:</strong> ليست المشكلة أن المستخدم ينتظر <span class="digits">١٫٨</span> ثانية فحسب، بل أن العتبة المضبوطة بعناية على <span class="digits">٠٫٧٦٥</span> تُطبَّق على مجموعة مرشّحين مبتورة. أي أن الضبط الدقيق للجولة الثانية يعمل على نصف بيانات.

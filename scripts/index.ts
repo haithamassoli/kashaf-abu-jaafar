@@ -22,6 +22,7 @@ const ONLY = process.argv[2]
  * already carry their vectors. So a re-vector builds `cues_next` and swaps it in.
  */
 const CUES = process.env.CUES_INDEX ?? 'cues'
+const ARTICLES = process.env.ARTICLES_INDEX ?? 'articles'
 const wants = (pass: string) => !ONLY || ONLY === pass
 // `cues` and `lessons` are two shapes of the same transcripts, so they share one read of RAW_DIR
 const readsRaw = wants('cues') || wants('lessons')
@@ -183,7 +184,7 @@ if (dropped.length && wants('cues')) {
 if (wants('articles')) {
   const ART = new URL('../data/articles/', import.meta.url).pathname
   await setup(
-    'articles',
+    ARTICLES,
     JSON.parse(
       await readFile(new URL('../meilisearch-articles-settings.json', import.meta.url), 'utf8'),
     ),
@@ -193,7 +194,7 @@ if (wants('articles')) {
   let sentDocs = 0
   const push = async (force = false) => {
     if (!docs.length || (!force && docs.length < BATCH)) return
-    const task = await client.index('articles').updateDocuments(docs)
+    const task = await client.index(ARTICLES).updateDocuments(docs)
     await waitFor(task.taskUid)
     sentDocs += docs.length
     process.stdout.write(`\r${sentDocs} article chunks indexed`)
@@ -248,7 +249,7 @@ const key =
 const none = { numberOfDocuments: 0 }
 const stats = await client.index(CUES).getStats().catch(() => none)
 const lessonStats = await client.index('lessons').getStats().catch(() => none)
-const artStats = await client.index('articles').getStats().catch(() => none)
+const artStats = await client.index(ARTICLES).getStats().catch(() => none)
 console.log(
   `\ndone: ${stats.numberOfDocuments} cues, ${lessonStats.numberOfDocuments} lessons, ` +
     `${artStats.numberOfDocuments} article chunks`,

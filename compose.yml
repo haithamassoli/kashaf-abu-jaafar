@@ -12,7 +12,7 @@ services:
       # network is allow-listed — without this every embedder task fails with «Rejected URI»,
       # which is the one error message that does not say what is wrong.
       MEILI_EXPERIMENTAL_ALLOWED_IP_NETWORKS: 127.0.0.0/8,172.16.0.0/12
-      # Embedding the query is the whole cost of a hybrid search on one core (~0.55 s). Cached,
+      # Embedding the query is the main cost of a hybrid search (~0.55 s). Cached,
       # a repeated query costs nothing, and the second query of a multi-search reuses the first.
       MEILI_EXPERIMENTAL_EMBEDDING_CACHE_ENTRIES: 20000
     volumes:
@@ -23,8 +23,8 @@ services:
       - ollama
 
   # Query-time embeddings only. Document vectors are computed on the maintenance machine and
-  # pushed with `regenerate: false` (scripts/embed.ts) — one ARM core would need a day and a
-  # half for the 99k documents.
+  # pushed with `regenerate: false` (scripts/embed.ts) — computing the full corpus on the search
+  # box would take far longer than doing it on the maintenance machine.
   ollama:
     image: ollama/ollama:latest
     restart: unless-stopped

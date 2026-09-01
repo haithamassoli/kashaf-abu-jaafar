@@ -2,8 +2,8 @@
  * `pnpm embed cues|articles` — compute the semantic vectors for an index here and PUT them in,
  * instead of letting Meilisearch call the embedder itself.
  *
- * Why: the search box is one ARM core, where Meilisearch embeds ~1 doc/s through its Ollama —
- * measured, and a full day for the 99k documents. This machine does 10–19/s. So the backfill
+ * Why: the search box embeds documents much more slowly than the maintenance machine. The
+ * measured rates were ~1 doc/s there and 10–19/s here. So the backfill
  * runs here and ships the vectors, marked
  * `regenerate: false` so Meilisearch keeps them instead of recomputing. The box still embeds the
  * *query* at search time, and any documents added later — a handful per ingest — on its own.
@@ -43,7 +43,7 @@ const CHUNK = flag('chunk', 2000)
  * `documentTemplate` for whatever it embeds itself, and this script renders the same string for
  * everything it embeds here, so a document added later cannot drift from the backfill. It lives
  * outside meilisearch-settings.json on purpose — `pnpm index` must never apply an embedder, or a
- * fresh box would answer by embedding the whole corpus on one core.
+ * fresh box would answer by embedding the whole corpus itself.
  */
 const embedder = JSON.parse(
   await readFile(new URL('../meilisearch-embedder.json', import.meta.url), 'utf8'),

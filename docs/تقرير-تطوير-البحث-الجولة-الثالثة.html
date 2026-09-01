@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="تقرير مقاس على الإنتاج عن تطوير البحث في كشّاف أبي جعفر بعد اكتمال أرشيف القناة">
+  <title>تطوير البحث في كشّاف أبي جعفر، الجولة الثالثة</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17211b;
+      --muted: #5d685f;
+      --paper: #f4f2ea;
+      --card: #fffefa;
+      --line: #d8d4c7;
+      --green: #176c4a;
+      --green-soft: #e3f1e9;
+      --amber: #855705;
+      --amber-soft: #fff1cd;
+      --red: #8b3030;
+      --red-soft: #fbe8e8;
+      --blue: #285f8f;
+      --blue-soft: #e9f2fb;
+      --code: #222a25;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Tahoma, Arial, system-ui, sans-serif;
+      line-height: 1.9;
+    }
+    main { width: min(960px, calc(100% - 32px)); margin: 44px auto; }
+    header, section {
+      margin-bottom: 20px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--card);
+      padding: clamp(20px, 4vw, 38px);
+    }
+    header { border-top: 5px solid var(--green); }
+    h1, h2, h3 { line-height: 1.4; }
+    h1 { margin: 10px 0; font-size: clamp(28px, 5vw, 44px); }
+    h2 { margin: 0 0 16px; font-size: 25px; }
+    h3 { margin: 26px 0 8px; font-size: 19px; }
+    p { margin: 8px 0; }
+    ul, ol { margin: 8px 0; padding-inline-start: 25px; }
+    li + li { margin-top: 7px; }
+    a { color: #125d40; text-underline-offset: 3px; }
+    code {
+      direction: ltr;
+      unicode-bidi: isolate;
+      border-radius: 5px;
+      background: #ece9df;
+      padding: 2px 6px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: .9em;
+    }
+    pre {
+      direction: ltr;
+      overflow-x: auto;
+      border-radius: 12px;
+      background: var(--code);
+      color: #f5f7f5;
+      padding: 16px;
+      text-align: left;
+      line-height: 1.65;
+    }
+    pre code { background: transparent; padding: 0; }
+    table { width: 100%; margin-top: 14px; border-collapse: collapse; font-size: 15px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 10px; text-align: right; vertical-align: top; }
+    th { color: var(--muted); font-weight: 700; }
+    .digits { direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; }
+    .eyebrow, .meta { color: var(--muted); font-size: 14px; }
+    .status {
+      display: inline-block;
+      border-radius: 999px;
+      background: var(--green-soft);
+      color: var(--green);
+      padding: 4px 12px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .lede {
+      margin-top: 20px;
+      border-inline-start: 5px solid var(--green);
+      border-radius: 10px;
+      background: var(--green-soft);
+      padding: 16px 18px;
+      font-size: 18px;
+    }
+    .notice, .danger, .info {
+      margin-top: 16px;
+      border: 1px solid;
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .notice { border-color: #e3c77e; background: var(--amber-soft); color: #573900; }
+    .danger { border-color: #dfb2b2; background: var(--red-soft); color: #611f1f; }
+    .info { border-color: #b9d1e7; background: var(--blue-soft); color: #1d4b73; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .metric, .step {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fbfaf5;
+      padding: 16px;
+    }
+    .metric strong { display: block; color: var(--green); font-size: 25px; }
+    .metric span { color: var(--muted); font-size: 14px; }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 18px 0;
+    }
+    .flow div {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfaf5;
+      padding: 14px;
+      text-align: center;
+      font-size: 14px;
+    }
+    .flow div:not(:last-child)::after {
+      content: "←";
+      position: absolute;
+      inset-inline-end: -17px;
+      top: 50%;
+      z-index: 2;
+      color: var(--green);
+      font-size: 20px;
+      transform: translateY(-50%);
+    }
+    .step { margin-top: 14px; }
+    .step h3 { margin: 0 0 8px; }
+    .tag {
+      display: inline-block;
+      margin-inline-start: 6px;
+      border-radius: 999px;
+      background: #ece9df;
+      color: var(--muted);
+      padding: 2px 9px;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+    .tag.high { background: var(--green-soft); color: var(--green); }
+    .good { color: var(--green); font-weight: 700; }
+    .bad { color: var(--red); font-weight: 700; }
+    footer { padding: 8px 4px 30px; color: var(--muted); text-align: center; font-size: 13px; }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --ink: #e8ebe8;
+        --muted: #a0aaa2;
+        --paper: #101210;
+        --card: #171a17;
+        --line: #2d322d;
+        --green: #68c79a;
+        --green-soft: #172c22;
+        --amber: #d8aa54;
+        --amber-soft: #2b2415;
+        --red: #e18d8d;
+        --red-soft: #2c1919;
+        --blue: #8dbce4;
+        --blue-soft: #172532;
+      }
+      code { background: #252923; }
+      .metric, .step, .flow div { background: #141713; }
+      a { color: #78d2a8; }
+    }
+    @media (max-width: 700px) {
+      main { width: min(100% - 20px, 960px); margin: 20px auto; }
+      header, section { border-radius: 12px; padding: 18px; }
+      table { display: block; overflow-x: auto; white-space: nowrap; }
+      .flow { grid-template-columns: 1fr; }
+      .flow div:not(:last-child)::after { content: "↓"; inset-inline-end: 50%; top: auto; bottom: -23px; transform: translateX(50%); }
+    }
+  </style>
+</head>
+<body>
+<main>
+
+  <header>
+    <p class="eyebrow">كشّاف أبي جعفر · 23 أغسطس 2026</p>
+    <h1>تطوير البحث بعد اكتمال الأرشيف</h1>
+    <p class="meta">تقرير مبني على الشيفرة والبيانات، وفحص الفهرس المحلي، وقياسات مباشرة على خادم الإنتاج، ومراجع Meilisearch وأبحاث استرجاع المعلومات العربية.</p>
+    <p><span class="status">الجودة أولًا: أصلح القياس والفهرسة ثم أعد ترتيب الأرشيف الكامل</span></p>
+
+    <div class="lede">
+      <strong>المشكلة لم تعد غياب البحث الدلالي، فهو موجود ويجد أسئلة لا تصل إليها الكلمات وحدها.</strong>
+      الأولوية هي أن يظهر الجواب الصحيح في أعلى الشاشة وأن يفتح عند موضعه. سرعة البحث ليست بوابة إطلاق. أما مهلة الخمس ثواني فمشكلتها أنها تقطع البحث وقد تعيد مجموعة ناقصة، لا أنها تجعل القارئ ينتظر.
+    </div>
+  </header>
+
+  <section>
+    <h2>1. ما فكرة الموقع، وما المشكلة التي يحلها؟</h2>
+    <p>
+      لدى الشيخ أبي جعفر عبد الله بن فهد الخليفي آلاف الساعات من الدروس وآلاف المقالات. المشكلة ليست نقص المادة، بل صعوبة الوصول إلى موضعها. طالب العلم يتذكر أن الشيخ تكلم في مسألة، لكنه لا يعرف اسم الدرس ولا الدقيقة. بحث يوتيوب يرى العنوان والوصف، ولا يبحث بصدق داخل الكلام المسجّل.
+    </p>
+    <p>
+      الكشّاف يحول الصوت إلى نص، ثم يقسمه إلى مقاطع قابلة للبحث. النتيجة ليست رابط فيديو عامًّا، بل مقطع مع توقيت يفتح المصدر عند موضع الكلام. وفي المقالات يفتح الفقرة نفسها. لهذا فالسؤال الذي يجيب عنه المنتج هو: <strong>«أين قال الشيخ هذا، وما المصدر الذي أستطيع مراجعته ونقله؟»</strong>
+    </p>
+
+    <div class="grid">
+      <div class="metric"><strong class="digits">4,691</strong><span>درسًا في لقطة البيانات الحالية</span></div>
+      <div class="metric"><strong class="digits">2,553</strong><span>ساعة صوت</span></div>
+      <div class="metric"><strong class="digits">133,649</strong><span>مقطع بحث في المصدر</span></div>
+      <div class="metric"><strong class="digits">3,370</strong><span>مقالة، في 37,086 فقرة</span></div>
+    </div>
+
+    <p style="margin-top:18px">
+      هذه الأرقام تغيّر طبيعة المشروع. الضبط السابق جرى على <span class="digits">1,584</span> درسًا و<span class="digits">62,311</span> مقطعًا. اليوم تضاعف فهرس المقاطع، واكتمل تقريبًا أرشيف القناة. كل عتبة وترتيب قيس على الحجم القديم يحتاج إعادة محاكمة.
+    </p>
+  </section>
+
+  <section>
+    <h2>2. كيف يعمل البحث اليوم؟</h2>
+
+    <div class="flow" aria-label="مسار البحث الحالي">
+      <div>سؤال عربي طبيعي</div>
+      <div>بحث كلمات + معنى بنسبة <span class="digits">0.7</span></div>
+      <div>رفض ما دون درجة <span class="digits">0.765</span></div>
+      <div>مقطع مؤقت أو فقرة مقال</div>
+    </div>
+
+    <p>في الخلفية تجري ثلاثة أشياء:</p>
+    <ul>
+      <li><code>cues</code> يبحث في مقاطع الدروس، ويفتح الفيديو عند بداية المقطع.</li>
+      <li><code>articles</code> يبحث في عنوان المقالة وفقرتها، ويمنع تكرار المقالة نفسها.</li>
+      <li><code>lessons</code> يبحث بالكلمات في نص الدرس كاملًا، ثم يعرض كتلة «دروس تتناول سؤالك» فوق المقاطع.</li>
+    </ul>
+    <p>
+      إذا لم يبق شيء فوق العتبة، يعيد الموقع البحث بالكلمات مع <code>frequency</code> ويصرّح بأنها «أقرب ما وجدنا». وإذا تعطّل المُضمّن، يعيد البحث بالكلمات بدل إسقاط الخدمة كلها.
+    </p>
+
+    <div class="info">
+      <strong>الأساس التقني جيد.</strong> هناك تطبيع عربي، ودعم للهمزات والتشكيل، وأخطاء إملائية، ومرادفات مجالية، وروابط قابلة للمشاركة، واستعادة لنتائج زر الرجوع، ورفض واضح للنتائج الضعيفة. لا يوجد سبب مقاس لاستبدال Meilisearch أو BGE-M3 الآن.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. ماذا بحثنا وقسنا؟</h2>
+    <ul>
+      <li>قرأنا مسار البحث من صندوق الإدخال حتى صفحة الفيديو أو فقرة المقالة، مع الفهرسة والمتجهات والفشل والتحليلات.</li>
+      <li>عددنا البيانات الحالية مباشرة، بدل الاعتماد على README والتقارير القديمة.</li>
+      <li>شغّلنا <code>pnpm verify</code> على الفهرس المحلي.</li>
+      <li>شغّلنا مجموعات التقييم الثلاث على النسخة المحلية وعلى <code>search.assoli.site</code>.</li>
+      <li>قارنّا الاستعلام الحالي بالاستعلام نفسه من دون العتبة الخادمية، ثم طبقنا الدرجة في العميل.</li>
+      <li>أعدنا حساب أول ثلاث بطاقات بحسب ترتيب الواجهة الحقيقي.</li>
+      <li>اختبرنا إزالة تكرار الفيديو عبر <code>distinct: "video_id"</code> على الأسئلة المصنّفة كلها.</li>
+      <li>راجعنا توثيق Meilisearch الحالي، وMIRACL العربي، وNoMIRACL للأسئلة التي لا جواب لها.</li>
+    </ul>
+    <p class="meta">كل رقم أداء أدناه مقاس في 23 أغسطس 2026. أرقام الصلة مربوطة بوسوم تقييم قديمة، وقد وجدنا فيها أجوبة صحيحة جديدة غير مسجلة، لذلك نستعملها للتشخيص لا لإعلان نسبة جودة نهائية.</p>
+  </section>
+
+  <section>
+    <h2>4. النتيجة الأولى: مهلة الخمس ثواني قد تقطع البحث</h2>
+    <p>
+      الاستعلام الحالي يرسل <code>rankingScoreThreshold</code> مع <code>page</code> و<code>hitsPerPage</code>. يصل البحث الحي إلى <code>searchCutoffMs=5000</code> بالضبط. وعند بلوغ المهلة يوقف Meilisearch البحث ويعيد أفضل ما جمعه حتى تلك اللحظة، وقد تغيب نتائج صحيحة لم يصل إليها بعد.
+    </p>
+
+    <table>
+      <thead><tr><th>الاستعلام الحي: «هل للصداق حد أعلى»</th><th>داخل Meilisearch</th><th>مع الشبكة</th></tr></thead>
+      <tbody>
+        <tr><td>الشكل الحالي، هجين + عتبة خادمية + صفحات</td><td class="digits bad">5,002 ms</td><td class="digits">5,253 ms</td></tr>
+        <tr><td>أول 60 فقط، بلا عتبة خادمية</td><td class="digits">49 ms</td><td class="digits">326 ms</td></tr>
+      </tbody>
+    </table>
+
+    <p>
+      القياس الثاني يثبت أن العتبة والعدّ الكامل هما موضع العمل الثقيل. لكنه يفحص عددًا محدودًا من المرشحين، فلا يثبت أنه يحافظ على كل جواب صحيح. هذا ثمن غير مقبول ما دامت الجودة هي الأولوية.
+    </p>
+
+    <div class="notice">
+      القرار المعدّل: أبقِ العتبة داخل Meilisearch وأبقِ الصفحات والعدد الكامل. اختبر مهلات <span class="digits">5/10/20/30</span> ثانية على الفهرس البديل، وضاعفها إن بقيت النتائج تتغير. اختر أول قيمة لا يتغير بعدها الترتيب ولا العدد عند زيادة المهلة مرة أخرى. زمن الانتظار يُسجّل، لكنه لا يرفض إصدارًا أجود.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. النتيجة الثانية: مقياس «أول 3» لا يقيس أول 3</h2>
+    <p>
+      أداة التقييم تجمع أول ثلاثة دروس من كتلة <code>lessons</code> وأول ثلاثة مقاطع من <code>cues</code>، ثم تسمي الاتحاد «top 3». قد تحتسب بذلك النتيجة السادسة. الواجهة تعرض كتلة الدروس أولًا، لذا ما يراه القارئ في أول ثلاث بطاقات مختلف.
+    </p>
+
+    <table>
+      <thead><tr><th>المجموعة على الإنتاج</th><th>رقم الأداة الحالي</th><th>أول 3 بطاقات فعلية</th></tr></thead>
+      <tbody>
+        <tr><td>أسئلة الفيديو الأصلية</td><td class="digits">20/29</td><td class="digits bad">17/29</td></tr>
+        <tr><td>أسئلة الفيديو المحجوزة</td><td class="digits">15/25</td><td class="digits bad">10/25</td></tr>
+        <tr><td>أسئلة المقالات</td><td class="digits good">12/12</td><td class="digits good">12/12</td></tr>
+        <tr><td>أسئلة سلبية عُرضت كجواب مباشر</td><td class="digits good">0/8</td><td class="digits good">0/8</td></tr>
+      </tbody>
+    </table>
+
+    <p>
+      وهناك خطأ أعمق: يكفي أن يطابق <code>video_id</code> القديم، ولو كان المقطع الظاهر بعيدًا عن الجواب. بعد إضافة ثلاثة آلاف درس ظهرت أجوبة صحيحة جديدة لم تدخل الوسوم. مثلًا، سؤال عيوب الزوجين صار يعيد أولًا درسًا عنوانه «العيوب التي يفسخ بها النكاح» ونصه يجيب مباشرة، لكنه يُحسب فشلًا لأن المعرّف ليس المعرّف التاريخي.
+    </p>
+
+    <div class="danger">
+      لا ينبغي ضبط <code>semanticRatio</code> أو العتبة على هذه الأرقام الآن. الخطوة الأولى هي تصحيح قائمة الأجوبة وترتيب الشاشة، ثم إضافة موضع المقطع أو نطاق التوقيت لعينة من الأسئلة. وإلا سنحسن رقمًا لا يصف تجربة القارئ.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. النتيجة الثالثة: الفهرس المحلي يكشف خلل نشر حقيقي</h2>
+    <p>خرج <code>pnpm verify</code> بفشلين:</p>
+    <ul>
+      <li>في <code>cues</code> المحلي <span class="digits">133,965</span> وثيقة، والمصدر <span class="digits">133,649</span>. هناك <span class="digits">316</span> مقطعًا يتيمًا من <span class="digits">17</span> درسًا محذوفًا.</li>
+      <li>الفهرس نفسه بلا مُضمّن، وكل وثائقه الـ<span class="digits">133,965</span> بلا متجه.</li>
+    </ul>
+    <p>
+      تبويب المقالات سليم وله <span class="digits">37,086</span> متجهًا، لكن فشل استعلام <code>cues</code> يجعل <code>multiSearch</code> كله يعاد بالكلمات فقط. لهذا هبطت المقالات محليًا من <span class="digits">12/12</span> عند سؤال فهرسها الهجين منفردًا إلى <span class="digits">3/12</span> عبر المسار الإنتاجي المشترك.
+    </p>
+    <p>
+      الإنتاج ما زال دلاليًا، وقد أعاد درس باب الخلع أولًا لسؤال الصداق. لكن الشيفرة التي تبني فهرسًا بديلًا غير مكتملة: التعليقات تقول إن المُضمّن يجب أن يُعرَّف على فهرس فارغ قبل إرسال المتجهات، بينما مسارا الرفع يعرّفانه بعد الإرسال، ولا يوجد استدعاء لتبديل الفهارس. كما أن <code>updateDocuments</code> لا يحذف وثيقة اختفت من المصدر.
+    </p>
+
+    <div class="info">
+      العلاج ليس أمرًا يدويًا آخر. ابنِ <code>cues_next</code> من الصفر، عرّف المُضمّن وهو فارغ، ارفع النص والمتجهات، افحص العدد والإعدادات والجودة، ثم بدّله ذريًا مع <code>cues</code>. Meilisearch يوفر <code>/swap-indexes</code> لهذا الغرض من دون توقف.
+    </div>
+  </section>
+
+  <section>
+    <h2>7. ما الذي نفعله، بالترتيب؟</h2>
+
+    <div class="step">
+      <h3>0. ثبّت الفهرسة <span class="tag high">عاجل</span></h3>
+      <p>أكمل مسار <code>cues_next</code>: المُضمّن أولًا، ثم الوثائق والمتجهات، ثم <code>verify</code> والإعدادات والتقييم، ثم تبديل ذري. أعد بناء <code>lessons</code> أيضًا حتى تختفي المعرّفات القديمة. ثبّت بصمة إصدار BGE-M3 في جهاز التضمين وخادم السؤال، لأن تساوي الأبعاد لا يجعل نسختين مختلفتين من النموذج متوافقتين.</p>
+    </div>
+
+    <div class="step">
+      <h3>1. أصلح القياس <span class="tag high">عاجل</span></h3>
+      <p>اجعل الاختبار يقرأ ترتيب الواجهة الحقيقي. أعد تحكيم كل إخفاق وأضف الأجوبة البديلة. أضف <code>expectCueIds</code> أو نطاقات زمنية إلى 30 سؤالًا مهمًا، ثم أنشئ 40 سؤالًا محجوزًا جديدًا. المقاييس المطلوبة: <span class="digits">Hit@3</span> و<span class="digits">MRR@3</span> و<span class="digits">nDCG@10</span> ونسبة الجواب المباشر الخاطئ.</p>
+    </div>
+
+    <div class="step">
+      <h3>2. امنع قطع البحث <span class="tag high">جودة النتائج</span></h3>
+      <p>أبقِ <code>rankingScoreThreshold</code> في الخادم. ارفع <code>searchCutoffMs</code> تدريجيًا حتى تستقر النتائج، وارفع مهلة عميل المتصفح فوقه. قارن المعرّفات والترتيب والعدد وقرار البحث الموسّع في كل جولة. لا تعتمد أول 60 ولا غربلة المتصفح في هذه المرحلة.</p>
+    </div>
+
+    <div class="step">
+      <h3>3. أعد ضبط الترتيب على الأرشيف الكامل <span class="tag">بعد ثبات القياس</span></h3>
+      <p>اختبر نسب المعنى <span class="digits">0، 0.3، 0.5، 0.7، 1.0</span> وعتبات منفصلة لكل فهرس. اختبر كتلة الدروس في ثلاثة أماكن: عند غياب المقاطع فقط، وبعد أول ثلاثة مقاطع، أو محذوفة. لا ترفع سقف <span class="digits">300</span> الآن، فقد قسناه ولم يحجب أي درس صحيح في مجموعة الأسئلة الحالية.</p>
+    </div>
+
+    <div class="step">
+      <h3>4. قس النقر من دون جمع الأسئلة الخاصة افتراضيًا <span class="tag">خصوصية</span></h3>
+      <p>سجّل التبويب، والرتبة المنقورة، ونوع النتيجة، وهل البحث موسّع أو متدهور إلى كلمات. اربط الأحداث بمعرّف جلسة مؤقت، لا بنص السؤال الخام. الأسئلة الدينية قد تكشف تفاصيل شخصية. إن احتجنا النص لتحسين الصلة، فليكن بإجراء صريح يختاره المستخدم عند الصفر أو النتائج القريبة.</p>
+    </div>
+
+    <div class="step">
+      <h3>5. قرّب القارئ من الجملة نفسها <span class="tag">بعد الاسترجاع</span></h3>
+      <p>وسيط مقطع البحث الحالي <span class="digits">83.9</span> ثانية، و<span class="digits">91.6%</span> من المقاطع أطول من دقيقة. البحث الحرفي يستطيع اختيار سطر دقيق، أما السؤال الدلالي المختلف في الصياغة فيرجع غالبًا إلى بداية المقطع الطويل. ابدأ باختيار السطر ذي أكبر تداخل من كلمات السؤال داخل المقطع. لا تعِد تقطيع <span class="digits">133</span> ألف مقطع قبل قياس خطأ الوصول.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>8. بوابات النجاح</h2>
+    <table>
+      <thead><tr><th>البوابة</th><th>شرط المرور</th></tr></thead>
+      <tbody>
+        <tr><td>سلامة الفهرس</td><td>عدد المصدر = عدد الوثائق = عدد الوثائق ذات المتجه، والإعدادات مطابقة للمستودع</td></tr>
+        <tr><td>اكتمال البحث</td><td>لا يتغير ترتيب المعرّفات ولا العدد عند رفع المهلة خطوة إضافية</td></tr>
+        <tr><td>النتائج السلبية</td><td>لا سؤال سلبي يظهر كجواب مباشر</td></tr>
+        <tr><td>الجودة</td><td>لا تراجع في <span class="digits">Hit@3 / MRR@3 / nDCG@10</span> على المجموعة الجديدة المحجوزة</td></tr>
+        <tr><td>الوصول داخل الصوت</td><td>وسيط الخطأ أقل من 15 ثانية، و<span class="digits">P95</span> أقل من 45 ثانية</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>9. أشياء قسناها أو لا نحتاجها الآن</h2>
+    <table>
+      <thead><tr><th>الفكرة</th><th>القرار</th></tr></thead>
+      <tbody>
+        <tr><td>فهرس متجهات جديد أو قاعدة متجهات ثانية</td><td>لا. المشكلة في تشغيل الموجود وقياسه.</td></tr>
+        <tr><td><code>distinct: "video_id"</code> لمنع تكرار الفيديو</td><td>قيس على 54 سؤالًا، ولم يغيّر النتيجة: <span class="digits">15/29</span> و<span class="digits">11/25</span> قبل وبعد.</td></tr>
+        <tr><td>رفع سقف كتلة الدروس</td><td>لا مكسب على التقييم الحالي. أعد القياس بعد تصحيح الوسوم فقط.</td></tr>
+        <tr><td>مُجذّر عربي عام</td><td>لا. التطبيع والمرادفات المستهدفة أقل خطرًا، ثم نختبر أخطاء حقيقية.</td></tr>
+        <tr><td>reranker أو جواب مولّد</td><td>لا قبل إثبات أن الاسترجاع يستحضر الجواب في أول 100 ثم يفشل في ترتيبه. وفي مادة دينية، إعادة الصياغة مخاطرة نسبة قول لم يُقَل.</td></tr>
+        <tr><td>دمج الفيديوهات والمقالات في قائمة واحدة</td><td>لا. التبويبان يخدمان نيتين مختلفتين، و<code>multiSearch</code> الحالي كافٍ.</td></tr>
+        <tr><td>تكميم المتجهات</td><td>ليس أولوية ما دام التخزين ليس القيد المقاس.</td></tr>
+        <tr><td>أول 60 نتيجة والعتبة في المتصفح</td><td>مؤجل. يسرّع البحث، لكنه يضع سقفًا قد يخفي جوابًا صحيحًا. لا يعود إلا إذا أصبحت السرعة مطلبًا وأثبت التطابق مع البحث الكامل.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>10. تصحيحات صغيرة لا تنتظر جولة ترتيب</h2>
+    <ul>
+      <li>احذف جملة «فُرّغ نحو 1600 من 4000» من حالة الصفر، فهي خاطئة بعد وصول البيانات إلى 4,691 درسًا.</li>
+      <li>غيّر اسم حقل البحث لقارئ الشاشة من «نصوص الدروس» إلى «الدروس والمقالات».</li>
+      <li>اجعل قرار التوسيع خاصًّا بالتبويب النشط. اليوم قد تمنع مقالة واحدة البحث المرن في فيديو فارغ.</li>
+      <li>أظهر زر إعادة المحاولة عند الخطأ، ولا تجعل فشل فهرس واحد يحوّل الفهرس السليم إلى بحث كلمات.</li>
+      <li>أظهر حالة <code>degraded</code> في التحليلات والمراقبة حين يسقط البحث إلى الكلمات.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>11. المراجع</h2>
+    <ul>
+      <li><a href="https://www.meilisearch.com/docs/reference/api/search/search-with-post">واجهة البحث في Meilisearch</a>، ومنها تحذير أداء العتبة مع صفحات النتائج.</li>
+      <li><a href="https://www.meilisearch.com/docs/capabilities/full_text_search/how_to/configure_search_cutoff">مهلة البحث في Meilisearch</a>، ومنها أن بلوغ المهلة يعيد نتائج قد تكون غير مكتملة.</li>
+      <li><a href="https://www.meilisearch.com/docs/reference/api/indexes/swap-indexes">تبديل الفهارس ذريًا في Meilisearch</a>.</li>
+      <li><a href="https://www.meilisearch.com/docs/capabilities/hybrid_search/advanced/composite_embedders">شروط توافق نموذج تضمين الوثائق مع نموذج تضمين السؤال</a>.</li>
+      <li><a href="https://www.meilisearch.com/docs/capabilities/hybrid_search/advanced/custom_hybrid_ranking">ضبط البحث الهجين</a>.</li>
+      <li><a href="https://www.meilisearch.com/docs/resources/help/language">دعم اللغات في Meilisearch</a> و<a href="https://github.com/meilisearch/charabia">محلل Charabia</a>.</li>
+      <li><a href="https://aclanthology.org/2023.tacl-1.63/">MIRACL</a>، معيار متعدد اللغات يستخدم <span class="digits">nDCG@10</span> و<span class="digits">Recall@100</span>.</li>
+      <li><a href="https://aclanthology.org/2024.findings-emnlp.730/">NoMIRACL</a>، لتقييم الاسترجاع حين لا يملك corpus جوابًا.</li>
+      <li><a href="https://aclanthology.org/2024.findings-acl.137/">ورقة BGE-M3</a>.</li>
+    </ul>
+    <p class="meta">الخطة التنفيذية الإنجليزية في المستودع: <code>docs/SEARCH-PLAN-3.md</code>.</p>
+  </section>
+
+  <footer>
+    <p>كشّاف أبي جعفر، تقرير تطوير البحث، الجولة الثالثة</p>
+    <p>القياسات الحية بتاريخ 23 أغسطس 2026. لا تغييرات برمجية نُفذت ضمن هذا التقرير.</p>
+  </footer>
+
+</main>
+</body>
+</html>

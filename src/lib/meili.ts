@@ -211,7 +211,7 @@ async function both(queries: ReturnType<typeof pair>) {
     .multiSearch({ queries })
     .then((r) => r.results)
     // Two ways this fails, and neither should take search down. The embedder can be missing or
-    // its Ollama down — the box runs both on one core — so retry keyword-only, which is worse
+    // its Ollama down — the box runs both services — so retry keyword-only, which is worse
     // but is still the whole corpus. Failing that, a deployment whose Meilisearch has no
     // `articles` index yet (or a key still scoped to `cues`) fails the multi-search itself, so
     // fall back to the cue query alone.

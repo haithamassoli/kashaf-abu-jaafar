@@ -7,7 +7,7 @@ Free tiers only. Ordered by risk, not by the order the items were asked in.
 The site is static on Vercel, so there is no backend to hide behind: the browser talks to
 Meilisearch directly at `search.assoli.site` with a **search key that ships inside the JS
 bundle**. Anyone can lift that key and fire hybrid queries at a box with one OCPU that also
-runs Ollama. Each uncached hybrid query costs roughly 0.55 s of that single core.
+runs Ollama. Each uncached hybrid query costs roughly 0.55 s of compute time.
 
 Everything below follows from that. Rate limiting is not item 4 on a checklist, it is the
 one thing standing between a public key and a dead search box.
@@ -30,7 +30,7 @@ no nameserver move at Namecheap, no third party in front of a live domain, and o
 What it does not buy is the two things only an edge can — the origin IP stays public and a
 volumetric flood still reaches the box's network card. It does stop the attack the public search
 key actually invites: someone lifting the key and firing hybrid queries that cost 0.55 s of a
-single core each.
+search box each.
 
 The `compose.yml` this section used to describe never existed. Caddy here is the apt package
 under systemd and docker is not even running. `caddy add-package` swaps `/usr/bin/caddy` for a
@@ -71,7 +71,7 @@ box if the IP leaks and someone goes around the edge.
 
 1. Cloudflare → Add site `assoli.site` (Free) → change the nameservers at Namecheap.
 2. Records — the zone is small: root, `www`, `alkulify` and `kashaf-alkulify` all point at
-   Vercel, `search` at the Oracle box, and there is **no MX**, so no mail can break.
+   Vercel, and `search` points at the Netcup box.
    - the Vercel names → **grey cloud (DNS only)**. Vercel misbehaves behind the proxy.
    - `search` → **orange cloud (Proxied)**.
 3. SSL/TLS → **Full (strict)**. Watch the first Caddy certificate renewal; if HTTP-01 fails

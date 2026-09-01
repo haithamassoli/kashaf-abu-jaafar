@@ -4,7 +4,7 @@
 
 search.assoli.site {
 	# The search key is public — it ships inside the JS bundle — so this block is the only thing
-	# between it and a box with one core that also runs Ollama. One search is 2–4 requests, so 30
+	# between it and a box that also runs Ollama. One search is 2–4 requests, so 30
 	# leaves room for a reader on a shared carrier IP and none for a script.
 	rate_limit {
 		zone search {
