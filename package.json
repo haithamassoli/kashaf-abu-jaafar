@@ -23,11 +23,11 @@
     "eval": "tsx --env-file-if-exists=.env scripts/eval.ts"
   },
   "dependencies": {
-    "@astrojs/react": "^6.0.4",
-    "@astrojs/sitemap": "^3.7.3",
+    "@astrojs/react": "^6.0.5",
+    "@astrojs/sitemap": "^3.7.4",
     "@base-ui/react": "^1.7.0",
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "^7.2.4",
+    "astro": "^7.2.10",
     "chart.js": "^4.5.1",
     "meilisearch": "^0.60.0",
     "posthog-js": "^1.418.10",

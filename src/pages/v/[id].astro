@@ -111,7 +111,7 @@ const crumbs = breadcrumb([['القوائم', '/p/'], [video.title, `/v/${video.
       <Actions title={video.title} kind="v" class="ms-auto shrink-0" />
     </div>
 
-    <h1 class="mt-4 text-xl font-semibold leading-relaxed sm:text-2xl">{video.title}</h1>
+    <h1 class="vt-title mt-4 text-xl font-semibold leading-relaxed sm:text-2xl">{video.title}</h1>
 
     <div class="mt-1 flex flex-wrap items-center gap-x-5 text-sm text-muted">
       {video.uploadDate && <span set:html={withDigits(arabicDate(video.uploadDate))} />}

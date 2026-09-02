@@ -455,6 +455,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
                   className="card block border-accent/30 bg-accent-soft/40 p-4 transition-colors hover:bg-accent-soft"
                 >
                   <h3
+                    data-vt-title
                     className="text-base font-medium text-fg"
                     dangerouslySetInnerHTML={{ __html: highlight(l._formatted?.title, l.title) }}
                   ></h3>
@@ -517,7 +518,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
                       href={lessonHref(cue.video_id, asked, cue.start)}
                       className="card block p-4 transition-colors hover:bg-surface-2"
                     >
-                      <h2 className="text-base font-medium text-fg">{cue.title}</h2>
+                      <h2 data-vt-title className="text-base font-medium text-fg">{cue.title}</h2>
                       <p
                         className="prose-read mt-2 line-clamp-3 text-muted"
                         dangerouslySetInnerHTML={{

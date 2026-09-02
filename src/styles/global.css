@@ -261,16 +261,73 @@
   }
 }
 
-/* تبديلُ الوضع: القديمُ ثابتٌ تحت، والجديدُ دائرةٌ تتّسع من زرّ التبديل. */
-::view-transition-old(root),
-::view-transition-new(root) {
+/* انتقالُ التصفّح: يتكفّل به المتصفّحُ وحده — لا موجِّهَ ولا سكربت.
+   ponytail: عبورٌ تلقائيّ (cross-fade)؛ لو أردنا أسماءً لعناصر بعينها نضيف view-transition-name. */
+@view-transition {
+  navigation: auto;
+}
+/* قاعدةُ `*` أعلاه لا تطال زائفاتِ ::view-transition، فالسكونُ هنا صريح. */
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+
+/* التحوُّل: مصغّرةُ البطاقة تكبر إلى صندوق المشغّل، وعنوانُها يطير إلى العنوان.
+   :not(.theme-vt) لأنّ تبديلَ الوضع موجةٌ تعمّ الجذر — والمسمّى يخرج منها فيشذّ. */
+html:not(.theme-vt) .vt-player,
+html:not(.theme-vt) .vt-card-img {
+  view-transition-name: vt-player;
+}
+html:not(.theme-vt) .vt-title,
+html:not(.theme-vt) .vt-card-title {
+  view-transition-name: vt-title;
+}
+::view-transition-group(vt-player),
+::view-transition-group(vt-title) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* المصغّرةُ تثبت إلى آخر الطريق ثم تنكشف عن صندوق المشغّل تحتها — لا عبورَ إلى رماديّ. */
+::view-transition-old(vt-player),
+::view-transition-new(vt-player) {
+  mix-blend-mode: normal;
+}
+::view-transition-old(vt-player) {
+  z-index: 1;
+  animation: vt-hold 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+::view-transition-new(vt-player) {
+  animation: none;
+}
+@keyframes vt-hold {
+  0%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* النصُّ لا يُمطّ: كلُّ لقطةٍ بحجمها الطبيعيّ مثبَّتةً في مبدأ السطر، والعبورُ بينهما. */
+::view-transition-old(vt-title),
+::view-transition-new(vt-title) {
+  block-size: 100%;
+  object-fit: none;
+  object-position: top right;
+}
+
+/* تبديلُ الوضع: القديمُ ثابتٌ تحت، والجديدُ دائرةٌ تتّسع من زرّ التبديل.
+   مقصورٌ على .theme-vt كي لا يسرقَ عبورَ التصفّح. */
+html.theme-vt::view-transition-old(root),
+html.theme-vt::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
 }
-::view-transition-old(root) {
+html.theme-vt::view-transition-old(root) {
   z-index: 0;
 }
-::view-transition-new(root) {
+html.theme-vt::view-transition-new(root) {
   z-index: 1;
   animation: theme-wipe 420ms cubic-bezier(0.4, 0, 0.2, 1);
 }

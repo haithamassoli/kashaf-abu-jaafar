@@ -321,7 +321,9 @@ const jsonLd = (data: Record<string, unknown>) => JSON.stringify(data).replaceAl
         s.setProperty('--wipe-x', x + 'px')
         s.setProperty('--wipe-y', y + 'px')
         s.setProperty('--wipe-r', Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)) + 'px')
-        document.startViewTransition(flip)
+        const root = document.documentElement
+        root.classList.add('theme-vt')
+        document.startViewTransition(flip).finished.finally(() => root.classList.remove('theme-vt'))
       })
 
       // "/" focuses the page's search box, unless the user is already typing.

@@ -72,6 +72,45 @@ export default defineConfig({
           ),
       },
     },
+    {
+      // أسماءُ العناصر المشتركة بين البطاقة وصفحة الدرس، يقرؤها الـ CSS.
+      // head-inline لأنّ pagereveal يسبق تنفيذَ سكربتات <script> المؤجَّلة.
+      name: 'nav-transitions',
+      hooks: {
+        'astro:config:setup': ({ injectScript }) =>
+          injectScript(
+            'head-inline',
+            `const at = (url) => (url ? new URL(url, location.href).pathname : '')
+const vid = (path) => (path.startsWith('/v/') ? path.slice(3).split('/')[0] : '')
+const clearCard = () =>
+  document
+    .querySelectorAll('.vt-card-img, .vt-card-title')
+    .forEach((el) => el.classList.remove('vt-card-img', 'vt-card-title'))
+
+// يسمّي مصغّرةَ الدرس وعنوانَه في البطاقة الموافقة لهذا المسار، إن وُجدت.
+const nameCard = (path) => {
+  clearCard()
+  const id = vid(path)
+  const card = id && document.querySelector('a[href^="/v/' + id + '/"]')
+  if (!card) return
+  card.querySelector('img')?.classList.add('vt-card-img')
+  card.querySelector('[data-vt-title]')?.classList.add('vt-card-title')
+}
+
+addEventListener('pageswap', (e) => {
+  if (e.viewTransition) nameCard(at(e.activation?.entry.url))
+})
+
+// الرجوعُ إلى القائمة: البطاقةُ التي جئنا منها هي طرفُ التحوُّل هنا.
+addEventListener('pagereveal', (e) => {
+  const vt = e.viewTransition
+  if (!vt) return
+  nameCard(at(globalThis.navigation?.activation?.from?.url))
+  vt.finished.finally(clearCard)
+})`,
+          ),
+      },
+    },
     react(),
     sitemap({
       // Error pages and /saved/ are noindex; the latter is empty until localStorage fills it.

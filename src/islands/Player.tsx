@@ -291,11 +291,11 @@ export default function Player({ videoId, title }: Props) {
         className={
           blocked
             ? 'hidden'
-            : 'aspect-video w-full overflow-hidden rounded-xl bg-surface-2 [&>iframe]:size-full'
+            : 'vt-player aspect-video w-full overflow-hidden rounded-xl bg-surface-2 [&>iframe]:size-full'
         }
       />
       {blocked && (
-        <div className="card flex aspect-video w-full flex-col items-center justify-center gap-4 p-6 text-center">
+        <div className="vt-player card flex aspect-video w-full flex-col items-center justify-center gap-4 p-6 text-center">
           <p className="text-muted">تعذّر تشغيل الفيديو هنا، شاهده على يوتيوب</p>
           <a
             href={youtubeUrl(videoId, timeRef.current)}
