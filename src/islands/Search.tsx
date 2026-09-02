@@ -493,6 +493,7 @@ export default function Search({ playlists }: { playlists: PlaylistOption[] }) {
                         ))}
                       </p>
                       <h2
+                        data-vt-title
                         className="mt-2 text-base font-medium text-fg"
                         dangerouslySetInnerHTML={{
                           __html: highlight(a._formatted?.title, a.title),

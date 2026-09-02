@@ -100,7 +100,7 @@ const indexSchema = {
       page.data.map((a) => (
         <li>
           <a href={`/a/${a.id}/`} class="card block px-4 py-3 transition-colors hover:bg-surface-2">
-            <span class="block font-medium leading-relaxed">{a.title}</span>
+            <span data-vt-title class="block font-medium leading-relaxed">{a.title}</span>
             <span class="mt-1 block text-sm text-muted">
               {a.date && <bdi>{arabicDate(a.date)}</bdi>}
               {a.date && a.tag && ' · '}
@@ -205,6 +205,7 @@ const indexSchema = {
     a.className = 'card block px-4 py-3 transition-colors hover:bg-surface-2'
     const t = a.appendChild(document.createElement('span'))
     t.className = 'block font-medium leading-relaxed'
+    t.dataset.vtTitle = ''
     t.textContent = title // textContent, so no title can ever be markup
     const meta = a.appendChild(document.createElement('span'))
     meta.className = 'mt-1 block text-sm text-muted'

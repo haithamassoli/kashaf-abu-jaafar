@@ -283,6 +283,11 @@ html:not(.theme-vt) .vt-title,
 html:not(.theme-vt) .vt-card-title {
   view-transition-name: vt-title;
 }
+/* صفحةُ القائمة تحمل عنوانَها وبطاقاتِها معًا؛ ولو تسمّى الاثنان باسمٍ واحد
+   أُلغيَ العبورُ كلُّه. فحين تُسمّى البطاقةُ يتنحّى عنوانُ الصفحة. */
+html.vt-card .vt-title {
+  view-transition-name: none;
+}
 ::view-transition-group(vt-player),
 ::view-transition-group(vt-title) {
   animation-duration: 300ms;

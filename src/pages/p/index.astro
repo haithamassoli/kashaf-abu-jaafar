@@ -65,7 +65,7 @@ const indexSchema = {
             href={`/p/${p.id}/`}
             class="card block px-4 py-4 transition-colors hover:bg-surface-2"
           >
-            <span class="block font-medium leading-relaxed">{p.title}</span>
+            <span data-vt-title class="block font-medium leading-relaxed">{p.title}</span>
             <span class="mt-1 block text-sm text-muted">
               <span set:html={withDigits(`${lessons(p.count)} · ${duration(p.length)}`)} />
             </span>

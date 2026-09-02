@@ -55,7 +55,7 @@ const schema = {
       books.map((book) => (
         <li class="card flex flex-col p-5">
           <h2 class="font-semibold leading-relaxed">
-            <a href={`/a/${book.id}/`} class="hover:text-accent">{book.title}</a>
+            <a href={`/a/${book.id}/`} class="hover:text-accent"><span data-vt-title>{book.title}</span></a>
           </h2>
           {book.date && <bdi class="mt-1 text-sm text-muted">{arabicDate(book.date)}</bdi>}
           <p class="mt-3 text-sm leading-7 text-muted">{summary(book.paragraphs[0])}</p>

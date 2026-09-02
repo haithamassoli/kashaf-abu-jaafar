@@ -81,20 +81,30 @@ export default defineConfig({
           injectScript(
             'head-inline',
             `const at = (url) => (url ? new URL(url, location.href).pathname : '')
-const vid = (path) => (path.startsWith('/v/') ? path.slice(3).split('/')[0] : '')
-const clearCard = () =>
+const isItem = (path) => {
+  // صفحاتُ المفردات وحدَها: /v/ درسٌ و/a/ مقالةٌ (والكتابُ منها) و/p/ قائمة.
+  const seg = path.split('/')
+  return seg.length === 4 && ['v', 'a', 'p'].includes(seg[1]) && !!seg[2]
+}
+const clearCard = () => {
+  document.documentElement.classList.remove('vt-card')
   document
     .querySelectorAll('.vt-card-img, .vt-card-title')
     .forEach((el) => el.classList.remove('vt-card-img', 'vt-card-title'))
+}
 
-// يسمّي مصغّرةَ الدرس وعنوانَه في البطاقة الموافقة لهذا المسار، إن وُجدت.
+// يسمّي مصغّرةَ البطاقة الموافقة لهذا المسار وعنوانَها، إن وُجدت.
+// البادئة لا المطابقة: الروابطُ تحمل ?q= و#p3 بعد المسار.
 const nameCard = (path) => {
   clearCard()
-  const id = vid(path)
-  const card = id && document.querySelector('a[href^="/v/' + id + '/"]')
+  const card = isItem(path) && document.querySelector('a[href^="' + path + '"]')
   if (!card) return
   card.querySelector('img')?.classList.add('vt-card-img')
-  card.querySelector('[data-vt-title]')?.classList.add('vt-card-title')
+  const title = card.querySelector('[data-vt-title]')
+  if (!title) return
+  title.classList.add('vt-card-title')
+  // العنوانُ الكبيرُ في الصفحة نفسها يحمل الاسمَ ذاته — يتنحّى كي لا يتكرّر.
+  document.documentElement.classList.add('vt-card')
 }
 
 addEventListener('pageswap', (e) => {
